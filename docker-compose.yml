@@ -1,6 +1,6 @@
-version: '3.9'
+version: '3.9' # version de docker-compose
 
-services:
+services: #declaracion de servicios para el contenedor    
   postgres:
     image: postgres
     ports:

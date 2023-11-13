@@ -1,22 +1,44 @@
 version: '3.9' # version de docker-compose
 
-services: #declaracion de servicios para el contenedor    
-  postgres:
+# services: #declaracion de servicios para el contenedor    
+#   postgres:
+#     image: postgres
+#     ports:
+#       - 5432:5432
+#     environment:
+#       - POSTGRES_DB=postgres
+#       - POSTGRES_USER=postgres
+#       - POSTGRES_PASSWORD=postgres
+#     volumes:
+#       - ./database:/var/lib/postgresql/data
+#   django:
+#     build: .
+#     ports:
+#       - 8000:8000
+#     volumes:
+#       - .:/app
+#     depends_on:
+#       - postgres
+  
+
+services: #declaracion de servicios para el contenedor 
+  db:
     image: postgres
-    ports:
-      -5431:5432
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     volumes:
-      - ./database:/var/lib/postgresql/data
-  django:
+      - postgres-data:/var/lib/postgresql/data
+  web:
     build: .
-    ports:
-      - 433:8000
+    # command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      -.:/app
+      - .:/app
+    ports:
+      - "333:8000"
     depends_on:
-      - postgres
-  
+      - db
+
+volumes:
+  postgres-data:

@@ -14,7 +14,7 @@ services: #declaracion de servicios para el contenedor
   django:
     build: .
     ports:
-      -433:8000
+      - 433:8000
     volumes:
       -.:/app
     depends_on:

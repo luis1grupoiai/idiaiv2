@@ -1,4 +1,5 @@
 import os
+from config.logging import *
 from config.settings.base import *
 from dotenv import load_dotenv
 

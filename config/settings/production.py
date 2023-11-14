@@ -1,6 +1,7 @@
-from .base import *
-from dotenv import load_dotenv
 import os
+from config.settings.base import *
+from dotenv import load_dotenv
+
 
 load_dotenv(Path.joinpath(BASE_DIR, '.env'))
 
@@ -25,4 +26,12 @@ DATABASES = {
         'HOST': os.environ.get('DB_HOST'),
         'PORT': os.environ.get('DB_PORT'),
     }
-}  
+}
+
+STATIC_ROOT=Path.joinpath(BASE_DIR, 'staticfiles')
+
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}

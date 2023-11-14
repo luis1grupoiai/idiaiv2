@@ -55,7 +55,7 @@ LOCAL_MIDDLEWARE =[
 ]
 
 THIRD_MIDDLEWARE =[
-    
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 MIDDLEWARE = BASE_MIDDLEWARE + LOCAL_MIDDLEWARE + THIRD_MIDDLEWARE

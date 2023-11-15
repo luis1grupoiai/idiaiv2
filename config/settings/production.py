@@ -18,32 +18,32 @@ ALLOWED_HOSTS = [ '*' ]
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST'),
-        'PORT': os.environ.get('DB_PORT'),
-    }
-}
-
 # DATABASES = {
 #     'default': {
-#         'ENGINE': os.environ.get('DB_ENGINE'),
+#         'ENGINE': 'django.db.backends.postgresql',
 #         'NAME': os.environ.get('DB_NAME'),
 #         'USER': os.environ.get('DB_USER'),
 #         'PASSWORD': os.environ.get('DB_PASSWORD'),
 #         'HOST': os.environ.get('DB_HOST'),
 #         'PORT': os.environ.get('DB_PORT'),
-#         'OPTIONS':{
-#             'driver': 'ODBC Driver 17 for SQL Server',
-#             'unicode_results': True,
-           
-#         },
-#     },
+#     }
 # }
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'mssql',
+        'NAME': os.environ.get('DB_NAME'),
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
+        'HOST': os.environ.get('DB_HOST'),
+        'PORT': '',
+        'OPTIONS':{
+            'driver': 'ODBC Driver 17 for SQL Server',
+            'unicode_results': True,
+        },
+    },
+}
+
 
 STATIC_ROOT=Path.joinpath(BASE_DIR, 'staticfiles')
 

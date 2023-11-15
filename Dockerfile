@@ -1,4 +1,4 @@
-FROM python
+FROM python:3.12.0-bookworm
 
 ENV PYTHONUNBUFFERED=1
 
@@ -10,4 +10,4 @@ RUN python -m pip install -r requirements.txt
 
 COPY ./ ./
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:333"]
+CMD ["sh", "entrypoint.sh"]

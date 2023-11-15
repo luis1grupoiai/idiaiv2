@@ -6,7 +6,7 @@ services: #declaracion de servicios para el contenedor
     volumes:
       - .:/app
     ports:
-      - "8000:8000"
+      - "333:333"
 
 # version: '3.9' # version de docker-compose
 

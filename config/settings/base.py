@@ -1,4 +1,4 @@
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -16,11 +16,10 @@ BASE_APPS = [
 ]
 
 LOCAL_APPS = [
-    'apps.core'
+    'apps.core',
 ]
 
 THIRD_APPS = [
-
 ]
 
 INSTALLED_APPS = BASE_APPS + LOCAL_APPS + THIRD_APPS
@@ -54,7 +53,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, '/apps/core/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

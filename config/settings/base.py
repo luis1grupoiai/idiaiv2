@@ -17,6 +17,7 @@ BASE_APPS = [
 
 LOCAL_APPS = [
     'apps.core',
+    'apps.rfacial'
 ]
 
 THIRD_APPS = [
@@ -53,7 +54,8 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, '/apps/core/templates')],
+        'DIRS': [os.path.join(BASE_DIR, '/apps/core/templates'),
+                 os.path.join(BASE_DIR, '/apps/rfacial/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

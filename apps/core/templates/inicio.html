@@ -1,5 +1,5 @@
 <!-- test_template.html -->
-
+{%  load  component_tags %} 
 <!DOCTYPE html>
 <html lang="es">
 
@@ -15,6 +15,19 @@
         <h1>¡Bienvenido a mi sitio web!</h1>
         <p class="lead">Este es un ejemplo de cómo usar Bootstrap con Django.</p>
         <a class="btn btn-primary" href="#" role="button">Botón de ejemplo</a>
+        
+        
+        
+        <head>
+            <title>My example calendar</title>
+            {% component_css_dependencies %}
+        </head>
+        <body>
+            {% component "calendar" date="2023-22-11" %}
+            {% component_js_dependencies %}
+        </body>
+
+
     </div>
 </body>
 

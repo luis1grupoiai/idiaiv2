@@ -1,3 +1,4 @@
+from components.calendar.calendar import Calendar
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 

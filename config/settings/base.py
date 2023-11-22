@@ -51,11 +51,11 @@ MIDDLEWARE = BASE_MIDDLEWARE + LOCAL_MIDDLEWARE + THIRD_MIDDLEWARE
 
 
 ROOT_URLCONF = 'config.urls'
-
+ 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'components/calendar')],
+        'DIRS': [os.path.join(BASE_DIR,)],
         # 'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

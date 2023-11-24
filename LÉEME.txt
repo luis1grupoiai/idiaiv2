@@ -1,0 +1,37 @@
+1.-Clonar el repositorio https://github.com/eloymendoza/django-project.git
+
+2.-Dentro de VS Code abrir la terminal y ejecuta este comando:
+python -m pip install -r requirements.txt
+
+3.-Para ejecutar el entorno de desarrollo:
+python manage.py runserver --settings=config.settings.development
+
+ --Las aplicaciones van a ir dentro de la ruta django-project/apps
+	**Dentro de ese directorio crea una carpeta con el nombre_de_tu_app 
+ 	**Con el siguiente comando puedes crear una app:
+		python manage.py startapp nombre_de_tu_app apps/nombre_de_tu_app
+	**Para instalar tu app debes modificar el archivo apps.py de tu aplicacion
+	Ejemplo:
+		from django.apps import AppConfig
+
+			class CoreConfig(AppConfig):
+    				default_auto_field = 'django.db.models.BigAutoField'
+    				name = 'apps.nombre_de_tu_app' <---Aqui
+
+	**Tambien debes de agregarlo en el archivo de configuración que se encuentra en la ruta django-project/config/settings/base.py
+	Ejemplo:
+		LOCAL_APPS = [
+    			'apps.nombre_de_tu_app',
+		]
+--Para que Django te reconozca tus templates de tu app, tienes que indicarle el directorio, para eso tienes que ir a django-project/config/settings/base.py, en el apartado 'DIRS' de
+	TEMPLATES debes incluir lo siguiente: 
+		'DIRS': [os.path.join(BASE_DIR, '/apps/nombre_de_tu_app/templates')],
+
+Si llegas a instalar alguna libreria, favor de incluirla en el archivo requirements.txt
+	Puedes consultar la version de la libreria que has instalado con los siguientes comandos:
+		pip freeze
+		pip list
+
+4.-Ejecutar entorno de produccion con docker
+docker-compose up --build
+

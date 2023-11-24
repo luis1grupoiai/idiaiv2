@@ -35,3 +35,5 @@ Si llegas a instalar alguna libreria, favor de incluirla en el archivo requireme
 4.-Ejecutar entorno de produccion con docker
 docker-compose up --build
 
+IMPORTANTE: EN CASO DE ERROR POR EL TIPO DE SALTO DE LINEA (LF O CRLF)
+CONFIGURAR EL ENTRYPOINT.SH CON SALTO DE LINEA LF

@@ -17,8 +17,6 @@ BASE_APPS = [
 
 LOCAL_APPS = [
     'apps.core',
-    'django_components',
-
 ]
 
 THIRD_APPS = [

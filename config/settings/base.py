@@ -17,6 +17,7 @@ BASE_APPS = [
 
 LOCAL_APPS = [
     'apps.mycore',
+    'apps.ActiveDirectory'
 ]
 
 THIRD_APPS = [
@@ -55,7 +56,10 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR,)],
+        'DIRS': [os.path.join(BASE_DIR,),
+                 os.path.join(BASE_DIR, 'apps/ActiveDirectory/templates'),
+                 
+                 ],
         # 'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

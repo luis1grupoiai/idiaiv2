@@ -40,3 +40,12 @@ DATABASES = {
 #         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
+# Configuración de LDAP
+
+
+AD_SERVER = 'ldap://192.192.194.10'  # Cambia esto según tu servidor
+AD_PORT = 389  # El puerto por defecto es 389
+AD_USER = 'CN=desarrollo,CN=Users,DC=iai,DC=com,DC=mx'  # Cambia esto según tus credenciales
+#dsquery user -name desarrollo
+#dsget user "CN=desarrollo,CN=Users,DC=iai,DC=com,DC=mx"
+AD_PASSWORD = 'D3sarrollo'

@@ -8,5 +8,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('mycore/', include('apps.mycore.urls')),
     path('areas/', include('apps.areas.urls')),
+    path('', include('apps.rfacial.urls')),   
+    path('AD/', include('apps.ActiveDirectory.urls'),name='ActDir'),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

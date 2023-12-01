@@ -1,0 +1,155 @@
+{% extends "mazer\base.html" %}
+
+{% block contenido  %}
+
+
+    <h2 class="text-center my-4">Agregar Nuevo Usuario</h2>
+ 
+
+
+                {% if messages %}
+                <div>
+                    {% for message in messages %}
+                        {% if forloop.last %}
+                            <div class="alert {% if 'error' in message.tags %}alert-danger{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %} 
+            
+            
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="row align-content-center " >
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="nombre_usuario" class="form-label">Nombre de Usuario:</label>
+                        <input type="text" class="form-control" name="nombre_usuario" id="nombre_usuario" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="nombre_inicio_sesion" class="form-label">Nombre de inicio de sesion de usuario:</label>
+                        <input type="text" class="form-control" name="nombre_inicio_sesion" id="nombre_inicio_sesion" required>
+                    </div>
+                </div>    
+
+                <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="nombre_pila" class="form-label">Nombre de pila:</label>
+                    <input type="text" class="form-control" name="nombre_pila" id="nombre_pila" required>
+                </div>
+                </div>
+                <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="apellido" class="form-label">Apellidos:</label>
+                    <input type="text" class="form-control" name="apellido" id="apellido" required>
+                </div>
+                </div>
+                <div class="mb-3">
+                    <label for="nombre_completo" class="form-label">Nombre Completo:</label>
+                    <input type="text" class="form-control" name="nombre_completo" id="nombre_completo" required>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="departamento" class="form-label">Departamento:</label>
+                        <select class="form-control select2" name="departamento" id="departamento" required>
+        
+                            <option value="administracion">Administración</option>
+                            <option value="calidad_ambiental_seguridad_salud">Calidad, Ambiental, Seguridad y Salud</option>
+                            <option value="presidencia_grupo_iai">Presidencia Grupo IAI</option>
+                            <option value="proyectos_especiales">Proyectos Especiales</option>
+                            <option value="direccion_proyectos_convencionales">Dirección de Proyectos Convencionales</option>
+                            <option value="ingenieria">Ingeniería</option>
+                            <option value="tecnatom">Tecnatom</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="puesto" class="form-label">puesto :</label>
+                    <input type="text" class="form-control" name="puesto" id="puesto" required>
+                </div>
+                </div>
+
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">Correo electronico :</label>
+                    <input type="email" class="form-control" name="email" id="email" value="@grupo-iai.com.mx" required>
+                </div>
+              
+
+               
+                <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="password" class="form-label">Contraseña:</label>
+                    <input type="password" class="form-control" name="password" id="password" required minlength="8">
+                </div>
+                </div>
+                <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="confirm_password" class="form-label">Confirmar Contraseña:</label>
+                    <input type="password" class="form-control" name="confirm_password" id="confirm_password" required minlength="8">
+                </div>
+                </div>
+                <div>
+                <!-- Agrega aquí más campos según sea necesario -->
+                <button type="submit" class="btn btn-success">Agregar Usuario</button>
+            </form>
+       
+
+{% endblock %}
+
+
+{% block script %} 
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var form = document.querySelector('form');
+        form.onsubmit = function (e) {
+            var password = document.getElementById('password').value;
+            var confirmPassword = document.getElementById('confirm_password').value;
+            
+            if (password != confirmPassword) {
+                alert('Las contraseñas no coinciden.');
+                e.preventDefault();
+                return false;
+            }
+            return true;
+        };
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var nombreUsuarioInput = document.getElementById('nombre_usuario');
+        var nombreInicioSesionInput = document.getElementById('nombre_inicio_sesion');
+        var correoInput = document.getElementById('email');
+        var dominioEmail = "@grupo-iai.com.mx"; // Puedes cambiar esto según sea necesario
+    
+        nombreUsuarioInput.addEventListener('input', function () {
+            nombreInicioSesionInput.value = nombreUsuarioInput.value;
+            correoInput.value = nombreUsuarioInput.value + dominioEmail;
+        });
+    });
+   
+    document.addEventListener('DOMContentLoaded', function () {
+        var nombrePilaInput = document.getElementById('nombre_pila');
+        var apellidoInput = document.getElementById('apellido');
+        var nombreCompletoInput = document.getElementById('nombre_completo');
+    
+        function actualizarNombreCompleto() {
+            nombreCompletoInput.value = nombrePilaInput.value + ' ' + apellidoInput.value;
+        }
+    
+        nombrePilaInput.addEventListener('input', actualizarNombreCompleto);
+        apellidoInput.addEventListener('input', actualizarNombreCompleto);
+    });
+
+    $(document).ready(function() {
+        $('.select2').select2({
+            language: "es"
+        });
+    });
+</script>
+{% endblock %}

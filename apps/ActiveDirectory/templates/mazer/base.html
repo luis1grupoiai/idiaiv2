@@ -839,7 +839,9 @@
                 <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="{% url 'usuarios' %}">Usuarios</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">consultar</li>
+                        <li class="breadcrumb-item active" aria-current="page">{% block EncabezadoNav%}
+                            
+                            {% endblock EncabezadoNav %}</li>
                     </ol>
                 </nav>
             </div>
@@ -848,7 +850,9 @@
     <section class="section">
         <div class="card">
             <div class="card-header">
-                <h4 class="card-title">Consulta de los Usuarios </h4>
+                <h4 class="card-title">{% block EncabezadoCard%}
+                    card-title
+                    {% endblock EncabezadoCard %} </h4>
             </div>
             <div class="card-body">
                

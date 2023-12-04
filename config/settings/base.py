@@ -17,6 +17,7 @@ BASE_APPS = [
 
 LOCAL_APPS = [
     'apps.mycore',
+    'apps.areas',
     'apps.rfacial',
     'apps.ActiveDirectory'
 ]

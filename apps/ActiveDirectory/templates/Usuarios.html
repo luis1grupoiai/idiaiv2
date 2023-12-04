@@ -4,6 +4,13 @@
 {% block title%}
 Dashboard - Activate Directory
 {% endblock title %}
+{% block extra_css %}
+<link rel="stylesheet" href="/static/assets/compiled/css/table-datatable.css">
+<link rel="stylesheet" href="/static/assets/extensions/datatables.net-bs5/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="/static/assets/compiled/css/table-datatable-jquery.css">
+<!-- Espacio para CSS adicional de plantillas hijas -->
+{% endblock %}
+
 
 {% block EncabezadoNav%}
 Consulta
@@ -17,7 +24,7 @@ Consulta de los Usuarios
 {% block contenido %}
     <div class="table-responsive ">
         <br>
-
+       
 
         <table id="myTable" class="table table-hover table-striped">
             <thead>
@@ -67,6 +74,13 @@ Consulta de los Usuarios
     {% endblock %}
 
     {% block script %} 
+    <script src="/static/assets/compiled/js/app.js"></script>
+    <script src="/static/assets/extensions/simple-datatables/umd/simple-datatables.js"></script>    
+    <script src="/static/assets/static/js/pages/simple-datatables.js"></script>
+    <script src="/static/assets/extensions/jquery/jquery.min.js"></script>
+    <script src="/static/assets/extensions/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="/static/assets/extensions/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="/static/assets/static/js/pages/datatables.js"></script>
     <script>
         $(document).ready( function () {
             $('#myTable').DataTable({

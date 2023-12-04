@@ -39,9 +39,15 @@ def consultar_usuarios(request):
     except Exception  as e:
         # Manejar la excepción, por ejemplo, registrando el error
         print(f"Error al conectar o buscar en Active Directory: {str(e)}")
-
+    
+    # Crear el diccionario de contexto con todas las variables necesarias
+    context = {
+        'users': usuarios,  # Lista de usuarios
+        'active_page': 'usuarios'  # Variable adicional
+        # Puedes agregar más variables aquí si lo necesitas
+    }
     # Renderiza la lista de usuarios en una plantilla HTML
-    return render(request, 'Usuarios.html', {'users': usuarios})
+    return render(request, 'Usuarios.html', context)
 
 
 def agregar_usuario(request):
@@ -95,6 +101,10 @@ def agregar_usuario(request):
             
             return redirect('usuarios')
             
-            
+  # Crear el diccionario de contexto con todas las variables necesarias
+    context = {
+        'active_page': 'agregar_usuario'  # Variable adicional para el boton del menu 
+        # Puedes agregar más variables aquí si lo necesitas
+    }          
     
-    return render(request, 'AgregarUsuario.html')
+    return render(request, 'AgregarUsuario.html',context)

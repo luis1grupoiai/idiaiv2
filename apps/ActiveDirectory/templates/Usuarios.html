@@ -18,14 +18,13 @@ Consulta
 
 
 {% block EncabezadoCard%}
-Consulta de los Usuarios
+Usuarios de Activate Directory
 {% endblock EncabezadoCard %}
 
 {% block contenido %}
-    <div class="table-responsive ">     
-       
-        <table id="myTable" class="table table-hover table-striped">
-            <thead>
+<div class="table-responsive ">
+<table id="myTable" class="table table-hover table-striped"> 
+    <thead>
                 <tr>
                     <th>Acción</th>
                     <th>Nombre de Usuario </th>
@@ -33,23 +32,19 @@ Consulta de los Usuarios
                     <th>Correo Electrónico</th>
                     <th>Direccion</th>
                 </tr>
-            </thead>
-            <tbody>
-                {% for user in users %}
+    </thead>
+    <tbody>
+     {% for user in users %}
                 <tr>
                     <td>
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#userModal"
-                        data-nombreCompleto ="{{ user.nombre_completo}}" 
-                        data-nombre="{{ user.nombre }}"
-                        data-email="{{ user.correo }}"
                         data-nombrePila ="{{ user.nombre_de_pila}}"
                         data-apellidos ="{{ user.apellidos}}"
-                        data-departamento ="{{ user.departamento}}"
-                        data-puesto ="{{ user.puesto }}"
+                        data-puesto ="{{ user.puesto}}"
                         data-nombreSesion ="{{ user.nombre_inicio_sesion}}"
                         data-nombreUsuarioPrincipal ="{{ user.usuario_principal }}"
                         onclick="showUserDetails(this);">
-                        Ver Detalles
+                        Ver
                         </button>
                     </td>
                     <td>{{ user.nombre }}</td>
@@ -60,7 +55,7 @@ Consulta de los Usuarios
                 </tr>
                 {% endfor %}
             </tbody>
-        </table> 
+</table> 
 
      
 
@@ -82,15 +77,20 @@ Consulta de los Usuarios
                                         <div class="modal-body">
                                              <!-- Aquí van los detalles del usuario -->
                                              <div class="row align-content-center " >
-                                                <div class="col-md-6">
-                                                <p id="modalNombreCompleto"></p>  
-                                                <p id="modalNombre"></p>
-                                                <p id="modalEmail"></p>
+                                                <div class="col-md-12">
+                                                <p id="modalPuesto"></p> 
+
                                                 </div>
                                                 <div class="col-md-6"> 
-                                                <p id="modalNombreCompleto">ddd</p>  
-                                                <p id="modalNombre">ddd</p>
-                                                <p id="modalEmail">dddddd</p>
+                                                <p id="modalNombre"></p>
+                                                
+                                                </div>
+                                                <div class="col-md-6"> 
+                                                <p id="modalApellidos"></p>
+                                                </div>
+                                                <div class="col-md-12">    
+                                                <p id="modalnombreSesion"></p>   
+                                                <p id="modalNombreUsuarioPrincipal"></p>
                                                 </div>
                                             </div>
                                             <!-- Agrega más campos según sea necesario -->
@@ -99,11 +99,11 @@ Consulta de los Usuarios
                                             <button type="button" class="btn btn-light-secondary"
                                                 data-bs-dismiss="modal">
                                                 <i class="bx bx-x d-block d-sm-none"></i>
-                                                <span class="d-none d-sm-block">Close</span>
+                                                <span class="d-none d-sm-block">Cerrar</span>
                                             </button>
                                             <button type="button" class="btn btn-primary ms-1" data-bs-dismiss="modal">
                                                 <i class="bx bx-check d-block d-sm-none"></i>
-                                                <span class="d-none d-sm-block">Accept</span>
+                                                <span class="d-none d-sm-block">Aceptar</span>
                                             </button>
                                         </div>
                                     </div>
@@ -121,7 +121,7 @@ Consulta de los Usuarios
     <script>
         $(document).ready( function () {
             $('#myTable').DataTable({
-                "pageLength": 10,
+                "pageLength": 5,
                 "language": {
                     "lengthMenu": "Mostrar _MENU_ registros por página",
                     "zeroRecords": "No se encontraron resultados",
@@ -148,9 +148,9 @@ Consulta de los Usuarios
       
             function showUserDetails(button) {
                 // Utiliza data attributes para obtener la información
-                var nombreCompleto = button.getAttribute('data-nombreCompleto');
-                var nombre = button.getAttribute('data-nombre');
-                var email = button.getAttribute('data-email');
+                var puesto = button.getAttribute('data-puesto');
+                var nombreSesion = button.getAttribute('data-nombreSesion');
+                var nombreUsuarioPrincipal = button.getAttribute('data-nombreUsuarioPrincipal');
                 var nombrePila = button.getAttribute('data-nombrePila');
                 var apellidos = button.getAttribute('data-apellidos');
 
@@ -158,9 +158,11 @@ Consulta de los Usuarios
                 // ... obtén otros datos usando data attributes
         
                 // Rellena los datos en el modal
-                document.getElementById("modalNombreCompleto").innerText = "Nombre: " + nombreCompleto;
-                document.getElementById("modalNombre").innerText = "Usuario : " + nombre;
-                document.getElementById("modalEmail").innerText = "Email: " + email;
+                document.getElementById("modalPuesto").innerText = "Puesto: " + puesto;
+                document.getElementById("modalnombreSesion").innerText = "Nombre de Sesión: " + nombreSesion;
+                document.getElementById("modalNombreUsuarioPrincipal").innerText = "Usuario Principal: " + nombreUsuarioPrincipal;
+                document.getElementById("modalNombre").innerText = "Nombre : " + nombrePila;
+                document.getElementById("modalApellidos").innerText = "Apellidos : " + apellidos;
 
                 
                 // ... rellena otros campos del modal
@@ -169,17 +171,22 @@ Consulta de los Usuarios
                 var modal = new bootstrap.Modal(document.getElementById('userModal'));
                 modal.show();
             }
-        
+              
+            $('#userModal').on('hidden.bs.modal', function () {
+                // Restaura el desplazamiento aquí
+                document.body.style.overflow = 'auto';
+            });
             // Esperar a que el DOM se cargue completamente
-            document.addEventListener("DOMContentLoaded", function() {
+              // document.addEventListener("DOMContentLoaded", function() {
                 // Obtener el elemento del modal por su ID
-                var userModal = document.getElementById('userModal');
+             //   var userModal = document.getElementById('userModal');
         
                 // Listener para el evento 'hidden.bs.modal', que se dispara después de que el modal se ha cerrado
-                userModal.addEventListener('hidden.bs.modal', function () {
+              //  userModal.addEventListener('hidden.bs.modal', function () {
                     // Refrescar la página
-                    location.reload();
-                });
-            });
+              //      location.reload();
+            //    });
+          //  });
+     
         </script>
     {% endblock%}

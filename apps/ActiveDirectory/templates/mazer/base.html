@@ -83,7 +83,7 @@
             class="sidebar-item {% if active_page == 'usuarios' %}active{% endif %} ">
             <a href="{% url 'usuarios' %}" class='sidebar-link'>
                 <i class="bi bi-people-fill"></i>
-                <span>Usuarios</span>
+                <span>Usuarios AD</span>
             </a>
             
 
@@ -92,7 +92,7 @@
             class="sidebar-item {% if active_page == 'agregar_usuario' %}active{% endif %} ">
             <a href="{% url 'agregar_usuario' %}" class='sidebar-link'>
                 <i class="bi bi-person-fill"></i>
-                <span>Agregar Usuarios</span>
+                <span>Agregar Usuarios AD</span>
             </a>
             
 
@@ -840,9 +840,8 @@
                 <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="{% url 'usuarios' %}">Usuarios</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">{% block EncabezadoNav%}
-                            
-                            {% endblock EncabezadoNav %}</li>
+                        <li class="breadcrumb-item active" aria-current="page">
+                            {% block EncabezadoNav%}{% endblock EncabezadoNav %}</li>
                     </ol>
                 </nav>
             </div>
@@ -851,9 +850,7 @@
     <section class="section">
         <div class="card">
             <div class="card-header">
-                <h4 class="card-title">{% block EncabezadoCard%}
-                    card-title
-                    {% endblock EncabezadoCard %} </h4>
+                <h4 class="card-title">{% block EncabezadoCard%}{% endblock EncabezadoCard %} </h4>
             </div>
             <div class="card-body">
                

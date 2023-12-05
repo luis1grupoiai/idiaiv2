@@ -1,0 +1,17 @@
+{
+  "name": "iai",
+  "version": "1.0.0",
+  "description": "Package json para sistema de grupo iai",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "toastify-js": "^1.12.0"
+  },
+  "devDependencies": {
+    "gulp": "^4.0.2"
+  }
+}

@@ -11,7 +11,7 @@ schema_view = get_schema_view(
       title="API Auth IDIAI",
       default_version='v1',
       description="Api de autenticación de ID IAI",
-      terms_of_service="",
+      terms_of_service="http://127.0.0.1:8000/api/auth/",
       contact=openapi.Contact(email="ana.sanchez@grupo-iai.com.mx"),
       license=openapi.License(name="BSD License"),
    ),

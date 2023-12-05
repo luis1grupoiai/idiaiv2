@@ -100,6 +100,6 @@ admin.site.register(Direccion, DireccionAdmin)
 
 
 class PermissionAdmin(admin.ModelAdmin):
-    list_display = ('codename', 'name', 'content_type', 'status', 'descripcion')
+    list_display = ( 'name', 'codename', 'descripcion', 'status')
 
 admin.site.register(Permission, PermissionAdmin)

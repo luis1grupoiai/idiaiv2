@@ -1,4 +1,5 @@
-venv/
+/venv/
+!/venv/Lib/site-packages/django/contrib/auth/templates/models.py
 __pycache__/
 *.pyc
 .venv/

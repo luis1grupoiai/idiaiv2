@@ -1,44 +1,74 @@
-from django.shortcuts import render, redirect
-from django.http import HttpResponse
-from django.http.response import StreamingHttpResponse
+# from django.shortcuts import render, redirect
+from django.views import View
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+
+# from django.http import HttpResponse
+from django.http.response import JsonResponse
+from apps.areas.models import *
+from passlib.hash import django_pbkdf2_sha256 as handler
+
+import json
+import os
+import base64
 # from camera import VideoCamera, IPWebCam
-import numpy as np
-import cv2
-import os, urllib
-import mediapipe as mp
+# import numpy as np
+# import cv2
+# import os, urllib
+# import mediapipe as mp
 
 
+class CAutenticacion(View):
 
+    @method_decorator(csrf_exempt)
+    def dispatch(self,request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
-def gen_frame():
-    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-    # while True:
-    while cap.isOpened():
-        
-        ret, frame = cap.read()
-        frame_flip = cv2.flip(frame,1)
+    def get(self,request):
+        usuarios = list(User.objects.values())
 
-        if not ret:
-            print("No hay imagen.")
-            break
+        if len(usuarios)>0:
+            datos = {'message': 'Success','usuarios':usuarios}
         else:
-            print("Si se obtiene imagen de camara.")
-            # cv2.imshow("Video", frame)
-            # suc, encode = cv2.imencode('.jpg', frame)
-            # frame = encode.tobytes()
+            datos = {'message': 'Usuarios no encontrados.'}
 
-            if cv2.waitKey(1) & 0xFF == ord("s"):
-                break
+        return JsonResponse(datos)
 
+    def post(self,request):
+        #Metodo Post
+        #Este metodo se encarga de validar las credenciales del ususario que se esta loggeando al sistema,
+        # como resultado obtiene (mediante el userName, password, idSistema y Token) los permisos y grupos del usuario.
 
-        # yield(b'--frame\r\n' 
-        #       b'Content-Type: image/jpeg\r\n\r\n'+frame+b'\r\n\r\n')
+        try:
+            #1. Carga los valores del json obtenido por el metodo post.
+            jd = json.loads(request.body)
+        
+            #2. Decodifica el password en base64
+            pwdD64 = base64.b64decode(jd['password'])
 
-# Create your views here.
-def inicio(request):
-    return render(request, "facial.html")
+            #3. Compara el token obtenido del json contra el secretKey de la aplicación.
+            if(jd['X-CSRFToken'] == os.environ.get('SECRET_KEY')):
+                
+                #4. Obtiene el registro del usuario mediante el userName.
+                dUsuario = list(User.objects.filter(username=jd['user']).values())
+                password = dUsuario[0]['password']
+            
+                #4. Verifica que la contraseña desencriptada en base64 coincida con la password encriptada de BD.
+                #En caso de coincidir es como devuelve los permisos y grupos del usuario.
+                if  handler.verify(pwdD64,password):
+                    print("Las contraseñas son iguales")
+                    datos = {'message': 'Success', 'datosUser': dUsuario}
+                else:
+                    datos = {'message': 'Ups, parece ser que los tokens no coinciden.'}
+        
+            return JsonResponse(datos)
+        except ValueError as error:
+            print("invalid json: %s" % error)
+            return False
+        
 
+    def put(self,request):
+        pass
 
-def video(request):
-    # return HttpResponse(gen_frame(),mime='multipart/x-mixed-replace; boundary=frame')
-    return StreamingHttpResponse(gen_frame(), content_type ='multipart/x-mixed-replace; boundary=frame')
+    def delete(self,request):
+        pass

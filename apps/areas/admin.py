@@ -97,4 +97,9 @@ class DireccionAdmin(admin.ModelAdmin):
     director.short_description = 'Director'  # Nombre que se mostrará en la lista
 
 admin.site.register(Direccion, DireccionAdmin)
-admin.site.register(Permission)
+
+
+class PermissionAdmin(admin.ModelAdmin):
+    list_display = ('codename', 'name', 'content_type', 'status', 'descripcion')
+
+admin.site.register(Permission, PermissionAdmin)

@@ -4,6 +4,7 @@
 {% block title%}
 Dashboard - Activate Directory
 {% endblock title %}
+
 {% block extra_css %}
 
 <link rel="stylesheet" href="/static/assets/extensions/datatables.net-bs5/css/dataTables.bootstrap5.min.css">
@@ -38,14 +39,32 @@ Usuarios de Activate Directory
      {% for user in users %}
      <tr>
         <td>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#userModal"
+            <button type="button" class="btn icon btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#userModal"
             data-nombrePila ="{{ user.nombre_de_pila}}"
             data-apellidos ="{{ user.apellidos}}"
             data-puesto ="{{ user.puesto}}"
             data-nombreSesion ="{{ user.nombre_inicio_sesion}}"
             data-nombreUsuarioPrincipal ="{{ user.usuario_principal }}"
             onclick="showUserDetails(this);">
-            Ver
+            <i class="bi bi-info-circle"></i>
+            </button>
+            <button type="button" class="btn icon btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#userModal"
+            data-nombrePila ="{{ user.user.nombre}}"
+            data-apellidos ="{{ user.apellidos}}"
+            data-puesto ="{{ user.puesto}}"
+            data-nombreSesion ="{{ user.nombre_inicio_sesion}}"
+            data-nombreUsuarioPrincipal ="{{ user.usuario_principal }}"
+            onclick="showUserDetails(this);">
+            <i class="bi bi-info-circle"></i>
+            </button>
+            <button type="button" class="btn icon btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#userModal"
+            data-nombrePila ="{{ user.nombre}}"
+            data-apellidos ="{{ user.apellidos}}"
+            data-puesto ="{{ user.puesto}}"
+            data-nombreSesion ="{{ user.nombre_inicio_sesion}}"
+            data-nombreUsuarioPrincipal ="{{ user.usuario_principal }}"
+            onclick="showUserDetails(this);">
+            <i class="bi bi-info-circle"></i>
             </button>
         </td>
         <td>{{ user.nombre }}</td>

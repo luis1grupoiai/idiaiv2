@@ -33,44 +33,43 @@ Usuarios de Activate Directory
                     <th>Nombre Completo </th>
                     <th>Correo Electrónico</th>
                     <th>Direccion</th>
+                    <th>Estatus </th>
                 </tr>
     </thead>
     <tbody>
      {% for user in users %}
      <tr>
-        <td>
-            <button type="button" class="btn icon btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#userModal"
+        <td class="d-flex">
+            <button type="button" class="btn icon btn-info btn-sm me-1" data-bs-toggle="modal" data-bs-target="#userModal"
             data-nombrePila ="{{ user.nombre_de_pila}}"
             data-apellidos ="{{ user.apellidos}}"
             data-puesto ="{{ user.puesto}}"
             data-nombreSesion ="{{ user.nombre_inicio_sesion}}"
             data-nombreUsuarioPrincipal ="{{ user.usuario_principal }}"
             onclick="showUserDetails(this);">
-            <i class="bi bi-info-circle"></i>
+            <span class="text-white"><i class="bi bi-info-circle"></i></span>
             </button>
-            <button type="button" class="btn icon btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#userModal"
-            data-nombrePila ="{{ user.user.nombre}}"
-            data-apellidos ="{{ user.apellidos}}"
-            data-puesto ="{{ user.puesto}}"
-            data-nombreSesion ="{{ user.nombre_inicio_sesion}}"
-            data-nombreUsuarioPrincipal ="{{ user.usuario_principal }}"
-            onclick="showUserDetails(this);">
-            <i class="bi bi-info-circle"></i>
+            <button type="button" class="btn icon btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#userModal">
+            <i class="bi bi-pencil"></i>
             </button>
-            <button type="button" class="btn icon btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#userModal"
-            data-nombrePila ="{{ user.nombre}}"
-            data-apellidos ="{{ user.apellidos}}"
-            data-puesto ="{{ user.puesto}}"
-            data-nombreSesion ="{{ user.nombre_inicio_sesion}}"
-            data-nombreUsuarioPrincipal ="{{ user.usuario_principal }}"
-            onclick="showUserDetails(this);">
-            <i class="bi bi-info-circle"></i>
-            </button>
+           
         </td>
         <td>{{ user.nombre }}</td>
         <td>{{ user.nombre_completo}}</td>
         <td>{{ user.correo }}</td>
         <td>{{ user.departamento}}</td>
+        <td class = "text-center">
+            {% if user.estatus == 1 %}
+            <button type="button" class="btn icon btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#userModal">
+                Desactivar
+            </button>
+        {% else %}
+            <button type="button" class="btn icon btn-success " data-bs-toggle="modal" data-bs-target="#userModal">
+                Activar
+            </button>
+        {% endif %}
+
+        </td>
         
     </tr>
                 {% endfor %}
@@ -207,6 +206,6 @@ Usuarios de Activate Directory
               //      location.reload();
             //    });
           //  });
-     
+          
         </script>
     {% endblock%}

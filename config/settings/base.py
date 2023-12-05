@@ -19,7 +19,8 @@ LOCAL_APPS = [
     'apps.mycore',
     'apps.areas',
     'apps.rfacial',
-    'apps.ActiveDirectory'
+    'apps.ActiveDirectory',
+    'drf_yasg'
 ]
 
 THIRD_APPS = [

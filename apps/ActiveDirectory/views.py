@@ -2,6 +2,7 @@ from django.shortcuts import render , redirect
 from django.conf import settings
 from ldap3 import Server, Connection, ALL_ATTRIBUTES
 from django.contrib import messages
+import random
 # Create your views here.
 
 
@@ -31,6 +32,7 @@ def consultar_usuarios(request):
                     'descripcion': entry.description.value if 'description' in entry else None,
                     'departamento': entry.department.value if 'department' in entry else None,  # Nuevo atributo
                     'puesto': entry.title.value if 'title' in entry else None,  # Nuevo atributo
+                    'estatus' :random.randint(0, 1),
         
                 }
                 #print(entry.cn.value)

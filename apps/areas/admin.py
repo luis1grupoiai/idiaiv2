@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Permission
 from .models import UserCoordinacion, Coordinacion, Gerencia, Direccion
 
 admin.site.site_header = 'IDIAI v2'
@@ -97,3 +97,9 @@ class DireccionAdmin(admin.ModelAdmin):
     director.short_description = 'Director'  # Nombre que se mostrará en la lista
 
 admin.site.register(Direccion, DireccionAdmin)
+
+
+class PermissionAdmin(admin.ModelAdmin):
+    list_display = ( 'name', 'codename', 'descripcion', 'status')
+
+admin.site.register(Permission, PermissionAdmin)

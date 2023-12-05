@@ -1,8 +1,9 @@
 from django.shortcuts import render , redirect
 from django.conf import settings
-from ldap3 import Server, Connection, ALL_ATTRIBUTES
+from ldap3 import Server, Connection, ALL_ATTRIBUTES , MODIFY_REPLACE
 from django.contrib import messages
 import random
+
 # Create your views here.
 
 
@@ -110,3 +111,36 @@ def agregar_usuario(request):
     }          
     
     return render(request, 'AgregarUsuario.html',context)
+
+
+def editar_usuario(request, nombre_inicio_sesion):
+    if request.method == 'POST':
+        # Aquí capturas los datos enviados desde el formulario
+        nuevo_nombre = request.POST['nuevo_nombre']
+        nuevo_apellido = request.POST['nuevo_apellido']
+        # ... otros campos ...
+
+        # Conectar a Active Directory
+        try:
+            server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
+            with Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True) as conn:
+                user_dn = f"CN={nombre_inicio_sesion},OU=iaiUsuario,OU=RedGrupoIAI,DC=iai,DC=com,DC=mx"
+                
+                # Actualizar los atributos
+                conn.modify(user_dn, {
+                    'givenName': [(MODIFY_REPLACE, [nuevo_nombre])],
+                    'sn': [(MODIFY_REPLACE, [nuevo_apellido])],
+                    # ... otros atributos ...
+                })
+
+                # Verificar resultado de la modificación
+                if conn.result['result'] == 0:  # éxito
+                    messages.success(request, 'Usuario editado correctamente.')
+                else:
+                    messages.error(request, f"Error al editar usuario: {conn.result['description']}")
+
+        except Exception as e:
+            messages.error(request, f"Error al conectar con AD: {str(e)}")
+
+    # Redireccionar de vuelta a la lista de usuarios
+    return redirect('usuarios')

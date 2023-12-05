@@ -78,7 +78,7 @@
     <div class="sidebar-menu">
         <ul class="menu">
             <li class="sidebar-title">Menu</li>
-            
+           
             <li
             class="sidebar-item {% if active_page == 'usuarios' %}active{% endif %} ">
             <a href="{% url 'usuarios' %}" class='sidebar-link'>
@@ -95,7 +95,15 @@
                 <span>Agregar Usuarios AD</span>
             </a>
             
+            <li
+            class="sidebar-item {% if active_page == 'usuariosidIAI' %}active{% endif %} ">
+            <a href="{% url 'usuarios' %}" class='sidebar-link'>
+                <i class="bi bi-person-circle"></i>
+                <span>Usuarios IDIAI</span>
+            </a>
+            
 
+            </li>
             </li>
 
         </ul>

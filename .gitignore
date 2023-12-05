@@ -1,6 +1,6 @@
 venv/
-staticfiles/
 __pycache__/
 *.pyc
 .venv/
 .vscode/
+node_modules/

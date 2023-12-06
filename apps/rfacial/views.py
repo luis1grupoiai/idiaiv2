@@ -68,7 +68,7 @@ class CAutenticacion(APIView):
         """
         Realiza la validación de las credenciales de los usuarios.
 
-        Para realizar una creación exitosa, envía un objeto JSON con los siguientes campos:
+        Para realizar un consulta exitosa, envía un objeto JSON con los siguientes campos:
        
         """
         #Metodo Post
@@ -78,30 +78,79 @@ class CAutenticacion(APIView):
         try:
             #1. Carga los valores del json obtenido por el metodo post.
             jd = json.loads(request.body)
-        
-            #2. Decodifica el password en base64
-            pwdD64 = base64.b64decode(jd['password'])
-
-            #3. Compara el token obtenido del json contra el secretKey de la aplicación.
-            if(jd['X-CSRFToken'] == os.environ.get('SECRET_KEY')):
-                
-                #4. Obtiene el registro del usuario mediante el userName.
-                dUsuario = list(User.objects.filter(username=jd['user']).values())
-                password = dUsuario[0]['password']
             
-                #4. Verifica que la contraseña desencriptada en base64 coincida con la password encriptada de BD.
-                #En caso de coincidir es como devuelve los permisos y grupos del usuario.
-                if  handler.verify(pwdD64,password):
-                    print("Las contraseñas son iguales")
-                    datos = {'message': 'Success', 'datosUser': dUsuario}
+            #Declaración y asignación de variables
+            bValido = True
+            dCamposJson = ['X-CSRFToken', 'user', 'password','idSistema']
+            sTexto = ""
+            pwdD64 = ""
+            dUsuario = ""
+            password = ""
+            sistema = 0
+            #total de items permitidos en la API, definidos en la diccionario dCamposJson
+            nLenDef = len(dCamposJson) 
+            #Variable que almacenara el numero de items del json recibido por la API.
+            numero_de_items = 0 
+            
+
+            #Valida que el numero de claves del JSON enviado a la API
+            #coincida con el numero de claves declaras en el diccioario dCamposJson
+            nItemJson = len(jd)
+            
+            if nItemJson != nLenDef:
+                sTexto = "El tamaño del JSON obtenido no es el esperado, por favor de verificar. "
+                bValido = False
+
+
+
+            #Validación de las claves json, si alguna clave no se encuentra en el objeto, entonces
+            #el valor de bValido es Falso y regresa un mensaje de error indicando el identificador
+            #  faltante.
+            for item in dCamposJson:
+                if item in jd:
+                    continue
                 else:
-                    datos = {'message': 'Ups, la contraseña es incorrecta.'}
-        
-            return JsonResponse(datos)
+                    sTexto += "El campo faltante es: "+item+". "
+                    bValido = False
+                    break
+            
+            #si las claves estan correctas, continuara realizando el resto del proceso
+            # de autenticación
+            if bValido:
+
+                #2. Compara el token obtenido del json contra el secretKey de la aplicación.
+                if(jd['X-CSRFToken'] == os.environ.get('SECRET_KEY')):
+
+                    sistema = jd['idSistema']
+                    if sistema>0:
+                        #3. Decodifica el password en base64
+                        pwdD64 = base64.b64decode(jd['password'])
+                    
+                        #Obtiene el registro del usuario mediante el userName.
+                        dUsuario = list(User.objects.filter(username=jd['user']).values())
+                        password = dUsuario[0]['password']
+                    
+                        #4. Verifica que la contraseña en base64 coincida con la password encriptada de BD.
+                        #En caso de coincidir es como devuelve los permisos y grupos del usuario.
+                        if  handler.verify(pwdD64,password):
+                            # print("Las contraseñas son iguales")
+                            datos = {'message': 'Success', 'datos': dUsuario}
+                        else:
+                            datos = {'message': 'Dato Invalidos', 'error':'¡Ups! la contraseña es incorrecta.'}
+                    else:
+                        datos = {'message': 'Dato Invalidos', 'error':'El Sistema es 0, debe pasar un id de sistema valido'}                   
+                else:
+                    datos = {'message': 'Dato invalido.', 'error': 'El Token es incorrecto.'}
+            else:
+                datos = {'message': 'JSON invalido.', 'error': sTexto}
+            
         except ValueError as error:
-            print("invalid json: %s" % error)
-            return False
+            sTexto = "%s" % error
+            datos = {'message': 'JSON invalido. ', "error": sTexto}
+            # return False
         
+
+        return JsonResponse(datos)
 
     # def put(self,request):
     #     pass

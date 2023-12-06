@@ -20,12 +20,13 @@ LOCAL_APPS = [
     'apps.areas',
     'apps.rfacial',
     'apps.ActiveDirectory',
-    'drf_yasg'
+    'apps.sistemas'
 ]
 
 THIRD_APPS = [
     "django_components",
-    "django_components.safer_staticfiles"
+    "django_components.safer_staticfiles",
+    'drf_yasg'
 ]
 
 INSTALLED_APPS = BASE_APPS + LOCAL_APPS + THIRD_APPS

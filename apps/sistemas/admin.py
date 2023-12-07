@@ -1,8 +1,8 @@
 from django.contrib import admin
-from .models import Sistemas, SistemaPermiso
+from .models import Sistemas, SistemaPermisoGrupo
 
 class SistemaPermisoInline(admin.TabularInline):
-    model = SistemaPermiso
+    model = SistemaPermisoGrupo 
 
 class SistemaAdmin(admin.ModelAdmin):
     inlines = [SistemaPermisoInline]

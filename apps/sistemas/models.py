@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import Permission
+from django.contrib.auth.models import Permission, Group
 from django.core.exceptions import ObjectDoesNotExist
 
 
@@ -22,22 +22,26 @@ class Sistemas(models.Model):
         verbose_name_plural = 'Sistemas'
 
 
-class SistemaPermiso(models.Model):
+class SistemaPermisoGrupo(models.Model):
     sistema = models.OneToOneField(Sistemas, on_delete=models.CASCADE)
     permiso = models.ForeignKey(Permission, on_delete=models.SET_NULL, null=True, blank=True)
+    grupo = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True, blank=True)
+
 
     class Meta:
         # Personaliza cómo se mostrará el nombre del modelo en la interfaz de administración de Django
-        verbose_name = 'Permisos Sistemas'
-        verbose_name_plural = 'Permisos Sistemas'
-        unique_together = ('sistema', 'permiso')
+        verbose_name = 'Sistemas Permisos Grupos'
+        verbose_name_plural = 'Sistemas Permisos Grupos'
+        unique_together = ('sistema', 'permiso', 'grupo')
 
     def __str__(self):
         try:
             permiso_nombre = self.permiso.name
+            grupo_nombre = self.permiso.name
         except ObjectDoesNotExist:
             permiso_nombre = 'Permiso no encontrado'
+            grupo_nombre = 'Grupo no encontrado'
 
-        return f'{self.sistema} - {permiso_nombre}'  
+        return f'{self.sistema} - {permiso_nombre} - {grupo_nombre}'  
 
     

@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Detected Faces</title>
+</head>
+<body>
+    <h2>Detected Faces in Image</h2>
+    {% if image %}
+        <img src="data:image/jpg;base64,{{ image|base64 }}" alt="Detected Faces">
+    {% endif %}
+</body>
+</html>

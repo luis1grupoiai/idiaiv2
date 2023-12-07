@@ -19,6 +19,7 @@ LOCAL_APPS = [
     'apps.mycore',
     'apps.areas',
     'apps.rfacial',
+    'apps.componentes',
     'apps.ActiveDirectory'
 ]
 
@@ -39,6 +40,8 @@ BASE_MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_components.middleware.ComponentDependencyMiddleware',
+
 ]
 
 LOCAL_MIDDLEWARE =[
@@ -60,6 +63,7 @@ TEMPLATES = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [os.path.join(BASE_DIR,),
                  os.path.join(BASE_DIR, 'apps/ActiveDirectory/templates'),
+                 os.path.join(BASE_DIR, 'components', 'templates'),
                  
                  ],
         # 'APP_DIRS': True,
@@ -83,6 +87,10 @@ TEMPLATES = [
         },
     },
 ]
+
+COMPONENTS = { 'RENDER_DEPENDENCIES': True }
+
+
 
 WSGI_APPLICATION = 'config.wsgi.application'
 

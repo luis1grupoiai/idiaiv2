@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 # from django.http import HttpResponse
 from django.http.response import JsonResponse
 from apps.areas.models import *
+from apps.sistemas.models import *
 from passlib.hash import django_pbkdf2_sha256 as handler
 
 from django.shortcuts import render
@@ -55,12 +56,12 @@ class CAutenticacion(APIView):
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'X-CSRFToken': openapi.Schema(type=openapi.TYPE_STRING, description='Token de autenticación.'),
+                'token': openapi.Schema(type=openapi.TYPE_STRING, description='Token de autenticación.'),
                 'user': openapi.Schema(type=openapi.TYPE_STRING, description='Nombre de usuario.'),
                 'password': openapi.Schema(type=openapi.TYPE_STRING, description='contraseña en base64.'),
                 'idSistema': openapi.Schema(type=openapi.TYPE_INTEGER, description='Id del sistema donde el usuario esta iniciando sesión.'),
             },
-            required=['X-CSRFToken', 'user', 'password','idSistema']
+            required=['token', 'user', 'password','idSistema']
         ),
         responses={200: 'Usuario loggeado exitosamente'},
     )
@@ -81,10 +82,11 @@ class CAutenticacion(APIView):
             
             #Declaración y asignación de variables
             bValido = True
-            dCamposJson = ['X-CSRFToken', 'user', 'password','idSistema']
+            dCamposJson = ['token', 'user', 'password','idSistema']
             sTexto = ""
             pwdD64 = ""
             dUsuario = ""
+            dSistema = ""
             password = ""
             sistema = 0
             #total de items permitidos en la API, definidos en la diccionario dCamposJson
@@ -119,9 +121,12 @@ class CAutenticacion(APIView):
             if bValido:
 
                 #2. Compara el token obtenido del json contra el secretKey de la aplicación.
-                if(jd['X-CSRFToken'] == os.environ.get('SECRET_KEY')):
+                if(jd['token'] == os.environ.get('SECRET_KEY')):
 
-                    sistema = jd['idSistema']
+                    dSistema = list(Sistemas.objects.filter(id=jd['idSistema']).values())
+                    if len(dSistema)>0:
+                        sistema = dSistema[0]['id']
+                    
                     if sistema>0:
                         #3. Decodifica el password en base64
                         pwdD64 = base64.b64decode(jd['password'])
@@ -138,7 +143,7 @@ class CAutenticacion(APIView):
                         else:
                             datos = {'message': 'Dato Invalidos', 'error':'¡Ups! la contraseña es incorrecta.'}
                     else:
-                        datos = {'message': 'Dato Invalidos', 'error':'El Sistema es 0, debe pasar un id de sistema valido'}                   
+                        datos = {'message': 'Dato Invalidos', 'error':'Id de sistema invalido'}                   
                 else:
                     datos = {'message': 'Dato invalido.', 'error': 'El Token es incorrecto.'}
             else:

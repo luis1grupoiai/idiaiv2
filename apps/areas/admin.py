@@ -18,7 +18,7 @@ class CustomUserAdmin(UserAdmin):
     inlines = (UserProfileInline, )
 
     # Especifica los campos adicionales que se mostrarán en la lista de usuarios en el administrador
-    list_display = ('first_name', 'last_name', 'get_coordinacion', 'get_gerencia', 'get_direccion', 'is_staff')
+    list_display = ('username','first_name', 'last_name', 'get_coordinacion', 'get_gerencia', 'get_direccion', 'is_staff')
 
     # Define una función para obtener la coordinación del usuario
     def get_coordinacion(self, obj):

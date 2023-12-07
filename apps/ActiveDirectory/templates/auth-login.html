@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
     <meta charset="UTF-8">
@@ -10,13 +10,14 @@
     
     <link rel="shortcut icon" href="/static/icon/python.ico" type="image/x-icon">
     <link rel="icon" href="/static/icon/icono.ico" type="image/x-icon">
-  <link rel="stylesheet" href="./assets/compiled/css/app.css">
-  <link rel="stylesheet" href="./assets/compiled/css/app-dark.css">
-  <link rel="stylesheet" href="./assets/compiled/css/auth.css">
+  <link rel="stylesheet" href="/static/assets/compiled/css/app.css">
+  <link rel="stylesheet" href="/static/assets/compiled/css/app-dark.css">
+  <link rel="stylesheet" href="/static/assets/compiled/css/auth.css">
+
 </head>
 
 <body>
-    <script src="assets/static/js/initTheme.js"></script>
+    <script src="/static/assets/static/js/initTheme.js"></script>
     <div id="auth">
         
 <div class="row h-100">
@@ -25,18 +26,18 @@
             <div class="auth-logo">
                 <a href="#"><img src="/static/img/logo2.png" alt="Logo"></a>
             </div>
-            <h1 class="auth-title">Iniciar Sesión.</h1>
-            <p class="auth-subtitle mb-5">Log in with your data that you entered during registration.</p>
+            <h1 class="auth-title">Bienvenido</h1>
+            <p class="auth-subtitle mb-5">Iniciar sesión</p>
 
-            <form action="index.html">
+            <form action="{% url 'usuarios' %}">
                 <div class="form-group position-relative has-icon-left mb-4">
-                    <input type="text" class="form-control form-control-xl" placeholder="Username">
+                    <input type="text" class="form-control form-control-xl" placeholder="Usuario">
                     <div class="form-control-icon">
                         <i class="bi bi-person"></i>
                     </div>
                 </div>
                 <div class="form-group position-relative has-icon-left mb-4">
-                    <input type="password" class="form-control form-control-xl" placeholder="Password">
+                    <input type="password" class="form-control form-control-xl" placeholder="Contraseña">
                     <div class="form-control-icon">
                         <i class="bi bi-shield-lock"></i>
                     </div>
@@ -44,22 +45,22 @@
                 <div class="form-check form-check-lg d-flex align-items-end">
                     <input class="form-check-input me-2" type="checkbox" value="" id="flexCheckDefault">
                     <label class="form-check-label text-gray-600" for="flexCheckDefault">
-                        Keep me logged in
+                       Mantenme conectado 
                     </label>
                 </div>
-                <button class="btn btn-primary btn-block btn-lg shadow-lg mt-5">Log in</button>
+                <button class="btn btn-success btn-block btn-lg shadow-lg mt-5" >Iniciar</button>
             </form>
             <div class="text-center mt-5 text-lg fs-4">
-                <p class="text-gray-600">Don't have an account? <a href="auth-register.html" class="font-bold">Sign
-                        up</a>.</p>
-                <p><a class="font-bold" href="auth-forgot-password.html">Forgot password?</a>.</p>
+                <p class="text-gray-600">¿No tienes una cuenta? <a href="auth-register.html" class="font-bold">Solicitar</a>.</p>
+                <p><a class="font-bold" href="auth-forgot-password.html">¿Olvidaste tu contraseña?</a>.</p>
             </div>
         </div>
     </div>
     <div class="col-lg-7 d-none d-lg-block">
         <div id="auth-right">
-
+            
         </div>
+        
     </div>
 </div>
 

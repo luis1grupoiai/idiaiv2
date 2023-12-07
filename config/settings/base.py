@@ -25,7 +25,9 @@ LOCAL_APPS = [
 
 THIRD_APPS = [
     "django_components",
-    "django_components.safer_staticfiles"
+    "django_components.safer_staticfiles",
+    'drf_yasg',
+    'rest_framework',
 ]
 
 INSTALLED_APPS = BASE_APPS + LOCAL_APPS + THIRD_APPS

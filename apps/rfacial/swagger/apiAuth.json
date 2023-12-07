@@ -1,0 +1,122 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "API Autenticación ID IAI.",
+    "description": "Esta API se encarga de validar las credenciales de los usuarios de Grupo IAI, para devolver los permisos correspondiente sobre el sistema donde dicho usuario haya iniciado sesión.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8000/api/auth/"
+    }
+  ],
+  "tags": [
+    {
+      "name": "auth",
+      "description": "Este endpoint maneja la consulta de credenciales de los usuarios."
+    }
+  ],
+  "paths": {
+    "/auth": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Validación de usuarios",
+        "description": "Metodo que se encarga de recibir el JSON con los datos para validar el usuario.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BodyAuthPost"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "(OK) El usuario fue autenticado correctamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExitoUserAuth"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "responses": {
+      "Unauthorized": {
+        "description": "(Unauthorized) no hay autorización para llamar al servicio"
+      },
+      "NotFound": {
+        "description": "(Not Found) no se encontro la información"
+      },
+      "BadRequest": {
+        "description": "(Bad Request) Los datos enviados son incorrectos o hay datos obligatorios no enviados"
+      },
+      "ServerError": {
+        "description": "Error en el servidor"
+      }
+    },
+    "schemas": {
+      "BodyAuthPost": {
+        "type": "object",
+        "properties": {
+          "keyToken": {
+            "type": "string",
+            "description": "Token de autenticación"
+          },
+          "id_sistema": {
+            "type": "integer",
+            "description": "Identificador del sistema donde esta iniciando sesión el usuario."
+          },
+          "userName": {
+            "type": "string",
+            "description": "el nombre del usuario que esta iniciando sesión."
+          },
+          "password": {
+            "type": "string",
+            "description": "contraseña del usuario en enconde64"
+          }
+        }
+      },
+      "ExitoUserAuth": {
+        "type": "object",
+        "properties": {
+          "respuesta": {
+            "type": "integer",
+            "enum": [
+              1
+            ],
+            "description": "Bandera que nos indica si la llamada al servicio fue exitosa."
+          },
+          "permisos": {
+            "type": "integer",
+            "enum": [
+              2
+            ],
+            "description": "JSON de permisos correspondientes al cliente en ese sistema"
+          }
+        }
+      }
+    }
+  }
+}

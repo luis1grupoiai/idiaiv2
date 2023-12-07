@@ -1,7 +1,10 @@
 from django.shortcuts import render , redirect
 from django.conf import settings
-from ldap3 import Server, Connection, ALL_ATTRIBUTES
+from ldap3 import Server, Connection, ALL_ATTRIBUTES , MODIFY_REPLACE
 from django.contrib import messages
+from django.conf import settings
+import random
+
 # Create your views here.
 
 
@@ -13,11 +16,12 @@ def consultar_usuarios(request):
         with Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True) as connection:
             search_base = 'DC=iai,DC=com,DC=mx'
             search_filter = '(objectClass=user)'
-            attributes = ['cn', 'sn', 'givenName', 'userPrincipalName', 'mail', 'displayName', 'sAMAccountName', 'distinguishedName', 'physicalDeliveryOfficeName', 'description','department','title']
-
+            attributes = ['cn', 'sn', 'givenName', 'userPrincipalName', 'mail', 'displayName', 'sAMAccountName', 'distinguishedName', 'physicalDeliveryOfficeName', 'description','department','title','userAccountControl']
+            
             connection.search(search_base, search_filter, attributes=attributes)
             for entry in connection.entries:
                 domain_name = '.'.join(part.replace('DC=', '') for part in entry.distinguishedName.value.split(',') if part.startswith('DC='))
+                useraccountcontrol_str = entry.userAccountControl.value if 'userAccountControl' in entry else '0'
                 usuario = {
                     'nombre': entry.cn.value if 'cn' in entry else None,
                     'apellidos': entry.sn.value if 'sn' in entry else None,
@@ -31,6 +35,9 @@ def consultar_usuarios(request):
                     'descripcion': entry.description.value if 'description' in entry else None,
                     'departamento': entry.department.value if 'department' in entry else None,  # Nuevo atributo
                     'puesto': entry.title.value if 'title' in entry else None,  # Nuevo atributo
+                    'estatus' :random.randint(0, 1),
+                    'userAccountControl': entry.userAccountControl.value if 'userAccountControl' in entry else None,
+                    'esta_deshabilitado': is_account_disabled(useraccountcontrol_str),
         
                 }
                 #print(entry.cn.value)
@@ -108,3 +115,107 @@ def agregar_usuario(request):
     }          
     
     return render(request, 'AgregarUsuario.html',context)
+
+
+def editar_usuario(request):
+    print("Vista editar Usuario ")
+    if request.method == 'POST':
+         # Captura los datos enviados desde el formulario
+        nombre_usuario = request.POST.get('nombre_usuario')
+        nombre_pila = request.POST.get('nombre_pila')
+        apellido = request.POST.get('apellido')
+        nombre_completo = request.POST.get('nombre_completo')
+        email = request.POST.get('email')
+        departamento = request.POST.get('departamento')
+        puesto = request.POST.get('puesto')
+        nombre_inicio_sesion = request.POST.get('nombre_inicio_sesion')
+        # ... otros campos ....
+        print(nombre_usuario)
+        print(nombre_pila)
+        # Conectar a Active Directory
+        try:
+            server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
+            with Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True) as conn:
+                user_dn = f"CN={nombre_usuario},OU=iaiUsuario,OU=RedGrupoIAI,DC=iai,DC=com,DC=mx"
+                
+                # Actualizar los atributos
+                conn.modify(user_dn, {
+                    'givenName': [(MODIFY_REPLACE, [nombre_pila])],
+                    'sn': [(MODIFY_REPLACE, [apellido])],
+                    'displayName': [(MODIFY_REPLACE, [nombre_completo])],
+                    'mail': [(MODIFY_REPLACE, [email])],
+                    'department': [(MODIFY_REPLACE, [departamento])],
+                    'title': [(MODIFY_REPLACE, [puesto])],
+                    'sAMAccountName': [(MODIFY_REPLACE, [nombre_inicio_sesion])],
+                    # ... otros atributos ...
+                })
+
+                # Verificar resultado de la modificación
+                if conn.result['result'] == 0:  # éxito
+                    messages.success(request, 'Usuario editado correctamente.')
+                    print(request, 'Usuario editado correctamente.')
+                else:
+                    messages.error(request, f"Error al editar usuario: {conn.result['description']}")
+                    print(request, f"Error al editar usuario: {conn.result['description']}")
+        except Exception as e:
+            messages.error(request, f"Error al conectar con AD: {str(e)}")
+            print(request, f"Error al conectar con AD: {str(e)}")
+    # Redireccionar de vuelta a la lista de usuarios
+    return redirect('usuarios')
+
+def is_account_disabled(useraccountcontrol_str):
+    DISABLED_ACCOUNT_BIT = 0x2
+    try:
+        # Convertir el valor a entero
+        useraccountcontrol_value = int(useraccountcontrol_str)
+        # Verificar si el bit de cuenta deshabilitada está activado
+        return (useraccountcontrol_value & DISABLED_ACCOUNT_BIT) != 0
+    except ValueError:
+        # En caso de que el valor no sea un número, asumir que la cuenta no está deshabilitada
+        return False
+    
+def activar_usuario(request, nombre_usuario):
+    print("entro a activar el usuario :"+str(nombre_usuario))
+    try:
+        server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
+        with Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True) as conn:
+            user_dn = f"CN={nombre_usuario},OU=iaiUsuario,OU=RedGrupoIAI,DC=iai,DC=com,DC=mx"
+            # Establecer userAccountControl a 512 para activar la cuenta
+            conn.modify(user_dn, {'userAccountControl': [(MODIFY_REPLACE, [544])]})
+            if conn.result['result'] == 0:
+                messages.success(request, 'Usuario activado correctamente.')
+                print(request, 'Usuario activado correctamente.')
+                return redirect('usuarios')
+            else:
+                messages.error(request, f"Error al activar usuario: {conn.result['description']}")
+                print(request, f"Error al activar usuario: {conn.result['description']}")
+    except Exception as e:
+        messages.error(request, f"Error al conectar con AD: {str(e)}")
+        print(request, f"Error al conectar con AD: {str(e)}")
+
+    
+    
+    
+
+def desactivar_usuario(request, nombre_usuario):
+    print("entro a activar el usuario :"+str(nombre_usuario))
+    try:
+        server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
+        with Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True) as conn:
+            user_dn = f"CN={nombre_usuario},OU=iaiUsuario,OU=RedGrupoIAI,DC=iai,DC=com,DC=mx"
+            # Establecer userAccountControl a 66050 para desactivar la cuenta
+            conn.modify(user_dn, {'userAccountControl': [(MODIFY_REPLACE, [66050])]})
+            if conn.result['result'] == 0:
+                messages.success(request, 'Usuario desactivado correctamente.')
+                print(request, 'Usuario desactivado correctamente.')
+                return redirect('usuarios')
+            else:
+                messages.error(request, f"Error al desactivar usuario: {conn.result['description']}")
+                print(request, f"Error al desactivar usuario: {conn.result['description']}")
+    except Exception as e:
+        messages.error(request, f"Error al conectar con AD: {str(e)}")
+        print(request, f"Error al conectar con AD: {str(e)}")
+
+
+def login_auth(request):
+    return render(request, 'auth-login.html')    

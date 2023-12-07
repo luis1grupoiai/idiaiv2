@@ -28,12 +28,12 @@ Usuarios de Activate Directory
     <table id="myTable" class="table table-hover table-striped"> 
    <thead>
                 <tr>
-                    <th>Acción</th>
-                    <th>Nombre de Usuario </th>
-                    <th>Nombre Completo </th>
-                    <th>Correo Electrónico</th>
-                    <th>Direccion</th>
-                    <th>Estatus </th>
+                    <th class="text-center">Acción</th>
+                    <th class="text-center">Nombre de Usuario </th>
+                    <th class="text-center">Nombre Completo </th>
+                    <th class="text-center">Correo Electrónico</th>
+                    <th class="text-center">Direccion</th>
+                    <th class="text-center">Baja </th>
                 </tr>
     </thead>
     <tbody>
@@ -50,11 +50,14 @@ Usuarios de Activate Directory
             <span class="text-white"><i class="bi bi-info-circle"></i></span>
             </button>
             <button type="button" class="btn icon btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editUserModal" 
+            data-nombre="{{ user.nombre }}"
             data-nombrePila ="{{ user.nombre_de_pila}}"
             data-apellidos ="{{ user.apellidos}}"
             data-puesto ="{{ user.puesto}}"
             data-nombreSesion ="{{ user.nombre_inicio_sesion}}"
-            data-nombreUsuarioPrincipal ="{{ user.usuario_principal }}"
+            data-nombreCompleto ="{{ user.nombre_completo }}"
+            data-email ="{{ user.correo }}"
+            data-deparamento="{{ user.departamento}}"
             onclick="editUser(this);">
             <i class="bi bi-pencil"></i>
             </button>
@@ -65,12 +68,13 @@ Usuarios de Activate Directory
         <td>{{ user.correo }}</td>
         <td>{{ user.departamento}}</td>
         <td class = "text-center">
-            {% if user.estatus == 1 %}
-            <button type="button" class="btn icon btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#userModal">
+            {{ user.userAccountControl}}
+            {% if not user.esta_deshabilitado %}
+            <button type="button" class="btn icon btn-danger btn-sm" onclick="desactivarUsuario('{{ user.nombre }}')">
                 Desactivar
             </button>
         {% else %}
-            <button type="button" class="btn icon btn-success " data-bs-toggle="modal" data-bs-target="#userModal">
+            <button type="button" class="btn icon btn-success " onclick="activarUsuario('{{ user.nombre }}')">
                 Activar
             </button>
         {% endif %}
@@ -121,11 +125,7 @@ Usuarios de Activate Directory
                                             <!-- Agrega más campos según sea necesario -->
                                         </div>
                                         <div class="modal-footer">
-                                            <button type="button" class="btn btn-light-secondary"
-                                                data-bs-dismiss="modal">
-                                                <i class="bx bx-x d-block d-sm-none"></i>
-                                                <span class="d-none d-sm-block">Cerrar</span>
-                                            </button>
+                                           
                                             <button type="button" class="btn btn-primary ms-1" data-bs-dismiss="modal">
                                                 <i class="bx bx-check d-block d-sm-none"></i>
                                                 <span class="d-none d-sm-block">Aceptar</span>
@@ -147,29 +147,32 @@ Usuarios de Activate Directory
                                             <i data-feather="x"></i>
                                         </button>
                                     </div>
-                                    <form action="#">
+                                    <form action="{% url 'editar_usuario' %}" method="post">
+                                        {% csrf_token %}
                                         <div class="modal-body">
-                                            {% csrf_token %}
+                                           
 
                                             <div class="row align-content-center " >
                                                 
                                             <div class="col-6">
                                                 <div class="mb-2">
-                                                    <label for="nombre_usuario" class="form-label">Nombre de Usuario:</label>
-                                                    <input type="text" class="form-control" name="nombre_usuario" id="nombre_usuario" required>
-                                                </div>
-                                            </div>
-                                            <div class="col-6">
-                                                <div class="mb-2">
                                                     <label for="nombre_inicio_sesion" class="form-label">Nombre de inicio de sesion de usuario:</label>
                                                     <input type="text" class="form-control" name="nombre_inicio_sesion" id="nombre_inicio_sesion" required>
                                                 </div>
+                                                <div class="mb-2">
+                                                 <!--  <label for="nombre_usuario" class="form-label">Nombre de Usuario:</label>--> 
+                                                    <input type="hidden" class="form-control" name="nombre_usuario" id="nombre_usuario" required >
+                                                    
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                
                                             </div>    
                             
                                             <div class="col-6">
                                             <div class="mb-2">
                                                 <label for="nombre_pila" class="form-label">Nombre de pila:</label>
-                                                <input type="text" class="form-control" name="nombre_pila" id="nombre_pila" required>
+                                                <input type="text" class="form-control" name="nombre_pila" id="nombre_pila" required >
                                             </div>
                                             </div>
                                             <div class="col-6">
@@ -183,23 +186,21 @@ Usuarios de Activate Directory
                                                 <input type="text" class="form-control" name="nombre_completo" id="nombre_completo" required>
                                             </div>
                                             <div class="col-6">
-                                                <div class="mb-2">
-                                                    <label for="departamento" class="form-label">Departamento:</label>
+                                                <div class="mb-2">Dirección:</label>
                                                     <select class="form-control select2" name="departamento" id="departamento" required>
-                                    
-                                                        <option value="administracion">Administración</option>
-                                                        <option value="calidad_ambiental_seguridad_salud">Calidad, Ambiental, Seguridad y Salud</option>
-                                                        <option value="presidencia_grupo_iai">Presidencia Grupo IAI</option>
-                                                        <option value="proyectos_especiales">Proyectos Especiales</option>
-                                                        <option value="direccion_proyectos_convencionales">Dirección de Proyectos Convencionales</option>
-                                                        <option value="ingenieria">Ingeniería</option>
-                                                        <option value="tecnatom">Tecnatom</option>
+        
+                                                        <option value="None">Seleccione una Opción </option>
+                                                        <option value="Administración">Administración</option>
+                                                        <option value="Calidad, Ambiental, Seguridad y Salud">Calidad, Ambiental, Seguridad y Salud</option>
+                                                        <option value="Proyectos Especiales">Proyectos Especiales</option>
+                                                        <option value="Ingeniería">Ingeniería</option>
+                                                        
                                                     </select>
                                                 </div>
                                             </div>
                                             <div class="col-6">
                                             <div class="mb-2">
-                                                <label for="puesto" class="form-label">puesto :</label>
+                                                <label for="puesto" class="form-label">Puesto :</label>
                                                 <input type="text" class="form-control" name="puesto" id="puesto" required>
                                             </div>
                                             </div>
@@ -223,11 +224,7 @@ Usuarios de Activate Directory
                                                 <i class="bx bx-x d-block d-sm-none"></i>
                                                 <span class="d-none d-sm-block">Cerrar</span>
                                             </button>
-                                            <button type="button" class="btn btn-primary ms-1"
-                                                data-bs-dismiss="modal">
-                                                <i class="bx bx-check d-block d-sm-none"></i>
-                                                <span class="d-none d-sm-block">Guardar</span>
-                                            </button>
+                                            <button type="submit" class="btn btn-primary">Guardar</button>
                                         </div>
                                     </form>
                                 </div>
@@ -237,7 +234,7 @@ Usuarios de Activate Directory
                             {% endblock %}
 
     {% block script %} 
-    <script src="/static/assets/compiled/js/app.js"></script>
+    
     <script src="/static/assets/extensions/jquery/jquery.min.js"></script>
     <script src="/static/assets/extensions/datatables.net/js/jquery.dataTables.min.js"></script>
     <script src="/static/assets/extensions/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
@@ -245,7 +242,7 @@ Usuarios de Activate Directory
     <script>
         $(document).ready( function () {
             $('#myTable').DataTable({
-                "pageLength": 5,
+                "pageLength": 10,
                 "language": {
                     "lengthMenu": "Mostrar _MENU_ registros por página",
                     "zeroRecords": "No se encontraron resultados",
@@ -296,19 +293,28 @@ Usuarios de Activate Directory
                 modal.show();
             }
             function editUser(button) {
-                // Utiliza data attributes para obtener la información
-                var puesto = button.getAttribute('data-puesto');
-                var nombreSesion = button.getAttribute('data-nombreSesion');
-                var nombreUsuarioPrincipal = button.getAttribute('data-nombreUsuarioPrincipal');
-                var nombrePila = button.getAttribute('data-nombrePila');
-                var apellidos = button.getAttribute('data-apellidos');
+                  // Utiliza data attributes para obtener la información
+                    var nombre = button.getAttribute('data-nombre');
+                    var nombrePila = button.getAttribute('data-nombrePila');
+                    var apellidos = button.getAttribute('data-apellidos');
+                    var puesto = button.getAttribute('data-puesto');
+                    var nombreSesion = button.getAttribute('data-nombreSesion');
+                    var nombreCompleto = button.getAttribute('data-nombreCompleto');
+                    var email = button.getAttribute('data-email');
+                    var departamento = button.getAttribute('data-deparamento');
 
-
-
-        
-                // Abre el modal
-                var modal = new bootstrap.Modal(document.getElementById('editUserModal'));
-                modal.show();
+                    // Rellena los campos del formulario en el modal
+                    document.getElementById('nombre_usuario').value = nombre ;
+                    document.getElementById('nombre_pila').value = nombrePila;
+                    document.getElementById('apellido').value = apellidos;
+                    document.getElementById('puesto').value = puesto;
+                    document.getElementById('nombre_inicio_sesion').value = nombreSesion;
+                    document.getElementById('nombre_completo').value = nombreCompleto ;
+                    document.getElementById('email').value = email ;
+                    document.getElementById('departamento').value = departamento ;
+                    // Abre el modal
+                    var modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+                    modal.show();
             }
               
             $('#userModal').on('hidden.bs.modal', function () {
@@ -330,5 +336,48 @@ Usuarios de Activate Directory
                });
             });
           
+
+
+            function activarUsuario(nombreUsuario) {
+                $.ajax({
+                    url: 'activar_usuario/' + nombreUsuario + '/',
+                    method: 'POST',
+                    data: {
+                        'csrfmiddlewaretoken': getCSRFToken() // Asegúrate de obtener el token CSRF
+                    },
+                    success: function(response) {
+                        alert("Usuario activado correctamente.");
+                        location.reload(); // Recarga la página
+                        // Aquí puedes agregar código para actualizar la UI según sea necesario
+                    },
+                    error: function(error) {
+                        alert("Error al activar el usuario.");
+                        // Manejo de errores
+                    }
+                });
+            }
+            
+            function desactivarUsuario(nombreUsuario) {
+                $.ajax({
+                    url: 'desactivar_usuario/' + nombreUsuario + '/',
+                    method: 'POST',
+                    data: {
+                        'csrfmiddlewaretoken': getCSRFToken() // Asegúrate de obtener el token CSRF
+                    },
+                    success: function(response) {
+                        alert("Usuario desactivado correctamente.");
+                        location.reload(); // Recarga la página
+                        // Aquí puedes agregar código para actualizar la UI según sea necesario
+                    },
+                    error: function(error) {
+                        alert("Error al desactivar el usuario.");
+                        // Manejo de errores
+                    }
+                });
+            }
+            
+            function getCSRFToken() {
+                return document.querySelector('[name=csrfmiddlewaretoken]').value;
+            }
         </script>
     {% endblock%}

@@ -5,9 +5,5 @@ __pycache__/
 .venv/
 .vscode/
 node_modules/
-<<<<<<< HEAD
 db.sqlite3
 *.vsidx
-=======
-*.sqlite3
->>>>>>> DevEloy

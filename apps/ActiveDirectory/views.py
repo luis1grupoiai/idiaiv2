@@ -216,4 +216,6 @@ def desactivar_usuario(request, nombre_usuario):
         messages.error(request, f"Error al conectar con AD: {str(e)}")
         print(request, f"Error al conectar con AD: {str(e)}")
 
-    
+
+def login_auth(request):
+    return render(request, 'auth-login.html')    

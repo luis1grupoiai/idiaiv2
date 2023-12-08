@@ -23,7 +23,7 @@ class Sistemas(models.Model):
 
 
 class SistemaPermisoGrupo(models.Model):
-    sistema = models.OneToOneField(Sistemas, on_delete=models.CASCADE)
+    sistema = models.ForeignKey(Sistemas, on_delete=models.CASCADE)
     permiso = models.ForeignKey(Permission, on_delete=models.SET_NULL, null=True, blank=True)
     grupo = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True, blank=True)
 

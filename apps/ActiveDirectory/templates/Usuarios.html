@@ -23,74 +23,134 @@ Usuarios de Activate Directory
 {% endblock EncabezadoCard %}
 
 {% block contenido %}
-<div class="table-responsive ">
 
-    <table id="myTable" class="table table-hover table-striped"> 
-   <thead>
-                <tr>
-                    <th class="text-center">Acción</th>
-                    <th class="text-center">Nombre de Usuario </th>
-                    <th class="text-center">Nombre Completo </th>
-                    <th class="text-center">Correo Electrónico</th>
-                    <th class="text-center">Direccion</th>
-                    <th class="text-center">Baja </th>
-                </tr>
-    </thead>
-    <tbody>
-     {% for user in users %}
-     <tr>
-        <td class="d-flex">
-            <button type="button" class="btn icon btn-info btn-sm me-1" data-bs-toggle="modal" data-bs-target="#userModal"
-            data-nombrePila ="{{ user.nombre_de_pila}}"
-            data-apellidos ="{{ user.apellidos}}"
-            data-puesto ="{{ user.puesto}}"
-            data-nombreSesion ="{{ user.nombre_inicio_sesion}}"
-            data-nombreUsuarioPrincipal ="{{ user.usuario_principal }}"
-            onclick="showUserDetails(this);">
-            <span class="text-white"><i class="bi bi-info-circle"></i></span>
-            </button>
-            <button type="button" class="btn icon btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editUserModal" 
-            data-nombre="{{ user.nombre }}"
-            data-nombrePila ="{{ user.nombre_de_pila}}"
-            data-apellidos ="{{ user.apellidos}}"
-            data-puesto ="{{ user.puesto}}"
-            data-nombreSesion ="{{ user.nombre_inicio_sesion}}"
-            data-nombreCompleto ="{{ user.nombre_completo }}"
-            data-email ="{{ user.correo }}"
-            data-deparamento="{{ user.departamento}}"
-            onclick="editUser(this);">
-            <i class="bi bi-pencil"></i>
-            </button>
-           
-        </td>
-        <td>{{ user.nombre }}</td>
-        <td>{{ user.nombre_completo}}</td>
-        <td>{{ user.correo }}</td>
-        <td>{{ user.departamento}}</td>
-        <td class = "text-center">
-            {{ user.userAccountControl}}
-            {% if not user.esta_deshabilitado %}
-            <button type="button" class="btn icon btn-danger btn-sm" onclick="desactivarUsuario('{{ user.nombre }}')">
-                Desactivar
-            </button>
-        {% else %}
-            <button type="button" class="btn icon btn-success " onclick="activarUsuario('{{ user.nombre }}')">
-                Activar
-            </button>
-        {% endif %}
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link active" id="home-tab" data-bs-toggle="tab" href="#home" role="tab"
+                aria-controls="home" aria-selected="true">Administración</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="profile-tab" data-bs-toggle="tab" href="#profile" role="tab"
+                aria-controls="profile" aria-selected="false">Ingeniería</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="contact-tab" data-bs-toggle="tab" href="#contact" role="tab"
+                aria-controls="contact" aria-selected="false">DCASS</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="pyes-tab" data-bs-toggle="tab" href="#pyes" role="tab"
+                aria-controls="pyes" aria-selected="false">Proyectos Especiales</a>
+        </li>
+    </ul>
+    <div class="tab-content" id="myTabContent">
+        <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+            <p class='my-2'>
+                
+                <div class="table-responsive ">
 
-        </td>
-        
-    </tr>
-                {% endfor %}
-            </tbody>
-</table> 
+                <table id="myTable" class="table table-hover table-striped"> 
+                    <thead>
+                                    <tr>
+                                        <th class="text-center">Acción</th>
+                                        <th class="text-center">Nombre de Usuario </th>
+                                        <th class="text-center">Nombre Completo </th>
+                                        <th class="text-center">Correo Electrónico</th>
+                                        <th class="text-center">Direccion</th>
+                                        <th class="text-center">Baja </th>
+                                    </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td class="d-flex">
+                                <button type="button" class="btn icon btn-info btn-sm me-1" data-bs-toggle="modal" data-bs-target="#userModal"
+                                data-nombrePila ="{{ user.nombre_de_pila}}"
+                                data-apellidos ="{{ user.apellidos}}"
+                                data-puesto ="{{ user.puesto}}"
+                                data-nombreSesion ="{{ user.nombre_inicio_sesion}}"
+                                data-nombreUsuarioPrincipal ="{{ user.usuario_principal }}"
+                                onclick="showUserDetails(this);">
+                                <span class="text-white"><i class="bi bi-info-circle"></i></span>
+                                </button>
+                                <button type="button" class="btn icon btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editUserModal" 
+                                data-nombre="{{ user.nombre }}"
+                                data-nombrePila ="{{ user.nombre_de_pila}}"
+                                data-apellidos ="{{ user.apellidos}}"
+                                data-puesto ="{{ user.puesto}}"
+                                data-nombreSesion ="{{ user.nombre_inicio_sesion}}"
+                                data-nombreCompleto ="{{ user.nombre_completo }}"
+                                data-email ="{{ user.correo }}"
+                                data-deparamento="{{ user.departamento}}"
+                                onclick="editUser(this);">
+                                <i class="bi bi-pencil"></i>
+                                </button>
+                            
+                            </td>
+                            <td>{{ user.nombre }}</td>
+                            <td>{{ user.nombre_completo}}</td>
+                            <td>{{ user.correo }}</td>
+                            <td>{{ user.departamento}}</td>
+                            <td class = "text-center">
+                            
+                                {% if not user.esta_deshabilitado %}
+                                <button type="button" class="btn icon btn-danger btn-sm" onclick="desactivarUsuario('{{ user.nombre }}',{{ user.userAccountControl}})">
+                                    Desactivar
+                                </button>
+                            {% else %}
+                                <button type="button" class="btn icon btn-success " onclick="activarUsuario('{{ user.nombre }}',{{ user.userAccountControl}})">
+                                    Activar
+                                </button>
+                            {% endif %}
+                    
+                            </td>
+                            
+                        </tr>
+                                    {% endfor %}
+                     </tbody>
+                </table> 
+                
+                     
+                
+                
+                
+                    </div>
 
-     
 
 
-
+            </p>
+        </div>
+        <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+            Integer interdum diam eleifend metus lacinia, quis gravida eros mollis. Fusce non sapien
+            sit amet magna dapibus
+            ultrices. Morbi tincidunt magna ex, eget faucibus sapien bibendum non. Duis a mauris ex.
+            Ut finibus risus sed massa
+            mattis porta. Aliquam sagittis massa et purus efficitur ultricies. Integer pretium dolor
+            at sapien laoreet ultricies.
+            Fusce congue et lorem id convallis. Nulla volutpat tellus nec molestie finibus. In nec
+            odio tincidunt eros finibus
+            ullamcorper. Ut sodales, dui nec posuere finibus, nisl sem aliquam metus, eu accumsan
+            lacus felis at odio. Sed lacus
+            quam, convallis quis condimentum ut, accumsan congue massa. Pellentesque et quam vel
+            massa pretium ullamcorper vitae eu
+            tortor.
+        </div>
+        <div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">
+            <p class="mt-2">Duis ultrices purus non eros fermentum hendrerit. Aenean ornare interdum
+                viverra. Sed ut odio velit. Aenean eu diam
+                dictum nibh rhoncus mattis quis ac risus. Vivamus eu congue ipsum. Maecenas id
+                sollicitudin ex. Cras in ex vestibulum,
+                posuere orci at, sollicitudin purus. Morbi mollis elementum enim, in cursus sem
+                placerat ut.</p>
+        </div>
+        <div class="tab-pane fade" id="pyes" role="tabpanel" aria-labelledby="contact-tab">
+            <p class="mt-2"></p>
+        </div>
     </div>
+
+
+
+
+
 
 
     <div class="modal fade text-left" id="userModal" tabindex="-1" role="dialog"  aria-labelledby="myModalLabel4" data-bs-backdrop="false" aria-hidden="true">
@@ -244,10 +304,10 @@ Usuarios de Activate Directory
             $('#myTable').DataTable({
                 "pageLength": 10,
                 "language": {
-                    "lengthMenu": "Mostrar _MENU_ registros por página",
+                    "lengthMenu": "Mostrar _MENU_ usuarios por página",
                     "zeroRecords": "No se encontraron resultados",
                     "info": "Mostrando página _PAGE_ de _PAGES_",
-                    "infoEmpty": "No hay registros disponibles",
+                    "infoEmpty": "No hay usuarios disponibles",
                     "infoFiltered": "(filtrado de _MAX_ registros totales)",
                     "search": "Buscar:",
                     "paginate": {
@@ -338,7 +398,7 @@ Usuarios de Activate Directory
           
 
 
-            function activarUsuario(nombreUsuario) {
+            function activarUsuario(nombreUsuario,numeroControlUsuario) {
                 $.ajax({
                     url: 'activar_usuario/' + nombreUsuario + '/',
                     method: 'POST',
@@ -346,18 +406,18 @@ Usuarios de Activate Directory
                         'csrfmiddlewaretoken': getCSRFToken() // Asegúrate de obtener el token CSRF
                     },
                     success: function(response) {
-                        alert("Usuario activado correctamente.");
+                        alert("Usuario ("+ nombreUsuario+" : " +numeroControlUsuario+") activado correctamente.");
                         location.reload(); // Recarga la página
                         // Aquí puedes agregar código para actualizar la UI según sea necesario
                     },
                     error: function(error) {
-                        alert("Error al activar el usuario.");
+                        alert("Error al activar el usuario ("+ nombreUsuario+" : " +numeroControlUsuario+").");
                         // Manejo de errores
                     }
                 });
             }
             
-            function desactivarUsuario(nombreUsuario) {
+            function desactivarUsuario(nombreUsuario,numeroControlUsuario) {
                 $.ajax({
                     url: 'desactivar_usuario/' + nombreUsuario + '/',
                     method: 'POST',
@@ -365,12 +425,12 @@ Usuarios de Activate Directory
                         'csrfmiddlewaretoken': getCSRFToken() // Asegúrate de obtener el token CSRF
                     },
                     success: function(response) {
-                        alert("Usuario desactivado correctamente.");
+                        alert("Usuario ("+ nombreUsuario+" : " +numeroControlUsuario+") desactivado correctamente.");
                         location.reload(); // Recarga la página
                         // Aquí puedes agregar código para actualizar la UI según sea necesario
                     },
                     error: function(error) {
-                        alert("Error al desactivar el usuario.");
+                        alert("Error al desactivar el usuario. ("+ nombreUsuario+" : " +numeroControlUsuario+")");
                         // Manejo de errores
                     }
                 });

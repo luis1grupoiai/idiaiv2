@@ -150,5 +150,8 @@ admin.site.register(Direccion, DireccionAdmin)
 
 class PermissionAdmin(admin.ModelAdmin):
     list_display = ( 'name', 'codename', 'descripcion', 'status')
+    def get_queryset(self, request):
+        # Filtra los permisos por app_label, en este caso, "sistemas-iai"
+        return super().get_queryset(request).filter(content_type__app_label='sistemas-iai')
 
 admin.site.register(Permission, PermissionAdmin)

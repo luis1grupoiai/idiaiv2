@@ -41,7 +41,7 @@ class CAutenticacion(APIView):
     def obtenerPermisos(p_nIdSistema):
         dPermisos = []
         try:
-            dPermisos = list(SistemaPermiso.objects.filter(sistema_id=p_nIdSistema).values())
+            dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema).values())
         except ValueError as error:
             sTexto = "%s" % error
             print(sTexto)

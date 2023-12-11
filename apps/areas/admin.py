@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.models import User, Permission, Group
+from django.contrib.auth.models import User, Permission
 from django.contrib.auth.forms import UserChangeForm
 from .models import UserCoordinacion, Coordinacion, Gerencia, Direccion
 

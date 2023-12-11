@@ -8,4 +8,4 @@ node_modules/
 db.sqlite3
 *.vsidx
 .env
-/migrations/
+**/migrations/

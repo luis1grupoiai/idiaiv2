@@ -41,12 +41,16 @@ Usuarios de Activate Directory
             <a class="nav-link" id="pyes-tab" data-bs-toggle="tab" href="#pyes" role="tab"
                 aria-controls="pyes" aria-selected="false">Proyectos Especiales</a>
         </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="pyes-tab" data-bs-toggle="tab" href="#pyes" role="tab"
+                aria-controls="pyes" aria-selected="false">Bajas</a>
+        </li>
     </ul>
     <div class="tab-content" id="myTabContent">
         <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
             <p class='my-2'>
                 
-                <div class="table-responsive ">
+            <div class="table-responsive ">
 
                 <table id="myTable" class="table table-hover table-striped"> 
                     <thead>
@@ -81,23 +85,24 @@ Usuarios de Activate Directory
                                 data-nombreCompleto ="{{ user.nombre_completo }}"
                                 data-email ="{{ user.correo }}"
                                 data-deparamento="{{ user.departamento}}"
+                                data-distinguishedName="{{ user.DistinguishedName}}"
                                 onclick="editUser(this);">
                                 <i class="bi bi-pencil"></i>
                                 </button>
                             
                             </td>
                             <td>{{ user.nombre }}</td>
-                            <td>{{ user.nombre_completo}}</td>
+                            <td>{{ user.nombre_completo}}<!--<br>{{ user.DistinguishedName}} --></td>
                             <td>{{ user.correo }}</td>
                             <td>{{ user.departamento}}</td>
                             <td class = "text-center">
                             
                                 {% if not user.esta_deshabilitado %}
-                                <button type="button" class="btn icon btn-danger btn-sm" onclick="desactivarUsuario('{{ user.nombre }}',{{ user.userAccountControl}})">
+                                <button type="button" class="btn icon btn-danger btn-sm" onclick="desactivarUsuario('{{ user.DistinguishedName}}',{{ user.userAccountControl}})">
                                     Desactivar
                                 </button>
                             {% else %}
-                                <button type="button" class="btn icon btn-success " onclick="activarUsuario('{{ user.nombre }}',{{ user.userAccountControl}})">
+                                <button type="button" class="btn icon btn-success " onclick="activarUsuario('{{ user.DistinguishedName }}',{{ user.userAccountControl}})">
                                     Activar
                                 </button>
                             {% endif %}
@@ -113,12 +118,15 @@ Usuarios de Activate Directory
                 
                 
                 
-                    </div>
+             </div>
 
 
 
             </p>
         </div>
+
+
+        
         <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
             Integer interdum diam eleifend metus lacinia, quis gravida eros mollis. Fusce non sapien
             sit amet magna dapibus
@@ -222,7 +230,7 @@ Usuarios de Activate Directory
                                                 <div class="mb-2">
                                                  <!--  <label for="nombre_usuario" class="form-label">Nombre de Usuario:</label>--> 
                                                     <input type="hidden" class="form-control" name="nombre_usuario" id="nombre_usuario" required >
-                                                    
+                                                    <input type="hidden" class="form-control" name="distinguished_name" id="distinguished_name" required >
                                                 </div>
                                             </div>
                                             <div class="col-6">
@@ -362,6 +370,7 @@ Usuarios de Activate Directory
                     var nombreCompleto = button.getAttribute('data-nombreCompleto');
                     var email = button.getAttribute('data-email');
                     var departamento = button.getAttribute('data-deparamento');
+                    var distinguishedName = button.getAttribute('data-distinguishedName');
 
                     // Rellena los campos del formulario en el modal
                     document.getElementById('nombre_usuario').value = nombre ;
@@ -372,6 +381,7 @@ Usuarios de Activate Directory
                     document.getElementById('nombre_completo').value = nombreCompleto ;
                     document.getElementById('email').value = email ;
                     document.getElementById('departamento').value = departamento ;
+                    document.getElementById('distinguished_name').value =distinguishedName;
                     // Abre el modal
                     var modal = new bootstrap.Modal(document.getElementById('editUserModal'));
                     modal.show();
@@ -406,12 +416,12 @@ Usuarios de Activate Directory
                         'csrfmiddlewaretoken': getCSRFToken() // Asegúrate de obtener el token CSRF
                     },
                     success: function(response) {
-                        alert("Usuario ("+ nombreUsuario+" : " +numeroControlUsuario+") activado correctamente.");
+                        alert("Usuario  activado correctamente.");
                         location.reload(); // Recarga la página
                         // Aquí puedes agregar código para actualizar la UI según sea necesario
                     },
                     error: function(error) {
-                        alert("Error al activar el usuario ("+ nombreUsuario+" : " +numeroControlUsuario+").");
+                        alert("Error al activar el usuario.");
                         // Manejo de errores
                     }
                 });
@@ -425,12 +435,12 @@ Usuarios de Activate Directory
                         'csrfmiddlewaretoken': getCSRFToken() // Asegúrate de obtener el token CSRF
                     },
                     success: function(response) {
-                        alert("Usuario ("+ nombreUsuario+" : " +numeroControlUsuario+") desactivado correctamente.");
+                        alert("Usuario desactivado correctamente.");
                         location.reload(); // Recarga la página
                         // Aquí puedes agregar código para actualizar la UI según sea necesario
                     },
                     error: function(error) {
-                        alert("Error al desactivar el usuario. ("+ nombreUsuario+" : " +numeroControlUsuario+")");
+                        alert("Error al desactivar el usuario.");
                         // Manejo de errores
                     }
                 });

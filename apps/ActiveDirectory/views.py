@@ -6,7 +6,7 @@ from django.conf import settings
 import random
 
 # Create your views here.
-
+domino='DC=iai,DC=com,DC=mx'
 
 def consultar_usuarios(request):
     # Establece la conexión con el servidor de Active Directory
@@ -14,9 +14,22 @@ def consultar_usuarios(request):
     try:
         server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
         with Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True) as connection:
-            search_base = 'DC=iai,DC=com,DC=mx'
+            search_base = domino
             search_filter = '(objectClass=user)'
-            attributes = ['cn', 'sn', 'givenName', 'userPrincipalName', 'mail', 'displayName', 'sAMAccountName', 'distinguishedName', 'physicalDeliveryOfficeName', 'description','department','title','userAccountControl']
+            attributes = ['cn', 
+                          'sn', 
+                          'givenName', 
+                          'userPrincipalName', 
+                          'mail', 
+                          'displayName', 
+                          'sAMAccountName', 
+                          'distinguishedName', 
+                          'physicalDeliveryOfficeName', 
+                          'description',
+                          'department',
+                          'title',
+                          'userAccountControl'
+                          ]
             
             connection.search(search_base, search_filter, attributes=attributes)
             for entry in connection.entries:
@@ -35,13 +48,16 @@ def consultar_usuarios(request):
                     'descripcion': entry.description.value if 'description' in entry else None,
                     'departamento': entry.department.value if 'department' in entry else None,  # Nuevo atributo
                     'puesto': entry.title.value if 'title' in entry else None,  # Nuevo atributo
-                    'estatus' :random.randint(0, 1),
                     'userAccountControl': entry.userAccountControl.value if 'userAccountControl' in entry else None,
                     'esta_deshabilitado': is_account_disabled(useraccountcontrol_str),
+                    'DistinguishedName' : entry.distinguishedName.value if 'DistinguishedName' in entry else None,
         
                 }
                 #print(entry.cn.value)
                # print(entry.distinguishedName.value if 'distinguishedName' in entry else None)
+               # print(entry.distinguishedName.value)
+                #print(extraer_unidad_organizativa(entry.distinguishedName.value))
+                #print(domain_name)
                 usuarios.append(usuario)
     except Exception  as e:
         # Manejar la excepción, por ejemplo, registrando el error
@@ -79,7 +95,7 @@ def agregar_usuario(request):
             with Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True) as conn:
                 
                 #user_dn = f"CN={nombre_usuario},CN=Users,DC=iai,DC=com,DC=mx"
-                user_dn = f"CN={nombre_usuario},OU=iaiUsuario,OU=RedGrupoIAI,DC=iai,DC=com,DC=mx"
+                user_dn = f"CN={nombre_usuario},OU=iaiUsuario,OU=RedGrupoIAI,{domino}"
                 conn.add(user_dn, ['top', 'person', 'organizationalPerson', 'user'], {
                     'cn': nombre_usuario,
                     'givenName':nombre_pila,
@@ -129,14 +145,15 @@ def editar_usuario(request):
         departamento = request.POST.get('departamento')
         puesto = request.POST.get('puesto')
         nombre_inicio_sesion = request.POST.get('nombre_inicio_sesion')
+        user_dn = request.POST.get('distinguished_name')
         # ... otros campos ....
         print(nombre_usuario)
-        print(nombre_pila)
+        print(user_dn)
         # Conectar a Active Directory
         try:
             server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
             with Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True) as conn:
-                user_dn = f"CN={nombre_usuario},OU=iaiUsuario,OU=RedGrupoIAI,DC=iai,DC=com,DC=mx"
+             #   user_dn = f"CN={nombre_usuario},OU=iaiUsuario,OU=RedGrupoIAI,{domino}"
                 
                 # Actualizar los atributos
                 conn.modify(user_dn, {
@@ -179,7 +196,8 @@ def activar_usuario(request, nombre_usuario):
     try:
         server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
         with Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True) as conn:
-            user_dn = f"CN={nombre_usuario},OU=iaiUsuario,OU=RedGrupoIAI,DC=iai,DC=com,DC=mx"
+            #user_dn = f"CN={nombre_usuario},OU=iaiUsuario,OU=RedGrupoIAI,{domino}"
+            user_dn = nombre_usuario;
             # Establecer userAccountControl a 512 para activar la cuenta
             conn.modify(user_dn, {'userAccountControl': [(MODIFY_REPLACE, [544])]})
             if conn.result['result'] == 0:
@@ -202,7 +220,8 @@ def desactivar_usuario(request, nombre_usuario):
     try:
         server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
         with Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True) as conn:
-            user_dn = f"CN={nombre_usuario},OU=iaiUsuario,OU=RedGrupoIAI,DC=iai,DC=com,DC=mx"
+            #user_dn = f"CN={nombre_usuario},OU=iaiUsuario,OU=RedGrupoIAI,{domino}"
+            user_dn = nombre_usuario;
             # Establecer userAccountControl a 66050 para desactivar la cuenta
             conn.modify(user_dn, {'userAccountControl': [(MODIFY_REPLACE, [66050])]})
             if conn.result['result'] == 0:
@@ -219,3 +238,15 @@ def desactivar_usuario(request, nombre_usuario):
 
 def login_auth(request):
     return render(request, 'auth-login.html')    
+
+
+def extraer_unidad_organizativa(dn):
+    """
+    Extrae la Unidad Organizativa (OU) de un Distinguished Name (DN) en Active Directory.
+
+    :param dn: Distinguished Name como cadena de texto.
+    :return: Lista de Unidades Organizativas.
+    """
+    partes = dn.split(',')
+    unidades_organizativas = [parte.strip()[3:] for parte in partes if parte.startswith('OU=')]
+    return unidades_organizativas

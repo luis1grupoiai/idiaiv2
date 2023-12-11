@@ -14,6 +14,7 @@ from django.http import JsonResponse
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.decorators import action
 from rest_framework import status
 
 from drf_yasg.utils import swagger_auto_schema
@@ -64,7 +65,8 @@ class CAutenticacion(APIView):
         #     datos = {'message': 'Usuarios no encontrados.'}
 
         return JsonResponse(datos)
-       
+    
+    
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -78,8 +80,7 @@ class CAutenticacion(APIView):
         ),
         responses={200: 'Usuario loggeado exitosamente'},
     )
-
-
+    # @action(detail=False, methods=['post'])
     def post(self,request):
         """
         Realiza la validación de las credenciales de los usuarios.

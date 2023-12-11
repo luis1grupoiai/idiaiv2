@@ -1,11 +1,26 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User, Permission
+from django.contrib.auth.forms import UserChangeForm
 from .models import UserCoordinacion, Coordinacion, Gerencia, Direccion
 
 admin.site.site_header = 'IDIAI v2'
 admin.site.site_title = 'IDIAI v2'
 admin.site.index_title = 'Sitio Administrativo IDIAI v2'
+
+class CustomUserChangeForm(UserChangeForm):
+    # Define la metadata del formulario
+    class Meta:
+        model = User  # Especifica el modelo asociado al formulario (User en este caso)
+        fields = '__all__'  # Incluye todos los campos del modelo en el formulario
+
+    # Método que se ejecuta al inicializar una instancia del formulario
+    def __init__(self, *args, **kwargs):
+        # Llama al inicializador de la clase base (UserChangeForm) con los argumentos recibidos
+        super().__init__(*args, **kwargs)
+        
+        # Filtra los permisos del usuario por app_label
+        self.fields['user_permissions'].queryset = self.fields['user_permissions'].queryset.filter(content_type__app_label='sistemas-iai')
 
 class UserProfileInline(admin.StackedInline):
     model = UserCoordinacion
@@ -14,12 +29,15 @@ class UserProfileInline(admin.StackedInline):
 
 # Define el administrador personalizado para el modelo User
 class CustomUserAdmin(UserAdmin):
+    # Usar el formulario personalizado
+    form = CustomUserChangeForm
+
     # Agrega un enlace al perfil de usuario en línea (UserProfileInline)
     inlines = (UserProfileInline, )
-
     # Especifica los campos adicionales que se mostrarán en la lista de usuarios en el administrador
     list_display = ('username','first_name', 'last_name', 'get_coordinacion', 'get_gerencia', 'get_direccion', 'is_staff')
 
+    # Define una función para obtener la coordinación del usuario
     # Define una función para obtener la coordinación del usuario
     def get_coordinacion(self, obj):
         # Busca el objeto UserCoordinacion asociado al usuario actual (obj)
@@ -74,7 +92,7 @@ class CustomUserAdmin(UserAdmin):
 # Desregistra el modelo User del administrador predeterminado
 admin.site.unregister(User)
 
-# Registra el modelo User con el administrador personalizado
+# Registra el modelo User en la interfaz de administración de Django, utilizando la configuración personalizada definida en la clase CustomUserAdmin
 admin.site.register(User, CustomUserAdmin)
 
 class CoordinacionAdmin(admin.ModelAdmin):
@@ -106,7 +124,7 @@ class CoordinacionAdmin(admin.ModelAdmin):
 
     direccion.short_description = 'Direccion'  # Corregido el nombre que se mostrará en la lista
 
-    # Otros ajustes según tus necesidades
+# Registra el modelo Coordinacion en la interfaz de administración de Django, utilizando la configuración personalizada definida en la clase CoordinacionAdmin
 admin.site.register(Coordinacion, CoordinacionAdmin)
 
 class GerenciaAdmin(admin.ModelAdmin):
@@ -130,6 +148,7 @@ class GerenciaAdmin(admin.ModelAdmin):
 
     direccion.short_description = 'Direccion'  # Corregido el nombre que se mostrará en la lista
 
+# Registra el modelo Gerencia en la interfaz de administración de Django, utilizando la configuración personalizada definida en la clase GerencoiaAdmin
 admin.site.register(Gerencia, GerenciaAdmin)
 
 class DireccionAdmin(admin.ModelAdmin):
@@ -145,10 +164,16 @@ class DireccionAdmin(admin.ModelAdmin):
 
     director.short_description = 'Director'  # Nombre que se mostrará en la lista
 
-admin.site.register(Direccion, DireccionAdmin)
+# Registra el modelo Direccion en la interfaz de administración de Django, utilizando la configuración personalizada definida en la clase DireccionAdmin
+admin.site.register(Direccion, DireccionAdmin) 
 
 
 class PermissionAdmin(admin.ModelAdmin):
     list_display = ( 'name', 'codename', 'descripcion', 'status')
+    
+    def get_queryset(self, request):
+        # Filtra los permisos por app_label, en este caso, "sistemas-iai"
+        return super().get_queryset(request).filter(content_type__app_label='sistemas-iai')
 
+# Registra el modelo Permission en la interfaz de administración de Django, utilizando la configuración personalizada definida en la clase PermissionAdmin
 admin.site.register(Permission, PermissionAdmin)

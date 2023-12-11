@@ -14,7 +14,9 @@ from django.http import JsonResponse
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.decorators import action
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -37,9 +39,22 @@ import base64
 class CAutenticacion(APIView):
 
 
+    @staticmethod
+    def obtenerPermisos(p_nIdSistema):
+        dPermisos = []
+        try:
+            dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema).values())
+        except ValueError as error:
+            sTexto = "%s" % error
+            print(sTexto)
+
+        return dPermisos
+
     @method_decorator(csrf_exempt)
     def dispatch(self,request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
+    
+    
 
     def get(self,request):
         # usuarios = list(User.objects.values())
@@ -51,7 +66,8 @@ class CAutenticacion(APIView):
         #     datos = {'message': 'Usuarios no encontrados.'}
 
         return JsonResponse(datos)
-       
+    
+    
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -65,6 +81,7 @@ class CAutenticacion(APIView):
         ),
         responses={200: 'Usuario loggeado exitosamente'},
     )
+    # @action(detail=False, methods=['post'])
     def post(self,request):
         """
         Realiza la validación de las credenciales de los usuarios.
@@ -79,6 +96,7 @@ class CAutenticacion(APIView):
         try:
             #1. Carga los valores del json obtenido por el metodo post.
             jd = json.loads(request.body)
+          
             
             #Declaración y asignación de variables
             bValido = True
@@ -87,6 +105,7 @@ class CAutenticacion(APIView):
             pwdD64 = ""
             dUsuario = ""
             dSistema = ""
+            dPermisos = []
             password = ""
             sistema = 0
             #total de items permitidos en la API, definidos en la diccionario dCamposJson
@@ -132,13 +151,25 @@ class CAutenticacion(APIView):
                         pwdD64 = base64.b64decode(jd['password'])
                     
                         #Obtiene el registro del usuario mediante el userName.
-                        dUsuario = list(User.objects.filter(username=jd['user']).values())
-                        password = dUsuario[0]['password']
+                        dUsuario = list(User.objects.filter(username=jd['user'], is_active=1).values())
+                        if len(dUsuario):
+                            password = dUsuario[0]['password']
                     
                         #4. Verifica que la contraseña en base64 coincida con la password encriptada de BD.
                         #En caso de coincidir es como devuelve los permisos y grupos del usuario.
                         if  handler.verify(pwdD64,password):
                             # print("Las contraseñas son iguales")
+                            
+                            #Listado de permisos
+                            # dPermisos = list(SistemaPermiso.objects.filter(sistema_id=sistema).values())
+                            dPermisos = self.obtenerPermisos(sistema)
+                             
+                            if len(dPermisos)>0:
+                                print(dPermisos)  
+                            else:
+                                print("Este sistema no tiene permisos")  
+
+                            
                             datos = {'message': 'Success', 'datos': dUsuario}
                         else:
                             datos = {'message': 'Dato Invalidos', 'error':'¡Ups! la contraseña es incorrecta.'}
@@ -156,12 +187,21 @@ class CAutenticacion(APIView):
         
 
         return JsonResponse(datos)
-
+    
+    
     # def put(self,request):
     #     pass
 
     # def delete(self,request):
     #     pass
 
+
+class Protegida(APIView):
+    permission_classes = [IsAuthenticated]
     
+    def get(self, request):
+        
+        datos = {'content': 'Esta vista está protegida'}
+        # return Response({"content": "Esta vista está protegida"})  
+        return JsonResponse(datos)  
 

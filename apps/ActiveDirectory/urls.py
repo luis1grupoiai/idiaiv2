@@ -10,5 +10,5 @@ urlpatterns = [
     path('consultar_usuarios/activar_usuario/<str:nombre_usuario>/', views.activar_usuario, name='activar_usuario'),
     path('consultar_usuarios/desactivar_usuario/<str:nombre_usuario>/', views.desactivar_usuario, name='desactivar_usuario'),
     path('login/', views.login_auth, name='login'),
-     path('', views.login_auth, name='login'),
+    path('', views.home, name='home'),
     ]

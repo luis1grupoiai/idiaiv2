@@ -4,13 +4,21 @@ from ldap3 import Server, Connection, ALL_ATTRIBUTES , MODIFY_REPLACE
 from django.contrib import messages
 from django.conf import settings
 import random
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import logout
 
 # Create your views here.
 domino='DC=iai,DC=com,DC=mx'
 
+
 def consultar_usuarios(request):
     # Establece la conexión con el servidor de Active Directory
     usuarios = []
+    usuariosAdmin =[]
+    usuariosIng = []
+    usuariosDCASS =[]
+    UsuariosPS =[]
+    UsuaruisDown=[]
     try:
         server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
         with Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True) as connection:
@@ -59,6 +67,24 @@ def consultar_usuarios(request):
                 #print(extraer_unidad_organizativa(entry.distinguishedName.value))
                 #print(domain_name)
                 usuarios.append(usuario)
+                print(entry.department.value)
+                if entry.department.value == 'Administración' and not is_account_disabled(useraccountcontrol_str) :
+                    usuariosAdmin.append(usuario)
+                
+                if entry.department.value == 'Ingeniería'and not is_account_disabled(useraccountcontrol_str) :
+                    usuariosIng.append(usuario)
+                
+                if entry.department.value == 'Calidad, Ambiental, Seguridad y Salud'and not is_account_disabled(useraccountcontrol_str) :
+                    usuariosDCASS.append(usuario)
+                
+                if entry.department.value == 'Proyectos Especiales'and not is_account_disabled(useraccountcontrol_str) :
+                    UsuariosPS.append(usuario)
+                    
+                if is_account_disabled(useraccountcontrol_str):
+                    UsuaruisDown.append(usuario)
+                
+                
+                
     except Exception  as e:
         # Manejar la excepción, por ejemplo, registrando el error
         print(f"Error al conectar o buscar en Active Directory: {str(e)}")
@@ -66,6 +92,11 @@ def consultar_usuarios(request):
     # Crear el diccionario de contexto con todas las variables necesarias
     context = {
         'users': usuarios,  # Lista de usuarios
+        'usersAdmin': usuariosAdmin,
+        'usersIng': usuariosIng,
+        'usersDCASS':usuariosDCASS,
+        'usersPS':UsuariosPS,
+        'usersDown':UsuaruisDown,
         'active_page': 'usuarios'  # Variable adicional
         # Puedes agregar más variables aquí si lo necesitas
     }
@@ -190,7 +221,8 @@ def is_account_disabled(useraccountcontrol_str):
     except ValueError:
         # En caso de que el valor no sea un número, asumir que la cuenta no está deshabilitada
         return False
-    
+ 
+  
 def activar_usuario(request, nombre_usuario):
     print("entro a activar el usuario :"+str(nombre_usuario))
     try:
@@ -236,8 +268,6 @@ def desactivar_usuario(request, nombre_usuario):
         print(request, f"Error al conectar con AD: {str(e)}")
 
 
-def login_auth(request):
-    return render(request, 'auth-login.html')    
 
 
 def extraer_unidad_organizativa(dn):
@@ -250,3 +280,25 @@ def extraer_unidad_organizativa(dn):
     partes = dn.split(',')
     unidades_organizativas = [parte.strip()[3:] for parte in partes if parte.startswith('OU=')]
     return unidades_organizativas
+
+
+
+def login_auth(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            login(request, user)
+            return redirect('usuarios')  # Cambia 'index' a la ruta que desees después del inicio de sesión
+        else:
+            # Mensaje de error si la autenticación falla
+            return render(request, 'login.html', {'error': 'Usuario o contraseña inválidos'})
+    
+    # Mostrar el formulario de inicio de sesión para un GET request
+    return render(request, 'login.html')
+
+def home(request):
+    # Aquí la lógica para mostrar la página de inicio
+    return render(request, 'auth-login.html')

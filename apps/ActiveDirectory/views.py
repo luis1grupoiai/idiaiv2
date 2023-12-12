@@ -3,9 +3,7 @@ from django.conf import settings
 from ldap3 import Server, Connection, ALL_ATTRIBUTES , MODIFY_REPLACE
 from django.contrib import messages
 from django.conf import settings
-import random
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import logout
+
 
 # Create your views here.
 domino='DC=iai,DC=com,DC=mx'
@@ -64,10 +62,10 @@ def consultar_usuarios(request):
                 #print(entry.cn.value)
                # print(entry.distinguishedName.value if 'distinguishedName' in entry else None)
                # print(entry.distinguishedName.value)
-                #print(extraer_unidad_organizativa(entry.distinguishedName.value))
+                print(extraer_unidad_organizativa(entry.distinguishedName.value))
                 #print(domain_name)
                 usuarios.append(usuario)
-                print(entry.department.value)
+                #print(entry.department.value)
                 if entry.department.value == 'Administración' and not is_account_disabled(useraccountcontrol_str) :
                     usuariosAdmin.append(usuario)
                 
@@ -283,21 +281,6 @@ def extraer_unidad_organizativa(dn):
 
 
 
-def login_auth(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
-
-        if user is not None:
-            login(request, user)
-            return redirect('usuarios')  # Cambia 'index' a la ruta que desees después del inicio de sesión
-        else:
-            # Mensaje de error si la autenticación falla
-            return render(request, 'login.html', {'error': 'Usuario o contraseña inválidos'})
-    
-    # Mostrar el formulario de inicio de sesión para un GET request
-    return render(request, 'login.html')
 
 def home(request):
     # Aquí la lógica para mostrar la página de inicio

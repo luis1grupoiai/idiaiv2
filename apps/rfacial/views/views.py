@@ -7,6 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http.response import JsonResponse
 from apps.areas.models import *
 from apps.sistemas.models import *
+from apps.rfacial.models import *
 from passlib.hash import django_pbkdf2_sha256 as handler
 
 from django.shortcuts import render
@@ -21,6 +22,8 @@ from rest_framework.permissions import IsAuthenticated
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+
+from apps.mycore.views.ejecutarsp import CEjecutarSP
 
 
 import json
@@ -50,6 +53,13 @@ class CAutenticacion(APIView):
             print(sTexto)
 
         return dPermisos
+    
+    @staticmethod
+    def prueba():
+        print("Accede a metodo prueba...")
+        instancia = CEjecutarSP()
+
+        resultado = instancia.ejecutarSP()
 
     @method_decorator(csrf_exempt)
     def dispatch(self,request, *args, **kwargs):
@@ -60,6 +70,8 @@ class CAutenticacion(APIView):
     def get(self,request):
         # usuarios = list(User.objects.values())
         datos = {'message': 'Conexion exitosa a API AUTH :)'}
+
+        self.prueba()
         # if len(usuarios)>0:
         #     # datos = {'message': 'Success','usuarios':usuarios}
         #     datos = {'message': 'Conexión exitosa :)'}
@@ -163,9 +175,14 @@ class CAutenticacion(APIView):
                             #Listado de permisos
                             # dPermisos = list(SistemaPermiso.objects.filter(sistema_id=sistema).values())
                             dPermisos = self.obtenerPermisos(sistema)
-                             
+                            resultados = vUsuarioPermiso.objects.all()
+
                             if len(dPermisos)>0:
-                                print(dPermisos)  
+                                print("resultados :) ")  
+                                
+                                print(resultados.query)  
+                                # primer_objeto = resultados[0]
+                                # print(primer_objeto)
                             else:
                                 # print("Este sistema no tiene permisos")  
                                 sTexto += "Este sistema no tiene permisos"

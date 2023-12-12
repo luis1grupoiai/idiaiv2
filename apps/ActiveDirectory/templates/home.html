@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grupo IAI</title>
+    
+    
+    <link rel="shortcut icon" href="/static/icon/icono.ico" type="image/x-icon">
+    <link rel="icon" href="/static/icon/icono.ico" type="image/x-icon">
+
+  <link rel="stylesheet" href="/static/assets/compiled/css/app.css">
+  <link rel="stylesheet" href="/static/assets/compiled/css/app-dark.css">
+</head>
+
+<body>
+    <script src="/static/assets/static/js/initTheme.js"></script>
+    <nav class="navbar navbar-light">
+        <div class="container d-block">
+            <!--<a href="#"><i class="bi bi-chevron-left"></i></a>-->
+            <a class="navbar-brand ms-4" href="#">
+                <img src="/static/img/logo2.png">
+            </a>
+        </div>
+    </nav>
+    
+
+<div class="container">
+    <div class="row text-center">
+        <div class="col-6">
+            <div class="card" >
+                <a href="admin/">
+                <img src="/static/img/IDIAI.png" class="card-img-top" alt="Descripción de la imagen" >
+                 </a>
+                <div class="card-body">
+                  <h5 class="card-title">IDIAI</h5>
+                  
+                  <a href="admin/" class="btn btn-primary">Entrar</a>
+                </div>
+              </div>
+        </div>
+        <div class="col-6">
+            <div class="card" >
+                <a href=" {% url 'usuarios' %}">
+                <img src="/static/img/PHYTONAD.png" class="card-img-top" alt="Descripción de la imagen"  >
+            </a>
+                <div class="card-body">
+                  <h5 class="card-title">Activate Directory</h5>
+                  
+                  <a href=" {% url 'usuarios' %}" class="btn btn-primary">Entrar</a>
+                </div>
+              </div>
+    </div>
+    
+</div>
+
+
+    
+    <script src="/static/assets/compiled/js/app.js"></script>
+    
+</body>
+
+</html>

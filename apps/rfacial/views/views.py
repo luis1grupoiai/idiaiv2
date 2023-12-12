@@ -59,6 +59,11 @@ class CAutenticacion(APIView):
         print("Accede a metodo prueba...")
         instancia = CEjecutarSP()
 
+       
+        instancia.registrarParametros("idUsuario",2)
+        instancia.registrarParametros("username","ana.sanchez")
+        instancia.registrarParametros("edad","14")
+
         resultado = instancia.ejecutarSP()
 
     @method_decorator(csrf_exempt)

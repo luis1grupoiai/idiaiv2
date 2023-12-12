@@ -12,14 +12,19 @@ class CEjecutarSP():
     parametros = {}
 
     # @staticmethod
+    #metodo que almacena los parametros del SP.
     def registrarParametros(self, nombreParametro, valor):
         self.parametros[nombreParametro] = valor
-        print(self.parametros)
+        # print(self.parametros)
 
 
     def ejecutarSP(self):
+        print("Accede a metodo ejecutarSP.")
         with connection.cursor() as cursor:
             try:
+
+                print(self.parametros)
+
                 cursor.execute("EXEC obtenerPermisosUsuario @idUsuario=%s",[2])
 
                 resultados = cursor.fetchall()

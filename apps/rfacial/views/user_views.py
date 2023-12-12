@@ -59,7 +59,7 @@ class CAutenticacio(APIView):
         datos = {'message': 'Conexion exitosa a API AUTH :)'}
         # if len(usuarios)>0:
         #     # datos = {'message': 'Success','usuarios':usuarios}
-        #     datos = {'message': 'Conexión exitosa :)'}
+        #     datos = {'message': 'Conexiï¿½n exitosa :)'}
         # else:
         #     datos = {'message': 'Usuarios no encontrados.'}
 
@@ -81,8 +81,8 @@ class CAutenticacio(APIView):
 
 
     def post(self,request):
-        # Realiza la validación de las credenciales de los usuarios.
-        #Para realizar un consulta exitosa, envía un objeto JSON con los siguientes campos:
+        # Realiza la validaciï¿½n de las credenciales de los usuarios.
+        #Para realizar un consulta exitosa, envï¿½a un objeto JSON con los siguientes campos:
        
         #Metodo Post
         #Este metodo se encarga de validar las credenciales del ususario que se esta loggeando al sistema,
@@ -93,7 +93,7 @@ class CAutenticacio(APIView):
             jd = json.loads(request.body)
           
             
-            #Declaración y asignación de variables
+            #Declaraciï¿½n y asignaciï¿½n de variables
             bValido = True
             dCamposJson = ['token', 'user', 'password','idSistema']
             sTexto = ""
@@ -119,7 +119,7 @@ class CAutenticacio(APIView):
 
 
 
-            #Validación de las claves json, si alguna clave no se encuentra en el objeto, entonces
+            #Validaciï¿½n de las claves json, si alguna clave no se encuentra en el objeto, entonces
             #el valor de bValido es Falso y regresa un mensaje de error indicando el identificador
             #  faltante.
             for item in dCamposJson:
@@ -131,10 +131,10 @@ class CAutenticacio(APIView):
                     break
             
             #si las claves estan correctas, continuara realizando el resto del proceso
-            # de autenticación
+            # de autenticaciï¿½n
             if bValido:
 
-                #2. Compara el token obtenido del json contra el secretKey de la aplicación.
+                #2. Compara el token obtenido del json contra el secretKey de la aplicaciï¿½n.
                 if(jd['token'] == os.environ.get('SECRET_KEY')):
 
                     dSistema = list(Sistemas.objects.filter(id=jd['idSistema']).values())
@@ -150,10 +150,10 @@ class CAutenticacio(APIView):
                         if len(dUsuario):
                             password = dUsuario[0]['password']
                     
-                        #4. Verifica que la contraseña en base64 coincida con la password encriptada de BD.
+                        #4. Verifica que la contraseï¿½a en base64 coincida con la password encriptada de BD.
                         #En caso de coincidir es como devuelve los permisos y grupos del usuario.
                         if  handler.verify(pwdD64,password):
-                            # print("Las contraseñas son iguales")
+                            # print("Las contraseï¿½as son iguales")
                             
                             #Listado de permisos
                             # dPermisos = list(SistemaPermiso.objects.filter(sistema_id=sistema).values())

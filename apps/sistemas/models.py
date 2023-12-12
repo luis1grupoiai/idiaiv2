@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import Permission, Group
+from django.contrib.auth.models import Permission, Group, User
 from django.core.exceptions import ObjectDoesNotExist
 
 class Sistemas(models.Model):
@@ -45,18 +45,28 @@ class SistemaPermisoGrupo(models.Model):
         verbose_name_plural = 'Sistemas Permisos Grupos'
         unique_together = ('sistema', 'permiso', 'grupo')
 
-    # Método para obtener una representación de cadena del objeto SistemaPermisoGrupo
+    # Define el método __str__ para obtener una representación de cadena del objeto SistemaPermisoGrupo
     def __str__(self):
-        try:
-            # Intenta obtener el nombre del permiso y el grupo asociados
-            permiso_nombre = self.permiso.name
-            grupo_nombre = self.permiso.name
-        except ObjectDoesNotExist:
-            # Si no se puede obtener el nombre, establece un mensaje de error
-            permiso_nombre = 'Permiso no encontrado'
-            grupo_nombre = 'Grupo no encontrado'
+        # Define mensajes predeterminados en caso de que no se encuentre un permiso o grupo
+        permiso_nombre = 'Permiso no encontrado'
+        grupo_nombre = 'Grupo no encontrado'
+
+        # Verifica si el objeto tiene un permiso asignado
+        if self.permiso:
+            # Si tiene un permiso, intenta obtener su nombre; si no tiene nombre, utiliza un mensaje predeterminado
+            permiso_nombre = self.permiso.name if self.permiso.name else 'Permiso sin nombre'
+
+        # Verifica si el objeto tiene un grupo asignado
+        if self.grupo:
+            # Si tiene un grupo, intenta obtener su nombre; si no tiene nombre, utiliza un mensaje predeterminado
+            grupo_nombre = self.grupo.name if self.grupo.name else 'Grupo sin nombre'
 
         # Devuelve una cadena que incluye el nombre del sistema, el nombre del permiso y el nombre del grupo (o mensajes de error)
         return f'{self.sistema} - {permiso_nombre} - {grupo_nombre}'
+    
+class UserSPG(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    spg = models.ForeignKey(SistemaPermisoGrupo, on_delete=models.CASCADE)
+
 
     

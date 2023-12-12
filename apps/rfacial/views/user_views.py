@@ -14,10 +14,7 @@ from django.http import JsonResponse
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.decorators import action
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -37,14 +34,14 @@ import base64
 #             data = json.load(json_file)
 #         return JsonResponse(data)
 
-class CAutenticacion(APIView):
+class CAutenticacio(APIView):
 
 
     @staticmethod
     def obtenerPermisos(p_nIdSistema):
         dPermisos = []
         try:
-            dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema, permiso_id__isnull=False).values())
+            dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema).values())
         except ValueError as error:
             sTexto = "%s" % error
             print(sTexto)
@@ -62,33 +59,31 @@ class CAutenticacion(APIView):
         datos = {'message': 'Conexion exitosa a API AUTH :)'}
         # if len(usuarios)>0:
         #     # datos = {'message': 'Success','usuarios':usuarios}
-        #     datos = {'message': 'Conexi贸n exitosa :)'}
+        #     datos = {'message': 'Conexi髇 exitosa :)'}
         # else:
         #     datos = {'message': 'Usuarios no encontrados.'}
 
         return JsonResponse(datos)
-    
-    # @action(detail=True, methods=['post'])
+       
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'token': openapi.Schema(type=openapi.TYPE_STRING, description='Token de autenticaci贸n.'),
+                'token': openapi.Schema(type=openapi.TYPE_STRING, description='Token de autenticacion.'),
                 'user': openapi.Schema(type=openapi.TYPE_STRING, description='Nombre de usuario.'),
-                'password': openapi.Schema(type=openapi.TYPE_STRING, description='contrase帽a en base64.'),
-                'idSistema': openapi.Schema(type=openapi.TYPE_INTEGER, description='Id del sistema donde el usuario esta iniciando sesi贸n.'),
+                'password': openapi.Schema(type=openapi.TYPE_STRING, description='contrasena en base64.'),
+                'idSistema': openapi.Schema(type=openapi.TYPE_INTEGER, description='Id del sistema donde el usuario esta iniciando sesion.'),
             },
             required=['token', 'user', 'password','idSistema']
         ),
         responses={200: 'Usuario loggeado exitosamente'},
-    )    
-    def post(self,request):
-        """
-        Realiza la validaci贸n de las credenciales de los usuarios.
+    )
 
-        Para realizar un consulta exitosa, env铆a un objeto JSON con los siguientes campos:
+
+    def post(self,request):
+        # Realiza la validaci髇 de las credenciales de los usuarios.
+        #Para realizar un consulta exitosa, env韆 un objeto JSON con los siguientes campos:
        
-        """
         #Metodo Post
         #Este metodo se encarga de validar las credenciales del ususario que se esta loggeando al sistema,
         # como resultado obtiene (mediante el userName, password, idSistema y Token) los permisos y grupos del usuario.
@@ -98,7 +93,7 @@ class CAutenticacion(APIView):
             jd = json.loads(request.body)
           
             
-            #Declaraci贸n y asignaci贸n de variables
+            #Declaraci髇 y asignaci髇 de variables
             bValido = True
             dCamposJson = ['token', 'user', 'password','idSistema']
             sTexto = ""
@@ -119,12 +114,12 @@ class CAutenticacion(APIView):
             nItemJson = len(jd)
             
             if nItemJson != nLenDef:
-                sTexto = "El tama帽o del JSON obtenido no es el esperado, por favor de verificar. "
+                sTexto = "El tamano del JSON obtenido no es el esperado, por favor de verificar. "
                 bValido = False
 
 
 
-            #Validaci贸n de las claves json, si alguna clave no se encuentra en el objeto, entonces
+            #Validaci髇 de las claves json, si alguna clave no se encuentra en el objeto, entonces
             #el valor de bValido es Falso y regresa un mensaje de error indicando el identificador
             #  faltante.
             for item in dCamposJson:
@@ -136,10 +131,10 @@ class CAutenticacion(APIView):
                     break
             
             #si las claves estan correctas, continuara realizando el resto del proceso
-            # de autenticaci贸n
+            # de autenticaci髇
             if bValido:
 
-                #2. Compara el token obtenido del json contra el secretKey de la aplicaci贸n.
+                #2. Compara el token obtenido del json contra el secretKey de la aplicaci髇.
                 if(jd['token'] == os.environ.get('SECRET_KEY')):
 
                     dSistema = list(Sistemas.objects.filter(id=jd['idSistema']).values())
@@ -155,10 +150,10 @@ class CAutenticacion(APIView):
                         if len(dUsuario):
                             password = dUsuario[0]['password']
                     
-                        #4. Verifica que la contrase帽a en base64 coincida con la password encriptada de BD.
+                        #4. Verifica que la contrase馻 en base64 coincida con la password encriptada de BD.
                         #En caso de coincidir es como devuelve los permisos y grupos del usuario.
                         if  handler.verify(pwdD64,password):
-                            # print("Las contrase帽as son iguales")
+                            # print("Las contrase馻s son iguales")
                             
                             #Listado de permisos
                             # dPermisos = list(SistemaPermiso.objects.filter(sistema_id=sistema).values())
@@ -170,10 +165,9 @@ class CAutenticacion(APIView):
                                 print("Este sistema no tiene permisos")  
 
                             
-                            # datos = {'message': 'Success', 'datos': dUsuario}
-                            datos = {'message': 'Success', 'datos': dPermisos}
+                            datos = {'message': 'Success', 'datos': dUsuario}
                         else:
-                            datos = {'message': 'Dato Invalidos', 'error':'隆Ups! la contrase帽a es incorrecta.'}
+                            datos = {'message': 'Dato Invalidos', 'error':'la contrasena es incorrecta.'}
                     else:
                         datos = {'message': 'Dato Invalidos', 'error':'Id de sistema invalido'}                   
                 else:
@@ -189,20 +183,12 @@ class CAutenticacion(APIView):
 
         return JsonResponse(datos)
     
-    
+
     # def put(self,request):
     #     pass
 
     # def delete(self,request):
     #     pass
 
-
-class Protegida(APIView):
-    permission_classes = [IsAuthenticated]
     
-    def get(self, request):
-        
-        datos = {'content': 'Esta vista est谩 protegida'}
-        # return Response({"content": "Esta vista est谩 protegida"})  
-        return JsonResponse(datos)  
 

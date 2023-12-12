@@ -48,3 +48,6 @@ AD_USER = 'CN=desarrollo,CN=Users,DC=iai,DC=com,DC=mx'  # Cambia esto según tus
 #dsquery user -name desarrollo
 #dsget user "CN=desarrollo,CN=Users,DC=iai,DC=com,DC=mx"
 AD_PASSWORD = 'D3sarrollo'
+
+LOGIN_REDIRECT_URL = 'home' 
+LOGOUT_REDIRECT_URL = 'home'

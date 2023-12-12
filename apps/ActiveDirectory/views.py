@@ -63,9 +63,9 @@ def consultar_usuarios(request):
                 }
                 #print(entry.cn.value)
                # print(entry.distinguishedName.value if 'distinguishedName' in entry else None)
-                print(entry.distinguishedName.value)
+                #print(entry.distinguishedName.value)
                 print(extraer_unidad_organizativa(entry.distinguishedName.value))
-                #print(domain_name)
+                print(domain_name)
                 usuarios.append(usuario)
                 #print(entry.department.value)
                 if entry.department.value == 'Administración' and not is_account_disabled(useraccountcontrol_str) :
@@ -102,6 +102,8 @@ def consultar_usuarios(request):
     }
     # Renderiza la lista de usuarios en una plantilla HTML
     return render(request, 'Usuarios.html', context)
+
+
 
 @login_required  
 def agregar_usuario(request):
@@ -211,7 +213,7 @@ def editar_usuario(request):
     # Redireccionar de vuelta a la lista de usuarios
     return redirect('usuarios')
 
-@login_required  
+ 
 def is_account_disabled(useraccountcontrol_str):
     DISABLED_ACCOUNT_BIT = 0x2
     try:
@@ -223,7 +225,7 @@ def is_account_disabled(useraccountcontrol_str):
         # En caso de que el valor no sea un número, asumir que la cuenta no está deshabilitada
         return False
  
-@login_required   
+   
 def activar_usuario(request, nombre_usuario):
     print("entro a activar el usuario :"+str(nombre_usuario))
     try:
@@ -247,7 +249,7 @@ def activar_usuario(request, nombre_usuario):
     
     
     
-@login_required  
+ 
 def desactivar_usuario(request, nombre_usuario):
     print("entro a desactivar el usuario :"+str(nombre_usuario))
     try:
@@ -269,7 +271,7 @@ def desactivar_usuario(request, nombre_usuario):
         print(request, f"Error al conectar con AD: {str(e)}")
 
 
-@login_required  
+
 def extraer_unidad_organizativa(dn):
     """
     Extrae la Unidad Organizativa (OU) de un Distinguished Name (DN) en Active Directory.

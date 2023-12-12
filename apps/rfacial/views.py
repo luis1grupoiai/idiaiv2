@@ -18,6 +18,7 @@ from rest_framework.decorators import action
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
+
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
@@ -43,7 +44,7 @@ class CAutenticacion(APIView):
     def obtenerPermisos(p_nIdSistema):
         dPermisos = []
         try:
-            dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema).values())
+            dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema, permiso_id__isnull=False).values())
         except ValueError as error:
             sTexto = "%s" % error
             print(sTexto)
@@ -67,7 +68,7 @@ class CAutenticacion(APIView):
 
         return JsonResponse(datos)
     
-    
+    # @action(detail=True, methods=['post'])
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -80,8 +81,7 @@ class CAutenticacion(APIView):
             required=['token', 'user', 'password','idSistema']
         ),
         responses={200: 'Usuario loggeado exitosamente'},
-    )
-    # @action(detail=False, methods=['post'])
+    )    
     def post(self,request):
         """
         Realiza la validación de las credenciales de los usuarios.
@@ -170,7 +170,8 @@ class CAutenticacion(APIView):
                                 print("Este sistema no tiene permisos")  
 
                             
-                            datos = {'message': 'Success', 'datos': dUsuario}
+                            # datos = {'message': 'Success', 'datos': dUsuario}
+                            datos = {'message': 'Success', 'datos': dPermisos}
                         else:
                             datos = {'message': 'Dato Invalidos', 'error':'¡Ups! la contraseña es incorrecta.'}
                     else:

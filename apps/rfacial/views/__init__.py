@@ -5,7 +5,7 @@ from .user_views import CAutenticacio
 from .views import CAutenticacion , Protegida
 
 
-# Cualquier otra lï¿½gica de inicializaciï¿½n necesaria
+# Cualquier otra lógica de inicialización necesaria
 
 
 

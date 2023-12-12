@@ -3,12 +3,14 @@ from django.conf import settings
 from ldap3 import Server, Connection, ALL_ATTRIBUTES , MODIFY_REPLACE
 from django.contrib import messages
 from django.conf import settings
-
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import logout
+from django.contrib.auth import authenticate, login
 
 # Create your views here.
 domino='DC=iai,DC=com,DC=mx'
 
-
+@login_required  
 def consultar_usuarios(request):
     # Establece la conexión con el servidor de Active Directory
     usuarios = []
@@ -61,9 +63,9 @@ def consultar_usuarios(request):
                 }
                 #print(entry.cn.value)
                # print(entry.distinguishedName.value if 'distinguishedName' in entry else None)
-               # print(entry.distinguishedName.value)
+                #print(entry.distinguishedName.value)
                 print(extraer_unidad_organizativa(entry.distinguishedName.value))
-                #print(domain_name)
+                print(domain_name)
                 usuarios.append(usuario)
                 #print(entry.department.value)
                 if entry.department.value == 'Administración' and not is_account_disabled(useraccountcontrol_str) :
@@ -102,6 +104,8 @@ def consultar_usuarios(request):
     return render(request, 'Usuarios.html', context)
 
 
+
+@login_required  
 def agregar_usuario(request):
     if request.method == 'POST':
         dominio_Principal = '@iai.com.mx'
@@ -161,7 +165,7 @@ def agregar_usuario(request):
     
     return render(request, 'AgregarUsuario.html',context)
 
-
+@login_required  
 def editar_usuario(request):
     print("Vista editar Usuario ")
     if request.method == 'POST':
@@ -209,6 +213,18 @@ def editar_usuario(request):
     # Redireccionar de vuelta a la lista de usuarios
     return redirect('usuarios')
 
+ 
+@login_required
+def home(request):
+    # Aquí la lógica para mostrar la página de inicio
+    return render(request, 'home.html')
+@login_required  
+def salir (request):
+    logout(request)
+    return redirect ('home')
+
+
+# -----------------------------------------------------------funciones que no son vistas -----------------------------------
 def is_account_disabled(useraccountcontrol_str):
     DISABLED_ACCOUNT_BIT = 0x2
     try:
@@ -220,7 +236,7 @@ def is_account_disabled(useraccountcontrol_str):
         # En caso de que el valor no sea un número, asumir que la cuenta no está deshabilitada
         return False
  
-  
+   
 def activar_usuario(request, nombre_usuario):
     print("entro a activar el usuario :"+str(nombre_usuario))
     try:
@@ -244,7 +260,7 @@ def activar_usuario(request, nombre_usuario):
     
     
     
-
+ 
 def desactivar_usuario(request, nombre_usuario):
     print("entro a desactivar el usuario :"+str(nombre_usuario))
     try:
@@ -267,7 +283,6 @@ def desactivar_usuario(request, nombre_usuario):
 
 
 
-
 def extraer_unidad_organizativa(dn):
     """
     Extrae la Unidad Organizativa (OU) de un Distinguished Name (DN) en Active Directory.
@@ -280,8 +295,3 @@ def extraer_unidad_organizativa(dn):
     return unidades_organizativas
 
 
-
-
-def home(request):
-    # Aquí la lógica para mostrar la página de inicio
-    return render(request, 'auth-login.html')

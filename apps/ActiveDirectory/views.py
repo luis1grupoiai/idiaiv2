@@ -61,7 +61,7 @@ def consultar_usuarios(request):
                 }
                 #print(entry.cn.value)
                # print(entry.distinguishedName.value if 'distinguishedName' in entry else None)
-               # print(entry.distinguishedName.value)
+                print(entry.distinguishedName.value)
                 print(extraer_unidad_organizativa(entry.distinguishedName.value))
                 #print(domain_name)
                 usuarios.append(usuario)
@@ -284,4 +284,4 @@ def extraer_unidad_organizativa(dn):
 
 def home(request):
     # Aquí la lógica para mostrar la página de inicio
-    return render(request, 'auth-login.html')
+    return render(request, 'home.html')

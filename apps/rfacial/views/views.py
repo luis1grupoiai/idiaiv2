@@ -167,7 +167,8 @@ class CAutenticacion(APIView):
                             if len(dPermisos)>0:
                                 print(dPermisos)  
                             else:
-                                print("Este sistema no tiene permisos")  
+                                # print("Este sistema no tiene permisos")  
+                                sTexto += "Este sistema no tiene permisos"
 
                             
                             # datos = {'message': 'Success', 'datos': dUsuario}

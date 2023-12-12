@@ -214,6 +214,17 @@ def editar_usuario(request):
     return redirect('usuarios')
 
  
+@login_required
+def home(request):
+    # Aquí la lógica para mostrar la página de inicio
+    return render(request, 'home.html')
+@login_required  
+def salir (request):
+    logout(request)
+    return redirect ('home')
+
+
+# -----------------------------------------------------------funciones que no son vistas -----------------------------------
 def is_account_disabled(useraccountcontrol_str):
     DISABLED_ACCOUNT_BIT = 0x2
     try:
@@ -284,12 +295,3 @@ def extraer_unidad_organizativa(dn):
     return unidades_organizativas
 
 
-
-@login_required
-def home(request):
-    # Aquí la lógica para mostrar la página de inicio
-    return render(request, 'home.html')
-@login_required  
-def salir (request):
-    logout(request)
-    return redirect ('home')

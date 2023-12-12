@@ -23,7 +23,7 @@ schema_view = get_schema_view(
       license=openapi.License(name="BSD License"),
       servers=[
                {
-                  "url": "http://127.0.0.1:8000/api/auth/",
+                  "url": "http://127.0.0.1:8000/api/",
                   "description": "Servidor de desarrollo para api de autenticación.",
                },
             ]

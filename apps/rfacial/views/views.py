@@ -14,7 +14,10 @@ from django.http import JsonResponse
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.decorators import action
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -41,7 +44,7 @@ class CAutenticacion(APIView):
     def obtenerPermisos(p_nIdSistema):
         dPermisos = []
         try:
-            dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema).values())
+            dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema, permiso_id__isnull=False).values())
         except ValueError as error:
             sTexto = "%s" % error
             print(sTexto)
@@ -64,7 +67,8 @@ class CAutenticacion(APIView):
         #     datos = {'message': 'Usuarios no encontrados.'}
 
         return JsonResponse(datos)
-       
+    
+    # @action(detail=True, methods=['post'])
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -77,9 +81,7 @@ class CAutenticacion(APIView):
             required=['token', 'user', 'password','idSistema']
         ),
         responses={200: 'Usuario loggeado exitosamente'},
-    )
-
-
+    )    
     def post(self,request):
         """
         Realiza la validación de las credenciales de los usuarios.
@@ -168,7 +170,8 @@ class CAutenticacion(APIView):
                                 print("Este sistema no tiene permisos")  
 
                             
-                            datos = {'message': 'Success', 'datos': dUsuario}
+                            # datos = {'message': 'Success', 'datos': dUsuario}
+                            datos = {'message': 'Success', 'datos': dPermisos}
                         else:
                             datos = {'message': 'Dato Invalidos', 'error':'¡Ups! la contraseña es incorrecta.'}
                     else:
@@ -186,12 +189,20 @@ class CAutenticacion(APIView):
 
         return JsonResponse(datos)
     
-
+    
     # def put(self,request):
     #     pass
 
     # def delete(self,request):
     #     pass
 
+
+class Protegida(APIView):
+    permission_classes = [IsAuthenticated]
     
+    def get(self, request):
+        
+        datos = {'content': 'Esta vista está protegida'}
+        # return Response({"content": "Esta vista está protegida"})  
+        return JsonResponse(datos)  
 

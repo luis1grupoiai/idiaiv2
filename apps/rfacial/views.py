@@ -7,6 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http.response import JsonResponse
 from apps.areas.models import *
 from apps.sistemas.models import *
+from apps.rfacial.models import *
 from passlib.hash import django_pbkdf2_sha256 as handler
 
 from django.shortcuts import render
@@ -21,6 +22,8 @@ from rest_framework.permissions import IsAuthenticated
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+
+from mycore.views.CEjecutarSP import CEjecutarSP
 
 
 import json
@@ -59,7 +62,10 @@ class CAutenticacion(APIView):
 
     def get(self,request):
         # usuarios = list(User.objects.values())
-        datos = {'message': 'Conexion exitosa a API AUTH :)'}
+       
+
+        datos = {'message': 'Conexion exitosa a API AUTH :): '}
+        
         # if len(usuarios)>0:
         #     # datos = {'message': 'Success','usuarios':usuarios}
         #     datos = {'message': 'Conexión exitosa :)'}
@@ -163,9 +169,12 @@ class CAutenticacion(APIView):
                             #Listado de permisos
                             # dPermisos = list(SistemaPermiso.objects.filter(sistema_id=sistema).values())
                             dPermisos = self.obtenerPermisos(sistema)
+                            dPerm = vUsuarioPermiso.objects.all()
+
+                            print("enlanzado al modelo vUsuarioPermiso: ")
                              
                             if len(dPermisos)>0:
-                                print(dPermisos)  
+                                print(dPerm)  
                             else:
                                 print("Este sistema no tiene permisos")  
 

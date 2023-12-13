@@ -41,13 +41,18 @@ import base64
 #         return JsonResponse(data)
 
 class CAutenticacion(APIView):
+        
+    oExecSP = CEjecutarSP()
 
-
-    @staticmethod
-    def obtenerPermisos(p_nIdSistema):
-        dPermisos = []
+    # @staticmethod
+    def obtenerPermisos(self, p_nIdSistema, p_nIdUsuario):
+        dPermisos = {}
         try:
-            dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema, permiso_id__isnull=False).values())
+            # dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema, permiso_id__isnull=False).values())
+            self.oExecSP.registrarParametros("idUsuario",p_nIdUsuario)
+            self.oExecSP.registrarParametros("idSistema",p_nIdSistema)
+            dPermisos = self.oExecSP.ejecutarSP("obtenerPermisosUsuario")
+            
         except ValueError as error:
             sTexto = "%s" % error
             print(sTexto)
@@ -57,15 +62,15 @@ class CAutenticacion(APIView):
     @staticmethod
     def prueba():
         print("Accede a metodo prueba...")
-        instancia = CEjecutarSP()
+        
 
        
-        instancia.registrarParametros("idUsuario",2)
-        sSP = "obtenerPermisosUsuario"
+        # instancia.registrarParametros("idUsuario",2)
+        # sSP = "obtenerPermisosUsuario"
         # instancia.registrarParametros("usuario","ana.sanchez")
         # instancia.registrarParametros("edad","14")
 
-        resultado = instancia.ejecutarSP(sSP)
+        # resultado = instancia.ejecutarSP(sSP)
 
     @method_decorator(csrf_exempt)
     def dispatch(self,request, *args, **kwargs):
@@ -172,7 +177,7 @@ class CAutenticacion(APIView):
                         dUsuario = list(User.objects.filter(username=jd['user'], is_active=1).values())
                         if len(dUsuario):
                             password = dUsuario[0]['password']
-                    
+                            idUsuario = dUsuario[0]['id']
                         #4. Verifica que la contraseña en base64 coincida con la password encriptada de BD.
                         #En caso de coincidir es como devuelve los permisos y grupos del usuario.
                         if  handler.verify(pwdD64,password):
@@ -180,18 +185,15 @@ class CAutenticacion(APIView):
                             
                             #Listado de permisos
                             # dPermisos = list(SistemaPermiso.objects.filter(sistema_id=sistema).values())
-                            dPermisos = self.obtenerPermisos(sistema)
-                            resultados = vUsuarioPermiso.objects.all()
+                            dPermisos = self.obtenerPermisos(sistema,idUsuario)
+                            # resultados = vUsuarioPermiso.objects.all()
 
-                            if len(dPermisos)>0:
-                                print("resultados :) ")  
+                            # if len(dPermisos)>0:
+                            #     print("resultados :) ")  
                                 
-                                print(resultados.query)  
-                                # primer_objeto = resultados[0]
-                                # print(primer_objeto)
-                            else:
-                                # print("Este sistema no tiene permisos")  
-                                sTexto += "Este sistema no tiene permisos"
+                            # else:
+                               
+                            #     sTexto += "Este sistema no tiene permisos"
 
                             
                             # datos = {'message': 'Success', 'datos': dUsuario}

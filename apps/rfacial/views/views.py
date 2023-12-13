@@ -61,10 +61,11 @@ class CAutenticacion(APIView):
 
        
         instancia.registrarParametros("idUsuario",2)
-        instancia.registrarParametros("username","ana.sanchez")
-        instancia.registrarParametros("edad","14")
+        sSP = "obtenerPermisosUsuario"
+        # instancia.registrarParametros("usuario","ana.sanchez")
+        # instancia.registrarParametros("edad","14")
 
-        resultado = instancia.ejecutarSP()
+        resultado = instancia.ejecutarSP(sSP)
 
     @method_decorator(csrf_exempt)
     def dispatch(self,request, *args, **kwargs):

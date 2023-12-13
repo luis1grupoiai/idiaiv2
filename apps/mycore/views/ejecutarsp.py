@@ -6,6 +6,7 @@ import json
 
 class CEjecutarSP():
 
+    #Clase que se encarga de ejecutar los procedimientos almacenados de la BD IDIAI
     #Definición y declaración de variables
     #El diccionario parametros debe contener el nombre del parametro y el valor de este, ejemplo:
     #parametros['idUsuario'] = 2

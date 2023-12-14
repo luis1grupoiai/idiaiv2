@@ -29,11 +29,11 @@ class CEjecutarSP():
 
         with connection.cursor() as cursor:
             try:
-                print(sNombreSP)
+                # print(sNombreSP)
                 
                 if len(sNombreSP)>0:
                     
-                    print("el Sp no esta vacio")
+                    # print("el Sp no esta vacio")
                     
                     sQuery = "EXEC "+sNombreSP+" "
                     
@@ -45,7 +45,7 @@ class CEjecutarSP():
                                 sQuery+= f'@{clave} = "{valor}", '
                             else:
                                 sQuery+= f'@{clave} = "{valor}"'
-                                print(nCont)    
+                                # print(nCont)    
 
                         print("El valor del query es: " +sQuery)
                         # cursor.execute("EXEC obtenerPermisosUsuario @idUsuario=%s",[2])

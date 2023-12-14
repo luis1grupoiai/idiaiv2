@@ -49,23 +49,24 @@ class CAutenticacion(APIView):
     def obtenerPermisos(self, p_nIdSistema, p_nIdUsuario):
         dPermisos = {}
         dPermisosUsuario = {}
+        print("Accede a metodo obtenerPermisos.")
         try:
             # dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema, permiso_id__isnull=False).values())
             self.oExecSP.registrarParametros("idUsuario",p_nIdUsuario)
             self.oExecSP.registrarParametros("idSistema",p_nIdSistema)
             dPermisos = self.oExecSP.ejecutarSP("obtenerPermisosUsuario")
 
-            print("el tipo de dato es: ")
-            print(type(dPermisos))
+            # print("el tipo de dato es: ")
+            # print(type(dPermisos))
 
             if len(dPermisos)>0:
-                print("El usuario si tiene acceso al sistema con clave: "+ str(p_nIdSistema))
+                # print("El usuario si tiene acceso al sistema con clave: "+ str(p_nIdSistema))
                 # print(dPermisos[0][12])
                 self.sNombreSistema = dPermisos[0][13]
                 for dPermiso in dPermisos:
                     dPermisosUsuario[dPermiso[6]] = dPermiso[7]
 
-                print(dPermisosUsuario)
+                # print(dPermisosUsuario)
 
             
         except ValueError as error:
@@ -78,25 +79,26 @@ class CAutenticacion(APIView):
     def obtenerGrupos(self, p_nIdSistema, p_nIdUsuario):
         dGrupos = {}
         dGruposUsuario = {}
+        print("Accede a metodo obtenerGrupos.")
         try:
             # dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema, permiso_id__isnull=False).values())
             self.oExecSP.registrarParametros("idUsuario",p_nIdUsuario)
             self.oExecSP.registrarParametros("idSistema",p_nIdSistema)
             dGrupos = self.oExecSP.ejecutarSP("obtenerGruposUsuario")
 
-            print("el tipo de dato es: ")
-            print(type(dGrupos))
+            # print("el tipo de dato es: ")
+            # print(type(dGrupos))
 
             if len(dGrupos)>0:
-                print("El usuario si tiene acceso al sistema con clave: "+ str(p_nIdSistema))
+                # print("El usuario si tiene acceso al sistema con clave: "+ str(p_nIdSistema))
                 # print(dPermisos[0][12])
                 self.sNombreSistema = dGrupos[0][16]
                 for dGrupo in dGrupos:
-                    dGruposUsuario[dGrupo[9]] = dGruposUsuario[dGrupo[15]] = dGrupo[13]
-                    # dGruposUsuario[dGrupo[15]] = dGrupo[13]
-                    
+                    sNombreGrupo = dGrupo[9]
 
-                print(dGruposUsuario)
+                    dGruposUsuario = self.ordenarGrupos(sNombreGrupo,dGrupos)
+
+                # print(dGruposUsuario)
 
             
         except ValueError as error:
@@ -104,6 +106,34 @@ class CAutenticacion(APIView):
             print(sTexto)
 
         return dGruposUsuario
+    
+    def ordenarGrupos(self,p_sElementoBuscado, p_dlistas):
+        try:
+            listas_coincidentes = []
+            dGrupoOrdenado = {}
+            dGrupoUsuario = {}
+
+            if len(p_sElementoBuscado)>0:
+                listas_coincidentes = [lista for lista in p_dlistas if p_sElementoBuscado in lista]
+                # print("Listas con el elemento coincidente:", listas_coincidentes)
+                
+                if len(listas_coincidentes)>0:
+                    for dGrupo in listas_coincidentes:
+                        dGrupoOrdenado[dGrupo[15]] = dGrupo[13]
+
+
+                dGrupoUsuario[p_sElementoBuscado] = dGrupoOrdenado
+
+                # print(dGrupoUsuario)
+
+            else:
+                print("El nombre del grupo no es el correcto.")
+        except ValueError as error:
+            sTexto = "Error en el metodo ordenarGrupos: %s" % error
+            print(sTexto)
+
+        return dGrupoUsuario
+
     
     @staticmethod
     def prueba():

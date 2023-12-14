@@ -61,7 +61,7 @@ class CAutenticacion(APIView):
             if len(dPermisos)>0:
                 print("El usuario si tiene acceso al sistema con clave: "+ str(p_nIdSistema))
                 # print(dPermisos[0][12])
-                self.sNombreSistema = dPermisos[0][12]
+                self.sNombreSistema = dPermisos[0][13]
                 for dPermiso in dPermisos:
                     dPermisosUsuario[dPermiso[6]] = dPermiso[7]
 
@@ -69,10 +69,41 @@ class CAutenticacion(APIView):
 
             
         except ValueError as error:
-            sTexto = "%s" % error
+            sTexto = "Error en el metodo obtenerPermisos: %s" % error
             print(sTexto)
 
         return dPermisosUsuario
+    
+
+    def obtenerGrupos(self, p_nIdSistema, p_nIdUsuario):
+        dGrupos = {}
+        dGruposUsuario = {}
+        try:
+            # dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema, permiso_id__isnull=False).values())
+            self.oExecSP.registrarParametros("idUsuario",p_nIdUsuario)
+            self.oExecSP.registrarParametros("idSistema",p_nIdSistema)
+            dGrupos = self.oExecSP.ejecutarSP("obtenerGruposUsuario")
+
+            print("el tipo de dato es: ")
+            print(type(dGrupos))
+
+            if len(dGrupos)>0:
+                print("El usuario si tiene acceso al sistema con clave: "+ str(p_nIdSistema))
+                # print(dPermisos[0][12])
+                self.sNombreSistema = dGrupos[0][16]
+                for dGrupo in dGrupos:
+                    dGruposUsuario[dGrupo[9]] = dGruposUsuario[dGrupo[15]] = dGrupo[13]
+                    # dGruposUsuario[dGrupo[15]] = dGrupo[13]
+                    
+
+                print(dGruposUsuario)
+
+            
+        except ValueError as error:
+            sTexto = "Error en el metodo obtenerGrupos: %s" % error
+            print(sTexto)
+
+        return dGruposUsuario
     
     @staticmethod
     def prueba():
@@ -143,7 +174,8 @@ class CAutenticacion(APIView):
             pwdD64 = ""
             dUsuario = ""
             dSistema = ""
-            dPermisos = []
+            dPermisos = {}
+            dGrupos = {}
             password = ""
             sistema = 0
             #total de items permitidos en la API, definidos en la diccionario dCamposJson
@@ -201,6 +233,7 @@ class CAutenticacion(APIView):
                             #Listado de permisos
                             # dPermisos = list(SistemaPermiso.objects.filter(sistema_id=sistema).values())
                             dPermisos = self.obtenerPermisos(sistema,idUsuario)
+                            dGrupos = self.obtenerGrupos(sistema,idUsuario)
                             # resultados = vUsuarioPermiso.objects.all()
 
                             # if len(dPermisos)>0:
@@ -212,7 +245,7 @@ class CAutenticacion(APIView):
 
                             
                             # datos = {'message': 'Success', 'datos': dUsuario}
-                            datos = {'message': 'Success', 'sistema':self.sNombreSistema,'permisos': dPermisos}
+                            datos = {'message': 'Success', 'sistema':self.sNombreSistema,'permisos': dPermisos, 'grupos':dGrupos}
                         else:
                             datos = {'message': 'Dato Invalidos', 'error':'¡Ups! la contraseña es incorrecta.'}
                     else:

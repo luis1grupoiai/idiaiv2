@@ -43,21 +43,36 @@ import base64
 class CAutenticacion(APIView):
         
     oExecSP = CEjecutarSP()
+    sNombreSistema = ""
 
     # @staticmethod
     def obtenerPermisos(self, p_nIdSistema, p_nIdUsuario):
         dPermisos = {}
+        dPermisosUsuario = {}
         try:
             # dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema, permiso_id__isnull=False).values())
             self.oExecSP.registrarParametros("idUsuario",p_nIdUsuario)
             self.oExecSP.registrarParametros("idSistema",p_nIdSistema)
             dPermisos = self.oExecSP.ejecutarSP("obtenerPermisosUsuario")
+
+            print("el tipo de dato es: ")
+            print(type(dPermisos))
+
+            if len(dPermisos)>0:
+                print("El usuario si tiene acceso al sistema con clave: "+ str(p_nIdSistema))
+                # print(dPermisos[0][12])
+                self.sNombreSistema = dPermisos[0][12]
+                for dPermiso in dPermisos:
+                    dPermisosUsuario[dPermiso[6]] = dPermiso[7]
+
+                print(dPermisosUsuario)
+
             
         except ValueError as error:
             sTexto = "%s" % error
             print(sTexto)
 
-        return dPermisos
+        return dPermisosUsuario
     
     @staticmethod
     def prueba():
@@ -197,7 +212,7 @@ class CAutenticacion(APIView):
 
                             
                             # datos = {'message': 'Success', 'datos': dUsuario}
-                            datos = {'message': 'Success', 'datos': dPermisos}
+                            datos = {'message': 'Success', 'sistema':self.sNombreSistema,'permisos': dPermisos}
                         else:
                             datos = {'message': 'Dato Invalidos', 'error':'¡Ups! la contraseña es incorrecta.'}
                     else:

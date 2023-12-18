@@ -3,6 +3,7 @@ version: '3.9' # version de docker-compose
 services: #declaracion de servicios para el contenedor 
   web:
     build: .
+    # command: ["./entrypoint.sh"]
     volumes:
       - .:/app
     ports:

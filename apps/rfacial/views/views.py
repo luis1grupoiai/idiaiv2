@@ -41,31 +41,112 @@ import base64
 #         return JsonResponse(data)
 
 class CAutenticacion(APIView):
+        
+    oExecSP = CEjecutarSP()
+    sNombreSistema = ""
 
-
-    @staticmethod
-    def obtenerPermisos(p_nIdSistema):
-        dPermisos = []
+    # @staticmethod
+    def obtenerPermisos(self, p_nIdSistema, p_nIdUsuario):
+        dPermisos = {}
+        dPermisosUsuario = {}
+        print("Accede a metodo obtenerPermisos.")
         try:
-            dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema, permiso_id__isnull=False).values())
+            # dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema, permiso_id__isnull=False).values())
+            self.oExecSP.registrarParametros("idUsuario",p_nIdUsuario)
+            self.oExecSP.registrarParametros("idSistema",p_nIdSistema)
+            dPermisos = self.oExecSP.ejecutarSP("obtenerPermisosUsuario")
+
+            # print("el tipo de dato es: ")
+            # print(type(dPermisos))
+
+            if len(dPermisos)>0:
+                # print("El usuario si tiene acceso al sistema con clave: "+ str(p_nIdSistema))
+                # print(dPermisos[0][12])
+                self.sNombreSistema = dPermisos[0][13]
+                for dPermiso in dPermisos:
+                    dPermisosUsuario[dPermiso[6]] = dPermiso[7]
+
+                # print(dPermisosUsuario)
+
+            
         except ValueError as error:
-            sTexto = "%s" % error
+            sTexto = "Error en el metodo obtenerPermisos: %s" % error
             print(sTexto)
 
-        return dPermisos
+        return dPermisosUsuario
+    
+
+    def obtenerGrupos(self, p_nIdSistema, p_nIdUsuario):
+        dGrupos = {}
+        dGruposUsuario = {}
+        print("Accede a metodo obtenerGrupos.")
+        try:
+            # dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema, permiso_id__isnull=False).values())
+            self.oExecSP.registrarParametros("idUsuario",p_nIdUsuario)
+            self.oExecSP.registrarParametros("idSistema",p_nIdSistema)
+            dGrupos = self.oExecSP.ejecutarSP("obtenerGruposUsuario")
+
+            # print("el tipo de dato es: ")
+            # print(type(dGrupos))
+
+            if len(dGrupos)>0:
+                # print("El usuario si tiene acceso al sistema con clave: "+ str(p_nIdSistema))
+                # print(dPermisos[0][12])
+                self.sNombreSistema = dGrupos[0][16]
+                for dGrupo in dGrupos:
+                    sNombreGrupo = dGrupo[9]
+
+                    dGruposUsuario = self.ordenarGrupos(sNombreGrupo,dGrupos)
+
+                # print(dGruposUsuario)
+
+            
+        except ValueError as error:
+            sTexto = "Error en el metodo obtenerGrupos: %s" % error
+            print(sTexto)
+
+        return dGruposUsuario
+    
+    def ordenarGrupos(self,p_sElementoBuscado, p_dlistas):
+        try:
+            listas_coincidentes = []
+            dGrupoOrdenado = {}
+            dGrupoUsuario = {}
+
+            if len(p_sElementoBuscado)>0:
+                listas_coincidentes = [lista for lista in p_dlistas if p_sElementoBuscado in lista]
+                # print("Listas con el elemento coincidente:", listas_coincidentes)
+                
+                if len(listas_coincidentes)>0:
+                    for dGrupo in listas_coincidentes:
+                        dGrupoOrdenado[dGrupo[15]] = dGrupo[13]
+
+
+                dGrupoUsuario[p_sElementoBuscado] = dGrupoOrdenado
+
+                # print(dGrupoUsuario)
+
+            else:
+                print("El nombre del grupo no es el correcto.")
+        except ValueError as error:
+            sTexto = "Error en el metodo ordenarGrupos: %s" % error
+            print(sTexto)
+
+        return dGrupoUsuario
+
     
     @staticmethod
     def prueba():
         print("Accede a metodo prueba...")
-        instancia = CEjecutarSP()
+        
 
        
-        instancia.registrarParametros("idUsuario",2)
-        sSP = "obtenerPermisosUsuario"
+        # instancia.registrarParametros("idUsuario",2)
+        # sSP = "obtenerPermisosUsuario"
         # instancia.registrarParametros("usuario","ana.sanchez")
         # instancia.registrarParametros("edad","14")
 
-        resultado = instancia.ejecutarSP(sSP)
+        # resultado = instancia.ejecutarSP(sSP)
 
     @method_decorator(csrf_exempt)
     def dispatch(self,request, *args, **kwargs):
@@ -123,7 +204,8 @@ class CAutenticacion(APIView):
             pwdD64 = ""
             dUsuario = ""
             dSistema = ""
-            dPermisos = []
+            dPermisos = {}
+            dGrupos = {}
             password = ""
             sistema = 0
             #total de items permitidos en la API, definidos en la diccionario dCamposJson
@@ -172,7 +254,7 @@ class CAutenticacion(APIView):
                         dUsuario = list(User.objects.filter(username=jd['user'], is_active=1).values())
                         if len(dUsuario):
                             password = dUsuario[0]['password']
-                    
+                            idUsuario = dUsuario[0]['id']
                         #4. Verifica que la contraseña en base64 coincida con la password encriptada de BD.
                         #En caso de coincidir es como devuelve los permisos y grupos del usuario.
                         if  handler.verify(pwdD64,password):
@@ -180,22 +262,20 @@ class CAutenticacion(APIView):
                             
                             #Listado de permisos
                             # dPermisos = list(SistemaPermiso.objects.filter(sistema_id=sistema).values())
-                            dPermisos = self.obtenerPermisos(sistema)
-                            resultados = vUsuarioPermiso.objects.all()
+                            dPermisos = self.obtenerPermisos(sistema,idUsuario)
+                            dGrupos = self.obtenerGrupos(sistema,idUsuario)
+                            # resultados = vUsuarioPermiso.objects.all()
 
-                            if len(dPermisos)>0:
-                                print("resultados :) ")  
+                            # if len(dPermisos)>0:
+                            #     print("resultados :) ")  
                                 
-                                print(resultados.query)  
-                                # primer_objeto = resultados[0]
-                                # print(primer_objeto)
-                            else:
-                                # print("Este sistema no tiene permisos")  
-                                sTexto += "Este sistema no tiene permisos"
+                            # else:
+                               
+                            #     sTexto += "Este sistema no tiene permisos"
 
                             
                             # datos = {'message': 'Success', 'datos': dUsuario}
-                            datos = {'message': 'Success', 'datos': dPermisos}
+                            datos = {'message': 'Success', 'sistema':self.sNombreSistema,'permisos': dPermisos, 'grupos':dGrupos}
                         else:
                             datos = {'message': 'Dato Invalidos', 'error':'¡Ups! la contraseña es incorrecta.'}
                     else:

@@ -24,14 +24,16 @@ class CEjecutarSP():
 
         sQuery = ""
         nCont = 0
+        nTot = 0
+        resultados = [] #lista que contendra los resultados de la consulta...
 
         with connection.cursor() as cursor:
             try:
-                print(sNombreSP)
+                # print(sNombreSP)
                 
                 if len(sNombreSP)>0:
                     
-                    print("el Sp no esta vacio")
+                    # print("el Sp no esta vacio")
                     
                     sQuery = "EXEC "+sNombreSP+" "
                     
@@ -43,27 +45,40 @@ class CEjecutarSP():
                                 sQuery+= f'@{clave} = "{valor}", '
                             else:
                                 sQuery+= f'@{clave} = "{valor}"'
-                                print(nCont)    
+                                # print(nCont)    
 
                         print("El valor del query es: " +sQuery)
                         # cursor.execute("EXEC obtenerPermisosUsuario @idUsuario=%s",[2])
                         cursor.execute(sQuery)
 
+                        #Se obtiene el resultado de la consulta en forma de lista
                         resultados = cursor.fetchall()
+
+                        # print("el tipo de dato es: ")
+                        # print(type(resultados))
+
+                        # if len(resultados)>0:
+                        #     print("El usuario si tiene acceso a este sistema...")
+                        #     #En un diccionario se agrega la clave del permiso y la descripción del permiso hacia el sistema.
+                        #     for resultado in resultados:
+                        #         # print(resultado[6])
+                        #         clave = resultado[6]
+                        #         dPermisosUsuario[clave] =  resultado[7]
+                             
+
+                        #     print(dPermisosUsuario)
+
+                        # else:
+                        #     print("El usuario no tiene acceso a este sistema...")
                         
-                        for resultado in resultados:
-                            print(resultado)
+                        
                     else:
                         print("No se recibieron parametros, por lo tanto se ejecutará el SP sin parametros.")
                         sQuery = "EXEC "+sNombreSP
 
                         cursor.execute(sQuery)
 
-                        resultados = cursor.fetchall()
-                        
-                        for resultado in resultados:
-                            print(resultado)
-
+                        resultados = cursor.fetchall()                       
                 else:
                     print("Por favor de pasar el nombre del Procedimiento Almacenado, sin este no se puede ejecutar el SP.")
 
@@ -73,4 +88,7 @@ class CEjecutarSP():
 
             except Exception as e:
                  print(f"Error al ejecutar el procedimiento almacenado: {str(e)}")
+
+            #retorna una lista de los registros obtenidos de la consulta.
+            return resultados
         

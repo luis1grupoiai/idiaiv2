@@ -9,6 +9,14 @@ from django.contrib.auth import authenticate, login
 
 # Create your views here.
 domino='DC=iai,DC=com,DC=mx'
+@login_required  
+def consultarUsuariosIDIAI(request):
+    
+    
+    context = {
+        'active_page': 'usuariosID'
+    }
+    return render(request, 'UsuariosIDIAI.html',context)
 
 @login_required  
 def consultar_usuarios(request):
@@ -63,9 +71,9 @@ def consultar_usuarios(request):
                 }
                 #print(entry.cn.value)
                # print(entry.distinguishedName.value if 'distinguishedName' in entry else None)
-                #print(entry.distinguishedName.value)
+                print(entry.userPrincipalName.value)
                 print(extraer_unidad_organizativa(entry.distinguishedName.value))
-                print(domain_name)
+                #print(domain_name)
                 usuarios.append(usuario)
                 #print(entry.department.value)
                 if entry.department.value == 'Administración' and not is_account_disabled(useraccountcontrol_str) :

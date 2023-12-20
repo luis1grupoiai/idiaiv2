@@ -94,9 +94,14 @@ class CAutenticacion(APIView):
                 # print(dPermisos[0][12])
                 self.sNombreSistema = dGrupos[0][16]
                 for dGrupo in dGrupos:
-                    sNombreGrupo = dGrupo[9]
+                    # sNombreGrupo = dGrupo[9]
+                    dGruposUsuario[dGrupo[15]] = dGrupo[13]
+                    
 
-                    dGruposUsuario = self.ordenarGrupos(sNombreGrupo,dGrupos)
+                    #Método encargado de ordenar los permisos por grupos en su correspondiente bloque
+                    #Se entregan los permisos de grupo dentro del bloque permisos, ya grupos no tendra un bloque propio
+                    #en la respuesta JSON de la api - 15/12/2023
+                    # dGruposUsuario = self.ordenarGrupos(sNombreGrupo,dGrupos)
 
                 # print(dGruposUsuario)
 
@@ -264,6 +269,9 @@ class CAutenticacion(APIView):
                             # dPermisos = list(SistemaPermiso.objects.filter(sistema_id=sistema).values())
                             dPermisos = self.obtenerPermisos(sistema,idUsuario)
                             dGrupos = self.obtenerGrupos(sistema,idUsuario)
+
+                            #El listado de permisos de grupos se unen al bloque permisos, todo junto.
+                            dPermisos.update(dGrupos)
                             # resultados = vUsuarioPermiso.objects.all()
 
                             # if len(dPermisos)>0:
@@ -275,7 +283,8 @@ class CAutenticacion(APIView):
 
                             
                             # datos = {'message': 'Success', 'datos': dUsuario}
-                            datos = {'message': 'Success', 'sistema':self.sNombreSistema,'permisos': dPermisos, 'grupos':dGrupos}
+                            # datos = {'message': 'Success', 'sistema':self.sNombreSistema,'permisos': dPermisos, 'grupos':dGrupos}
+                            datos = {'message': 'Success', 'sistema':self.sNombreSistema,'permisos': dPermisos}
                         else:
                             datos = {'message': 'Dato Invalidos', 'error':'¡Ups! la contraseña es incorrecta.'}
                     else:

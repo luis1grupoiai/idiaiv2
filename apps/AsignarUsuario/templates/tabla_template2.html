@@ -1,0 +1,33 @@
+<div class="table-responsive ">
+
+    <table id="{{ table_id }}" class="table table-hover table-striped"> 
+        <thead>
+                        <tr>
+                            <th class="text-center">Acción</th>
+                            <th class="text-center">Nombre Completo </th>
+                            <th class="text-center">Direccion</th>
+                            
+                        </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td class="d-flex">
+                
+                </td>
+              
+                <td>{{ user.nombre_completo}}<!--<br>{{ user.DistinguishedName}} --></td>
+             
+                <td>{{ user.departamento}}</td>
+                
+                
+            </tr>
+                        {% endfor %}
+         </tbody>
+    </table> 
+    
+         
+    
+    
+    
+ </div>

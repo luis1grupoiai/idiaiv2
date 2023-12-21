@@ -76,6 +76,26 @@ class CAutenticacion(APIView):
         return dPermisosUsuario
     
 
+    def obtenerDatosPersonales(self, p_nIdUsuario):
+        dDatos = {}
+        # dDatosUsuario = {}
+        print("Accede a metodo obtenerDatosPersonales.")
+        try:
+            
+            self.oExecSP.registrarParametros("idUsuario",p_nIdUsuario)
+            dDatos = self.oExecSP.ejecutarSP("obtenerDatosPersonales")
+
+            # if len(dDatos)>0:
+            #    dDatosUsuario = dDatos
+                
+
+                # print(dPermisosUsuario)           
+        except ValueError as error:
+            sTexto = "Error en el metodo obtenerDatosPersonales: %s" % error
+            print(sTexto)
+
+        return dDatos
+
     def obtenerGrupos(self, p_nIdSistema, p_nIdUsuario):
         dGrupos = {}
         dGruposUsuario = {}
@@ -209,10 +229,13 @@ class CAutenticacion(APIView):
             pwdD64 = ""
             dUsuario = ""
             dSistema = ""
+            dDatosPersonales = {}
             dPermisos = {}
             dGrupos = {}
             password = ""
             sistema = 0
+            idPersonal = 0
+            sNombreCompleto = ""
             #total de items permitidos en la API, definidos en la diccionario dCamposJson
             nLenDef = len(dCamposJson) 
             #Variable que almacenara el numero de items del json recibido por la API.
@@ -267,6 +290,12 @@ class CAutenticacion(APIView):
                             
                             #Listado de permisos
                             # dPermisos = list(SistemaPermiso.objects.filter(sistema_id=sistema).values())
+                            dDatosPersonales = self.obtenerDatosPersonales(idUsuario)
+                            if len(dDatosPersonales)>0:
+                                print(dDatosPersonales[0][1])
+                                idPersonal = dDatosPersonales[0][1]
+                                sNombreCompleto = dDatosPersonales[0][8]
+
                             dPermisos = self.obtenerPermisos(sistema,idUsuario)
                             dGrupos = self.obtenerGrupos(sistema,idUsuario)
 
@@ -284,7 +313,7 @@ class CAutenticacion(APIView):
                             
                             # datos = {'message': 'Success', 'datos': dUsuario}
                             # datos = {'message': 'Success', 'sistema':self.sNombreSistema,'permisos': dPermisos, 'grupos':dGrupos}
-                            datos = {'message': 'Success', 'sistema':self.sNombreSistema,'permisos': dPermisos}
+                            datos = {'message': 'Success','idPersonal':idPersonal,'usuario': jd['user'], 'password': jd['password'],'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'permisos': dPermisos}
                         else:
                             datos = {'message': 'Dato Invalidos', 'error':'¡Ups! la contraseña es incorrecta.'}
                     else:

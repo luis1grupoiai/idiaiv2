@@ -90,5 +90,7 @@ class CEjecutarSP():
                  print(f"Error al ejecutar el procedimiento almacenado: {str(e)}")
 
             #retorna una lista de los registros obtenidos de la consulta.
+            self.parametros = {}
+            
             return resultados
         

@@ -33,11 +33,11 @@ Personal de grupo IAI
 
     <ul class="nav nav-tabs" id="myTab" role="tablist">
         <li class="nav-item" role="presentation">
-            <a class="nav-link" id="all-tab" data-bs-toggle="tab" href="#all" role="tab"
+            <a class="nav-link active " id="all-tab" data-bs-toggle="tab" href="#all" role="tab"
                 aria-controls="all" aria-selected="false">Todos</a>
         </li>
         <li class="nav-item" role="presentation">
-            <a class="nav-link active" id="home-tab" data-bs-toggle="tab" href="#home" role="tab"
+            <a class="nav-link " id="home-tab" data-bs-toggle="tab" href="#home" role="tab"
                 aria-controls="home" aria-selected="true">Administración</a>
         </li>
         <li class="nav-item" role="presentation">
@@ -56,7 +56,7 @@ Personal de grupo IAI
        
     </ul>
     <div class="tab-content" id="myTabContent">
-        <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+        <div class="tab-pane fade " id="home" role="tabpanel" aria-labelledby="home-tab">
             <p class='my-2'>
                 
                 {% include 'tabla_template2.html' with table_id='myTable1' users=usersAdmin %}
@@ -84,7 +84,7 @@ Personal de grupo IAI
     
                 </p>
         </div>
-        <div class="tab-pane fade" id="pyes" role="tabpanel" aria-labelledby="contact-tab">
+        <div class="tab-pane fade " id="pyes" role="tabpanel" aria-labelledby="contact-tab">
             <p class="mt-2">
 
 
@@ -100,10 +100,10 @@ Personal de grupo IAI
 
   
 
-        <div class="tab-pane fade" id="all" role="tabpanel" aria-labelledby="all-tab">
+        <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
             <p class="mt-2">
 
-                {% include 'tabla_template2.html' with table_id='myTable6' users=users %}
+                {% include 'tabla_template2.html' with table_id='myTable6' users=empleados %}
    
 
             </p>

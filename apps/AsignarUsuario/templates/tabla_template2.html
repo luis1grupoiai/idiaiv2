@@ -13,12 +13,28 @@
             {% for user in users %}
             <tr>
                 <td class="d-flex">
+                <a
+                    name=""
+                    id=""
+                    class="btn btn-primary btn-sm me-1"
+                    href="#"
+                    role="button"
+                    >Solicitar Alta</a
+                >
+                <a
+                name=""
+                id=""
+                class="btn btn-danger btn-sm "
+                href="#"
+                role="button"
+                >Solicitar Baja</a
+            >
                 
                 </td>
               
-                <td>{{ user.nombre_completo}}<!--<br>{{ user.DistinguishedName}} --></td>
+                <td class="text-center">{{ user.NombreCompleto}}</td>
              
-                <td>{{ user.departamento}}</td>
+                <td class="text-center" >Direccion de Ingenieria</td>
                 
                 
             </tr>

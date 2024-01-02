@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Detección de Rostros en Tiempo Real</title>
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            position: relative;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            position: absolute;
+            top: -5px; /* Ajusta este valor para subir el cuadro de detección */
+            left: 0;
+        }
+
+
+        video {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+    <video id="video" autoplay muted></video>
+    <canvas id="canvas"></canvas>
+    <script>
+        let canvas, displaySize;
+        let isFrameSent = false; // Variable de control para evitar envíos múltiples
+        const video = document.getElementById('video');
+        const captureButton = document.getElementById('capture');
+
+        Promise.all([
+            faceapi.nets.tinyFaceDetector.loadFromUri('/static/models'),
+            // Carga aquí otros modelos si los necesitas
+        ]).then(startVideo);
+
+        function startVideo() {
+            navigator.mediaDevices.getUserMedia({ video: {} })
+                .then(stream => {
+                    video.srcObject = stream;
+                    video.onloadedmetadata = () => {
+                        video.play();
+                    }
+                })
+                .catch(err => console.error("Error accessing the camera", err));
+        }
+
+        video.addEventListener('loadedmetadata', () => {
+            // Crear canvas y añadirlo al DOM
+            canvas = faceapi.createCanvasFromMedia(video);
+            document.body.append(canvas);
+            displaySize = { width: video.videoWidth, height: video.videoHeight };
+            faceapi.matchDimensions(canvas, displaySize);
+            detectFaces(); // Ya no necesitas pasar canvas y displaySize
+        });
+
+        function detectFaces() {
+
+            if (isFrameSent) {
+                return; // Si ya se envió el frame, no hacer nada
+            }
+
+            setInterval(async () => {
+                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions());
+                const resizedDetections = faceapi.resizeResults(detections, displaySize);
+                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+                  if (detections.length > 0) {
+                    sendFrame();
+                }
+                faceapi.draw.drawDetections(canvas, resizedDetections);
+            }, 100);
+        }
+
+        function sendFrame() {
+
+            if (isFrameSent) {
+                return; // Evitar que la función se ejecute si ya se ha enviado el frame
+            }
+
+            isFrameSent = true; // Actualizar la variable de control
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            const data = canvas.toDataURL('image/jpeg');
+            fetch('../api/ReconFacial/', {
+                method: 'POST',
+                body: JSON.stringify({ imagen_base64: data }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    if (data.match) {
+                        // Si hay coincidencia, ocultamos el video y el canvas
+                        video.style.display = 'none';
+                        canvas.style.display = 'none';
+                        // Detener la detección y el stream de la cámara
+                        stopCameraStream();
+                    } else {
+                        alert("usuario no encontrado");
+                        // Opcional: resetear isFrameSent si quieres permitir reintentos
+                        isFrameSent = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al enviar la imagen:', error);
+                    // Opcional: resetear isFrameSent si quieres permitir reintentos
+                    isFrameSent = false;
+                });
+
+        }
+
+        function stopCameraStream() {
+            let stream = video.srcObject;
+            if (stream) {
+                let tracks = stream.getTracks();
+                tracks.forEach(track => track.stop());
+            }
+            video.srcObject = null;
+        }
+
+
+        // Función para obtener el CSRF token de Django
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>

@@ -12,7 +12,7 @@ from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-
+from apps.rfacial.models import RasgosFaciales
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.core.files.base import ContentFile
@@ -138,28 +138,36 @@ class CCompareFaces(APIView):
 
 # Ejemplo de usocx
 
-    # def get(self, request):
-    #     # Cargar una imagen estática desde tu servidor
-    #     image = face_recognition.load_image_file("staticfiles/admin/img/10972.jpg")
-        
-    #     # Convertir la imagen a formato numpy
-    #     image_np = np.array(image)
-
-    #     # Extraer encodings de las caras en la imagen
-    #     face_encodings = self.extract_face_encodings(image_np)
-
-    #     # Devolver los encodings como respuesta
-    #     encodings_as_list = [encoding.tolist() for encoding in face_encodings]  # Convierte los numpy arrays a listas para JSON
-       
-
-    #     return JsonResponse({'status': 'success', 'face_encodings': encodings_as_list})
-
-
     def get(self, request):
-        image_folder = "staticfiles/admin/img"
-        encodings_with_names = self.extract_encodings_from_images(image_folder)
+         # Cargar una imagen estática desde tu servidor
+         image = face_recognition.load_image_file("staticfiles/admin/img/10972.jpg")
+        
+         # Convertir la imagen a formato numpy
+         image_np = np.array(image)
 
-        # Preparar datos para la respuesta JSON
-        encodings_json = [{'image_name': name, 'encoding': encoding.tolist()} for name, encoding in encodings_with_names]
+         # Extraer encodings de las caras en la imagen
+         face_encodings = self.extract_face_encodings(image_np)
+        
+        
+         db_encodings = [(rasgo.id_personal, np.array(rasgo.rasgos_faciales)) for rasgo in RasgosFaciales.objects.all()]
+         if not db_encodings:
+                return JsonResponse({'status': 'Database is empty'})
 
-        return JsonResponse({'status': 'success', 'face_encodings': encodings_json})
+            # Preparar una lista de encodings de la base de datos para comparación
+         db_encoding_list = [db_encoding[1] for db_encoding in db_encodings]
+
+         TOLERANCE = 0.5  # Ajusta este valor según sea necesario
+         best_match_id = None
+         lowest_distance = float('inf')
+
+         for encoding in face_encodings:
+                distances = face_recognition.face_distance(db_encoding_list, encoding)
+                for db_encoding, distance in zip(db_encodings, distances):
+                    if distance < lowest_distance and distance < TOLERANCE:
+                        lowest_distance = distance
+                        best_match_id = db_encoding[0]
+
+         if best_match_id is None:
+                return JsonResponse({'status': 'No Match'})
+         else:
+                return JsonResponse({'status': 'Match Found', 'best_match_id': best_match_id})

@@ -21,6 +21,7 @@ class VallEmpleado(models.Model):
     Nombre_ct = models.CharField(max_length=200)
     nombre_direccion = models.CharField(max_length=200)
     nombre_coordinacion = models.CharField(max_length=200)
+    is_active= models.CharField(max_length=2)
     
 
     class Meta:

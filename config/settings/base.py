@@ -7,7 +7,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # Application definition
 
 BASE_APPS = [
-    'jazzmin',
+    'unfold',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -20,8 +20,9 @@ LOCAL_APPS = [
     'apps.mycore',
     'apps.areas',
     'apps.rfacial',
-    'apps.ActiveDirectory',
     'apps.sistemas',
+    'apps.componentes',
+    'apps.ActiveDirectory',
     'apps.AsignarUsuario'
 ]
 
@@ -47,6 +48,8 @@ BASE_MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_components.middleware.ComponentDependencyMiddleware',
+
 ]
 
 LOCAL_MIDDLEWARE =[
@@ -68,6 +71,8 @@ TEMPLATES = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [os.path.join(BASE_DIR,),
                  os.path.join(BASE_DIR, 'apps/ActiveDirectory/templates'),
+                 os.path.join(BASE_DIR, 'components', 'templates'),
+                 
                  os.path.join(BASE_DIR, 'apps/AsignarUsuario/templates'),
                  ],
         # 'APP_DIRS': True,
@@ -91,6 +96,10 @@ TEMPLATES = [
         },
     },
 ]
+
+COMPONENTS = { 'RENDER_DEPENDENCIES': True }
+
+
 
 WSGI_APPLICATION = 'config.wsgi.application'
 

@@ -33,11 +33,11 @@ Personal de grupo IAI
 
     <ul class="nav nav-tabs" id="myTab" role="tablist">
         <li class="nav-item" role="presentation">
-            <a class="nav-link" id="all-tab" data-bs-toggle="tab" href="#all" role="tab"
+            <a class="nav-link active " id="all-tab" data-bs-toggle="tab" href="#all" role="tab"
                 aria-controls="all" aria-selected="false">Todos</a>
         </li>
         <li class="nav-item" role="presentation">
-            <a class="nav-link active" id="home-tab" data-bs-toggle="tab" href="#home" role="tab"
+            <a class="nav-link " id="home-tab" data-bs-toggle="tab" href="#home" role="tab"
                 aria-controls="home" aria-selected="true">Administración</a>
         </li>
         <li class="nav-item" role="presentation">
@@ -56,10 +56,10 @@ Personal de grupo IAI
        
     </ul>
     <div class="tab-content" id="myTabContent">
-        <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+        <div class="tab-pane fade " id="home" role="tabpanel" aria-labelledby="home-tab">
             <p class='my-2'>
                 
-                {% include 'tabla_template2.html' with table_id='myTable1' users=usersAdmin %}
+                {% include 'tabla_personal.html' with table_id='myTable1' users=usersAdmin %}
 
 
 
@@ -71,7 +71,7 @@ Personal de grupo IAI
         <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
             <p class='my-2'>
                 
-                {% include 'tabla_template2.html' with table_id='myTable2' users=usersIng %}
+                {% include 'tabla_personal.html' with table_id='myTable2' users=usersIng %}
     
                 </p>
         </div>
@@ -79,16 +79,16 @@ Personal de grupo IAI
             <p class='my-2'>
                 
                 
-                {% include 'tabla_template2.html' with table_id='myTable3' users=usersDCASS %}
+                {% include 'tabla_personal.html' with table_id='myTable3' users=usersDCASS %}
     
     
                 </p>
         </div>
-        <div class="tab-pane fade" id="pyes" role="tabpanel" aria-labelledby="contact-tab">
+        <div class="tab-pane fade " id="pyes" role="tabpanel" aria-labelledby="contact-tab">
             <p class="mt-2">
 
 
-                {% include 'tabla_template2.html' with table_id='myTable4' users=usersPS %}
+                {% include 'tabla_personal.html' with table_id='myTable4' users=usersPS %}
 
 
 
@@ -100,10 +100,10 @@ Personal de grupo IAI
 
   
 
-        <div class="tab-pane fade" id="all" role="tabpanel" aria-labelledby="all-tab">
+        <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
             <p class="mt-2">
 
-                {% include 'tabla_template2.html' with table_id='myTable6' users=users %}
+                {% include 'tabla_personal.html' with table_id='myTable6' users=empleados %}
    
 
             </p>
@@ -158,46 +158,5 @@ Personal de grupo IAI
     
 
 
-            function activarUsuario(nombreUsuario,numeroControlUsuario) {
-                $.ajax({
-                    url: 'activar_usuario/' + nombreUsuario + '/',
-                    method: 'POST',
-                    data: {
-                        'csrfmiddlewaretoken': getCSRFToken() // Asegúrate de obtener el token CSRF
-                    },
-                    success: function(response) {
-                        alert("Usuario  activado correctamente.");
-                        location.reload(); // Recarga la página
-                        // Aquí puedes agregar código para actualizar la UI según sea necesario
-                    },
-                    error: function(error) {
-                        alert("Error al activar el usuario.");
-                        // Manejo de errores
-                    }
-                });
-            }
-            
-            function desactivarUsuario(nombreUsuario,numeroControlUsuario) {
-                $.ajax({
-                    url: 'desactivar_usuario/' + nombreUsuario + '/',
-                    method: 'POST',
-                    data: {
-                        'csrfmiddlewaretoken': getCSRFToken() // Asegúrate de obtener el token CSRF
-                    },
-                    success: function(response) {
-                        alert("Usuario desactivado correctamente.");
-                        location.reload(); // Recarga la página
-                        // Aquí puedes agregar código para actualizar la UI según sea necesario
-                    },
-                    error: function(error) {
-                        alert("Error al desactivar el usuario.");
-                        // Manejo de errores
-                    }
-                });
-            }
-            
-            function getCSRFToken() {
-                return document.querySelector('[name=csrfmiddlewaretoken]').value;
-            }
         </script>
     {% endblock%}

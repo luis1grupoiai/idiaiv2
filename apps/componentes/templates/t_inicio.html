@@ -90,10 +90,9 @@
             canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
             const data = canvas.toDataURL('image/jpeg');
-
-            fetch('detect_faces/', {
+            fetch('../api/ReconFacial/', {
                 method: 'POST',
-                body: JSON.stringify({ image: data }),
+                body: JSON.stringify({ imagen_base64: data }),
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken')

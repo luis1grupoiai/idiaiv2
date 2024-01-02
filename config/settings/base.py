@@ -7,7 +7,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # Application definition
 
 BASE_APPS = [
-    'jazzmin',
+    'unfold',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -20,6 +20,7 @@ LOCAL_APPS = [
     'apps.mycore',
     'apps.areas',
     'apps.rfacial',
+    'apps.sistemas',
     'apps.componentes',
     'apps.ActiveDirectory'
 ]

@@ -8,9 +8,10 @@ class Calendar(component.Component):
     template_name = "components/calendar/calendar.html"
 
     # This component takes one parameter, a date string to show in the template
-    def get_context_data(self, date):
+    def get_context_data(self, date,clase):
         return {
             "date": date,
+            "clase":clase,
         }
 
     class Media:

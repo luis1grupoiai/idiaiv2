@@ -48,7 +48,8 @@ BASE_MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_components.middleware.ComponentDependencyMiddleware',
-
+    'querycount.middleware.QueryCountMiddleware'
+    
 ]
 
 LOCAL_MIDDLEWARE =[

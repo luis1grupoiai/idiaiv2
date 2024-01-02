@@ -22,7 +22,8 @@ LOCAL_APPS = [
     'apps.rfacial',
     'apps.sistemas',
     'apps.componentes',
-    'apps.ActiveDirectory'
+    'apps.ActiveDirectory',
+    'apps.AsignarUsuario'
 ]
 
 THIRD_APPS = [

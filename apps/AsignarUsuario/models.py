@@ -1,13 +1,9 @@
 from django.db import models
 
-# Create your models here.
-from django.db import models
-
-
         
 class VallEmpleado(models.Model):
     id = models.IntegerField(primary_key=True)
-    id_personal = models.IntegerField()
+    id_personal = models.IntegerField(unique=True)
     username = models.CharField(max_length=150)
     password = models.CharField(max_length=128)
     Nombre_ps = models.CharField(max_length=150)
@@ -21,6 +17,7 @@ class VallEmpleado(models.Model):
     Nombre_ct = models.CharField(max_length=200)
     nombre_direccion = models.CharField(max_length=200)
     nombre_coordinacion = models.CharField(max_length=200)
+    is_active= models.BooleanField()
     
 
     class Meta:

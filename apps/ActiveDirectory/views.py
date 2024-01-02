@@ -7,8 +7,20 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 from django.contrib.auth import authenticate, login
 
+
+
+
 # Create your views here.
 domino='DC=iai,DC=com,DC=mx'
+@login_required  
+def consultarUsuariosIDIAI(request):
+    
+    
+    context = {
+        'active_page': 'usuariosID',
+        'nombre_usuario': nameUser(request)
+    }
+    return render(request, 'UsuariosIDIAI.html',context)
 
 @login_required  
 def consultar_usuarios(request):
@@ -63,9 +75,9 @@ def consultar_usuarios(request):
                 }
                 #print(entry.cn.value)
                # print(entry.distinguishedName.value if 'distinguishedName' in entry else None)
-                #print(entry.distinguishedName.value)
+                print(entry.userPrincipalName.value)
                 print(extraer_unidad_organizativa(entry.distinguishedName.value))
-                print(domain_name)
+                #print(domain_name)
                 usuarios.append(usuario)
                 #print(entry.department.value)
                 if entry.department.value == 'Administración' and not is_account_disabled(useraccountcontrol_str) :
@@ -97,7 +109,8 @@ def consultar_usuarios(request):
         'usersDCASS':usuariosDCASS,
         'usersPS':UsuariosPS,
         'usersDown':UsuaruisDown,
-        'active_page': 'usuarios'  # Variable adicional
+        'active_page': 'usuarios',
+        'nombre_usuario': nameUser(request)# Variable adicional
         # Puedes agregar más variables aquí si lo necesitas
     }
     # Renderiza la lista de usuarios en una plantilla HTML
@@ -159,7 +172,8 @@ def agregar_usuario(request):
             
   # Crear el diccionario de contexto con todas las variables necesarias
     context = {
-        'active_page': 'agregar_usuario'  # Variable adicional para el boton del menu 
+        'active_page': 'agregar_usuario',
+        'nombre_usuario': nameUser(request)# Variable adicional para el boton del menu 
         # Puedes agregar más variables aquí si lo necesitas
     }          
     
@@ -295,3 +309,8 @@ def extraer_unidad_organizativa(dn):
     return unidades_organizativas
 
 
+def nameUser(request):
+    if request.user.is_authenticated:
+        nombreUsuario = request.user.first_name+" "+request.user.last_name 
+    
+    return  nombreUsuario

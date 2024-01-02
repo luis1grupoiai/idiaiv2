@@ -23,14 +23,19 @@ DATABASES = {
         'USER': os.environ.get('DB_USER'),
         'PASSWORD': os.environ.get('DB_PASSWORD'),
         'HOST': os.environ.get('DB_HOST'),
-        'PORT': '',
+        'PORT': os.environ.get('DB_PORT'),
         'OPTIONS':{
             'driver': 'ODBC Driver 17 for SQL Server',
             'unicode_results': True,
         },
     },
 }
-
+AD_SERVER = 'ldap://192.192.194.10'  # Cambia esto segun tu servidor
+AD_PORT = 389  # El puerto por defecto es 389
+AD_USER = 'CN=desarrollo,CN=Users,DC=iai,DC=com,DC=mx'  # Cambia esto segun tus credenciales
+#dsquery user -name desarrollo
+#dsget user "CN=desarrollo,CN=Users,DC=iai,DC=com,DC=mx"
+AD_PASSWORD = 'D3sarrollo'
 
 # DATABASES = {
 #     'default': {
@@ -39,15 +44,13 @@ DATABASES = {
 #     }
 # }
 
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-# Configuración de LDAP
+STATIC_URL = '/static/'
 
-AD_SERVER = 'ldap://192.192.194.10'  # Cambia esto según tu servidor
-AD_PORT = 389  # El puerto por defecto es 389
-AD_USER = 'CN=desarrollo,CN=Users,DC=iai,DC=com,DC=mx'  # Cambia esto según tus credenciales
-#dsquery user -name desarrollo
-#dsget user "CN=desarrollo,CN=Users,DC=iai,DC=com,DC=mx"
-AD_PASSWORD = 'D3sarrollo'
-LOGIN_REDIRECT_URL = 'home' 
-LOGOUT_REDIRECT_URL = 'home'
+STATICFILES_DIRS = [
+    BASE_DIR / "components",
+]
+
 

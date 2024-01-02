@@ -28,7 +28,19 @@
 
 <div class="container">
     <div class="row text-center">
-        <div class="col-6">
+        <div class="col-4">
+            <div class="card" >
+                <a href=" {% url 'solicitud' %}">
+                <img src="/static/img/solicitud.png" class="card-img-top" alt="Descripción de la imagen"  >
+            </a>
+                <div class="card-body">
+                  <h5 class="card-title">Solicitud de alta de usuario</h5>
+                  
+                  <a href=" {% url 'solicitud' %}" class="btn btn-primary">Entrar</a>
+                </div>
+              </div>
+    </div>
+        <div class="col-4">
             <div class="card" >
                 <a href="admin/">
                 <img src="/static/img/IDIAI.png" class="card-img-top" alt="Descripción de la imagen" >
@@ -40,7 +52,7 @@
                 </div>
               </div>
         </div>
-        <div class="col-6">
+        <div class="col-4">
             <div class="card" >
                 <a href=" {% url 'usuarios' %}">
                 <img src="/static/img/PHYTONAD.png" class="card-img-top" alt="Descripción de la imagen"  >
@@ -52,6 +64,7 @@
                 </div>
               </div>
     </div>
+
     
 </div>
 

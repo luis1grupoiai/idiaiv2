@@ -12,6 +12,10 @@ Dashboard - Activate Directory
 <!-- Espacio para CSS adicional de plantillas hijas -->
 {% endblock %}
 
+{% block Encabezado %}
+<h3>Bienvenido a Active Directory:</h3>
+<p class="text-subtitle text-muted">Su plataforma para visualizar, crear y editar usuarios.</p>
+{% endblock %}
 
 {% block EncabezadoNav%}
 Consulta
@@ -25,6 +29,10 @@ Usuarios de Activate Directory
 {% block contenido %}
 
     <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="all-tab" data-bs-toggle="tab" href="#all" role="tab"
+                aria-controls="all" aria-selected="false">Todos</a>
+        </li>
         <li class="nav-item" role="presentation">
             <a class="nav-link active" id="home-tab" data-bs-toggle="tab" href="#home" role="tab"
                 aria-controls="home" aria-selected="true">Administración</a>
@@ -45,10 +53,7 @@ Usuarios de Activate Directory
             <a class="nav-link" id="bajas-tab" data-bs-toggle="tab" href="#bajas" role="tab"
                 aria-controls="bajas" aria-selected="false">Bajas</a>
         </li>
-        <li class="nav-item" role="presentation">
-            <a class="nav-link" id="all-tab" data-bs-toggle="tab" href="#all" role="tab"
-                aria-controls="all" aria-selected="false">Todos</a>
-        </li>
+       
     </ul>
     <div class="tab-content" id="myTabContent">
         <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">

@@ -25,7 +25,7 @@ DATABASES = {
         'USER': os.environ.get('DB_USER'),
         'PASSWORD': os.environ.get('DB_PASSWORD'),
         'HOST': os.environ.get('DB_HOST'),
-        'PORT': '',
+        'PORT': os.environ.get('DB_PORT'),
         'OPTIONS':{
             'driver': 'ODBC Driver 17 for SQL Server',
             'unicode_results': True,
@@ -33,14 +33,13 @@ DATABASES = {
     },
 }
 
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_ROOT=Path.joinpath(BASE_DIR, 'staticfiles')
+STATIC_URL = '/static/'
 
-# STORAGES = {
-#     "staticfiles": {
-#         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-#     },
-# }
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 LOGIN_REDIRECT_URL = 'home' 

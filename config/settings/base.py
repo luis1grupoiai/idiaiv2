@@ -72,6 +72,7 @@ TEMPLATES = [
                  os.path.join(BASE_DIR, 'apps/ActiveDirectory/templates'),
                  os.path.join(BASE_DIR, 'components', 'templates'),
                  
+                 os.path.join(BASE_DIR, 'apps/AsignarUsuario/templates'),
                  ],
         # 'APP_DIRS': True,
         'OPTIONS': {
@@ -145,7 +146,6 @@ STATIC_URL = 'static/'
 
 STATICFILES_DIRS = [
     BASE_DIR / "components",
-    BASE_DIR / "staticfiles"
 ]
 
 # Default primary key field type

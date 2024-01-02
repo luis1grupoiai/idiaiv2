@@ -1,0 +1,162 @@
+{% extends "mazer\baseAU.html" %}
+
+{% block title%}
+Personal de Grupo IAI  - IDIAI
+{% endblock title %}
+
+{% block extra_css %}
+
+<link rel="stylesheet" href="/static/assets/extensions/datatables.net-bs5/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="/static/assets/compiled/css/table-datatable-jquery.css">
+<!-- Espacio para CSS adicional de plantillas hijas -->
+{% endblock %}
+
+{% block Encabezado %}
+<h3>Bienvenido a IDIAI:</h3>
+<p class="text-subtitle text-muted">Plataforma para solicitar usuarios para el personal del Grupo IAI</p>
+{% endblock %}
+
+
+{% block EncabezadoNav%}
+Solicitud
+{% endblock EncabezadoNav %}
+
+
+
+{% block EncabezadoCard%}
+Personal de grupo IAI
+{% endblock EncabezadoCard %}
+
+
+
+{% block contenido %}
+
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link active " id="all-tab" data-bs-toggle="tab" href="#all" role="tab"
+                aria-controls="all" aria-selected="false">Todos</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link " id="home-tab" data-bs-toggle="tab" href="#home" role="tab"
+                aria-controls="home" aria-selected="true">Administración</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="profile-tab" data-bs-toggle="tab" href="#profile" role="tab"
+                aria-controls="profile" aria-selected="false">Ingeniería</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="contact-tab" data-bs-toggle="tab" href="#contact" role="tab"
+                aria-controls="contact" aria-selected="false">DCASS</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="pyes-tab" data-bs-toggle="tab" href="#pyes" role="tab"
+                aria-controls="pyes" aria-selected="false">Proyectos Especiales</a>
+        </li>
+      
+       
+    </ul>
+    <div class="tab-content" id="myTabContent">
+        <div class="tab-pane fade " id="home" role="tabpanel" aria-labelledby="home-tab">
+            <p class='my-2'>
+                
+                {% include 'tabla_personal.html' with table_id='myTable1' users=usersAdmin %}
+
+
+
+            </p>
+        </div>
+
+
+        
+        <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+            <p class='my-2'>
+                
+                {% include 'tabla_personal.html' with table_id='myTable2' users=usersIng %}
+    
+                </p>
+        </div>
+        <div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">
+            <p class='my-2'>
+                
+                
+                {% include 'tabla_personal.html' with table_id='myTable3' users=usersDCASS %}
+    
+    
+                </p>
+        </div>
+        <div class="tab-pane fade " id="pyes" role="tabpanel" aria-labelledby="contact-tab">
+            <p class="mt-2">
+
+
+                {% include 'tabla_personal.html' with table_id='myTable4' users=usersPS %}
+
+
+
+
+
+            </p>
+        </div>
+
+
+  
+
+        <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
+            <p class="mt-2">
+
+                {% include 'tabla_personal.html' with table_id='myTable6' users=empleados %}
+   
+
+            </p>
+        </div>
+    </div>
+
+
+
+
+
+
+
+   
+   
+                            {% endblock %}
+
+    {% block script %} 
+    
+    <script src="/static/assets/extensions/jquery/jquery.min.js"></script>
+    <script src="/static/assets/extensions/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="/static/assets/extensions/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="/static/assets/static/js/pages/datatables.js"></script>
+    <script>
+        $(document).ready(function() {
+            var config = {
+                "pageLength": 10,
+                "language": {
+                    "lengthMenu": "Mostrar _MENU_ usuarios por página",
+                    "zeroRecords": "No se encontraron resultados",
+                    "info": "Mostrando página _PAGE_ de _PAGES_",
+                    "infoEmpty": "No hay usuarios disponibles",
+                    "infoFiltered": "(filtrado de _MAX_ registros totales)",
+                    "search": "Buscar:",
+                    "paginate": {
+                        "first": "Primero",
+                        "last": "Último",
+                        "next": "Siguiente",
+                        "previous": "Anterior"
+                    },
+                    "loadingRecords": "Cargando...",
+                    "processing": "Procesando...",
+                    "emptyTable": "No hay datos disponibles en la tabla",
+                    "aria": {
+                        "sortAscending": ": activar para ordenar la columna de manera ascendente",
+                        "sortDescending": ": activar para ordenar la columna de manera descendente"
+                    }
+                }
+            };
+        
+            $('#myTable1, #myTable2, #myTable3, #myTable4, #myTable5, #myTable6').DataTable(config);
+        });
+    
+
+
+        </script>
+    {% endblock%}

@@ -29,18 +29,18 @@ DATABASES = {
             'unicode_results': True,
         },
     },
-    # 'db2': {
-    #     'ENGINE': 'mssql',
-    #     'NAME': os.environ.get('DB_NAME_DB2'),
-    #     'USER': os.environ.get('DB_USER_DB2'),
-    #     'PASSWORD': os.environ.get('DB_PASSWORD_DB2'),
-    #     'HOST': os.environ.get('DB_HOST_DB2'),
-    #     'PORT': os.environ.get('DB_PORT_DB2'),
-    #     'OPTIONS': {
-    #         'driver': 'ODBC Driver 17 for SQL Server',
-    #         'unicode_results': True,
-    #     },
-    # },
+    'db2': {
+        'ENGINE': 'mssql',
+        'NAME': os.environ.get('DB_NAME_DB2'),
+        'USER': os.environ.get('DB_USER_DB2'),
+        'PASSWORD': os.environ.get('DB_PASSWORD_DB2'),
+        'HOST': os.environ.get('DB_HOST_DB2'),
+        'PORT': os.environ.get('DB_PORT_DB2'),
+        'OPTIONS': {
+            'driver': 'ODBC Driver 17 for SQL Server',
+            'unicode_results': True,
+        },
+    },
 }
 
 

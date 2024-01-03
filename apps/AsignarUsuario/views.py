@@ -30,8 +30,7 @@ def solicitudNuevos(request):
     # Aquí la lógica para mostrar la página de inicio
     empleados = []
     empleados = VallEmpleado.objects.filter(Q(username__isnull=True) )
-    if request.user.is_authenticated:
-        nombreUsuario = request.user.first_name+" "+request.user.last_name 
+
    # print(empleados)
     context = {
         'empleados' : empleados,

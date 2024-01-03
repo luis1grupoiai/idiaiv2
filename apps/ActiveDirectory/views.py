@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 from django.contrib.auth import authenticate, login
-
+from apps.AsignarUsuario.models import VallEmpleado 
 
 
 
@@ -14,11 +14,29 @@ from django.contrib.auth import authenticate, login
 domino='DC=iai,DC=com,DC=mx'
 @login_required  
 def consultarUsuariosIDIAI(request):
+    # Obtiene los usuarios de la base de datos
+    usuarios = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='').exclude(is_active=False)
+    usuariosAdmin =VallEmpleado.objects.filter(nombre_direccion="Administración")
+    usuariosIng = VallEmpleado.objects.filter(nombre_direccion="Ingeniería")
+    usuariosDCASS =VallEmpleado.objects.filter(nombre_direccion="Calidad, Ambiental, Seguridad y Salud")
+    UsuariosPS =VallEmpleado.objects.filter(nombre_direccion="Proyectos Especiales")
+    UsuaruisDown = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='').exclude(is_active=True)
     
-    
+     # Verifica la existencia en AD para cada conjunto de usuarios y agrega la información al contexto
+    for conjunto_usuarios in [usuarios, usuariosAdmin, usuariosIng, usuariosDCASS, UsuariosPS, UsuaruisDown]:
+        for usuario in conjunto_usuarios:
+            # Suponiendo que 'username' es el campo relevante para verificar en AD
+            usuario.existe_en_ad = existeUsuario(usuario.username)
+
     context = {
         'active_page': 'usuariosID',
-        'nombre_usuario': nameUser(request)
+        'nombre_usuario': nameUser(request),
+        'users': usuarios,
+        'usersDown' : UsuaruisDown,
+        'usersAdmin': usuariosAdmin,
+        'usersIng': usuariosIng,
+        'usersDCASS':usuariosDCASS,
+        'usersPS':UsuariosPS,
     }
     return render(request, 'UsuariosIDIAI.html',context)
 
@@ -75,8 +93,9 @@ def consultar_usuarios(request):
                 }
                 #print(entry.cn.value)
                # print(entry.distinguishedName.value if 'distinguishedName' in entry else None)
-                print(entry.userPrincipalName.value)
-                print(extraer_unidad_organizativa(entry.distinguishedName.value))
+                #print(entry.userPrincipalName.value)
+                #print(entry.distinguishedName.value)
+                #print(extraer_unidad_organizativa(entry.distinguishedName.value))
                 #print(domain_name)
                 usuarios.append(usuario)
                 #print(entry.department.value)
@@ -250,7 +269,20 @@ def is_account_disabled(useraccountcontrol_str):
         # En caso de que el valor no sea un número, asumir que la cuenta no está deshabilitada
         return False
  
-   
+def existeUsuario(nombreUsuario):
+    try:
+        server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
+        with Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True) as conn:
+            search_base = domino  # Asegúrate de que domino está definido y es correcto.
+            search_filter = f'(cn={nombreUsuario})'  # Filtro para buscar por Common Name
+            conn.search(search_base, search_filter, attributes=['cn'])
+            return len(conn.entries) > 0
+    except Exception as e:
+        print(f"Error al buscar en Active Directory: {str(e)}")
+        return False
+
+
+ 
 def activar_usuario(request, nombre_usuario):
     print("entro a activar el usuario :"+str(nombre_usuario))
     try:

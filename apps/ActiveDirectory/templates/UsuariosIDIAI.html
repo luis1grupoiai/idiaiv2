@@ -58,6 +58,7 @@ Usuarios de IDIAI
         </li>
        
     </ul>
+
     <div class="tab-content" id="myTabContent">
         <div class="tab-pane fade " id="home" role="tabpanel" aria-labelledby="home-tab">
             <p class='my-2'>
@@ -125,145 +126,103 @@ Usuarios de IDIAI
 
 
 
-
-    <div class="modal fade text-left" id="userModal" tabindex="-1" role="dialog"  aria-labelledby="myModalLabel4" data-bs-backdrop="false" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h4 class="modal-title" id="myModalLabel4">Detalles del Usuario</h4>
-                                            <button type="button" class="close" data-bs-dismiss="modal"
-                                                aria-label="Close">
-                                                <i data-feather="x"></i>
-                                            </button>
-                                        </div>
-                                        <div class="modal-body">
-                                             <!-- Aquí van los detalles del usuario -->
-                                             <div class="row align-content-center " >
-                                                <div class="col-md-12">
-                                                <p id="modalPuesto"></p> 
-
-                                                </div>
-                                                <div class="col-md-6"> 
-                                                <p id="modalNombre"></p>
-                                                
-                                                </div>
-                                                <div class="col-md-6"> 
-                                                <p id="modalApellidos"></p>
-                                                </div>
-                                                <div class="col-md-12">    
-                                                <p id="modalnombreSesion"></p>   
-                                                <p id="modalNombreUsuarioPrincipal"></p>
-                                                </div>
-                                            </div>
-                                            <!-- Agrega más campos según sea necesario -->
-                                        </div>
-                                        <div class="modal-footer">
-                                           
-                                            <button type="button" class="btn btn-primary ms-1" data-bs-dismiss="modal">
-                                                <i class="bx bx-check d-block d-sm-none"></i>
-                                                <span class="d-none d-sm-block">Aceptar</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="modal fade text-left" id="editUserModal" tabindex="-1" role="dialog"
-                            aria-labelledby="myModalLabel33" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg"
-                                        role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h4 class="modal-title" id="myModalLabel33">Editar Usuario</h4>
-                                        <button type="button" class="close" data-bs-dismiss="modal"
-                                            aria-label="Close">
-                                            <i data-feather="x"></i>
-                                        </button>
-                                    </div>
-                                    <form action="{% url 'editar_usuario' %}" method="post">
-                                        {% csrf_token %}
-                                        <div class="modal-body">
-                                           
-
-                                            <div class="row align-content-center " >
-                                                
-                                            <div class="col-6">
-                                                <div class="mb-2">
-                                                    <label for="nombre_inicio_sesion" class="form-label">Nombre de inicio de sesion de usuario:</label>
-                                                    <input type="text" class="form-control" name="nombre_inicio_sesion" id="nombre_inicio_sesion" required>
-                                                </div>
-                                                <div class="mb-2">
-                                                 <!--  <label for="nombre_usuario" class="form-label">Nombre de Usuario:</label>--> 
-                                                    <input type="hidden" class="form-control" name="nombre_usuario" id="nombre_usuario" required >
-                                                    <input type="hidden" class="form-control" name="distinguished_name" id="distinguished_name" required >
-                                                </div>
-                                            </div>
-                                            <div class="col-6">
-                                                
-                                            </div>    
-                            
-                                            <div class="col-6">
-                                            <div class="mb-2">
-                                                <label for="nombre_pila" class="form-label">Nombre de pila:</label>
-                                                <input type="text" class="form-control" name="nombre_pila" id="nombre_pila" required >
-                                            </div>
-                                            </div>
-                                            <div class="col-6">
-                                            <div class="mb-2">
-                                                <label for="apellido" class="form-label">Apellidos:</label>
-                                                <input type="text" class="form-control" name="apellido" id="apellido" required>
-                                            </div>
-                                            </div>
-                                            <div class="mb-2">
-                                                <label for="nombre_completo" class="form-label">Nombre Completo:</label>
-                                                <input type="text" class="form-control" name="nombre_completo" id="nombre_completo" required>
-                                            </div>
-                                            <div class="col-6">
-                                                <div class="mb-2">Dirección:</label>
-                                                    <select class="form-control select2" name="departamento" id="departamento" required>
-        
-                                                        <option value="None">Seleccione una Opción </option>
-                                                        <option value="Administración">Administración</option>
-                                                        <option value="Calidad, Ambiental, Seguridad y Salud">Calidad, Ambiental, Seguridad y Salud</option>
-                                                        <option value="Proyectos Especiales">Proyectos Especiales</option>
-                                                        <option value="Ingeniería">Ingeniería</option>
-                                                        
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="col-6">
-                                            <div class="mb-2">
-                                                <label for="puesto" class="form-label">Puesto :</label>
-                                                <input type="text" class="form-control" name="puesto" id="puesto" required>
-                                            </div>
-                                            </div>
-                            
-                            
-                                            <div class="mb-2">
-                                                <label for="email" class="form-label">Correo electronico :</label>
-                                                <input type="email" class="form-control" name="email" id="email" value="@grupo-iai.com.mx" required>
-                                            </div>
-                                          
-                            
-                                           
-                                               
-
-                                          
-
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-light-secondary"
-                                                data-bs-dismiss="modal">
-                                                <i class="bx bx-x d-block d-sm-none"></i>
-                                                <span class="d-none d-sm-block">Cerrar</span>
-                                            </button>
-                                            <button type="submit" class="btn btn-primary">Guardar</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
    
+
+                        <div class="modal fade text-left" id="crearUserModal" tabindex="-1" role="dialog"
+                        aria-labelledby="myModalLabel33" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg"
+                                    role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h4 class="modal-title" id="myModalLabel33">Crear Usuario de Active Directory</h4>
+                                    <button type="button" class="close" data-bs-dismiss="modal"
+                                        aria-label="Close">
+                                        <i data-feather="x"></i>
+                                    </button>
+                                </div>
+                                <form action="{% url 'editar_usuario' %}" method="post">
+                                    {% csrf_token %}
+                                    <div class="modal-body">
+                                       
+
+                                        <div class="row align-content-center " >
+                                            
+                                        <div class="col-6">
+                                            <div class="mb-2">
+                                                <label for="nombre_inicio_sesion" class="form-label">Nombre de inicio de sesion de usuario:</label>
+                                                <input type="text" class="form-control" name="nombre_inicio_sesion" id="nombre_inicio_sesion" required>
+                                            </div>
+                                            <div class="mb-2">
+                                             <!--  <label for="nombre_usuario" class="form-label">Nombre de Usuario:</label>--> 
+                                                <input type="hidden" class="form-control" name="nombre_usuario" id="nombre_usuario" required >
+                                                <input type="hidden" class="form-control" name="distinguished_name" id="distinguished_name" required >
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            
+                                        </div>    
+                        
+                                        <div class="col-6">
+                                        <div class="mb-2">
+                                            <label for="nombre_pila" class="form-label">Nombre de pila:</label>
+                                            <input type="text" class="form-control" name="nombre_pila" id="nombre_pila" required >
+                                        </div>
+                                        </div>
+                                        <div class="col-6">
+                                        <div class="mb-2">
+                                            <label for="apellido" class="form-label">Apellidos:</label>
+                                            <input type="text" class="form-control" name="apellido" id="apellido" required>
+                                        </div>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label for="nombre_completo" class="form-label">Nombre Completo:</label>
+                                            <input type="text" class="form-control" name="nombre_completo" id="nombre_completo" required>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="mb-2">Dirección:</label>
+                                                <select class="form-control select2" name="departamento" id="departamento" required>
+    
+                                                    <option value="None">Seleccione una Opción </option>
+                                                    <option value="Administración">Administración</option>
+                                                    <option value="Calidad, Ambiental, Seguridad y Salud">Calidad, Ambiental, Seguridad y Salud</option>
+                                                    <option value="Proyectos Especiales">Proyectos Especiales</option>
+                                                    <option value="Ingeniería">Ingeniería</option>
+                                                    
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                        <div class="mb-2">
+                                            <label for="puesto" class="form-label">Puesto :</label>
+                                            <input type="text" class="form-control" name="puesto" id="puesto" required>
+                                        </div>
+                                        </div>
+                        
+                        
+                                        <div class="mb-2">
+                                            <label for="email" class="form-label">Correo electronico :</label>
+                                            <input type="email" class="form-control" name="email" id="email" value="@grupo-iai.com.mx" required>
+                                        </div>
+                                      
+                        
+                                       
+                                           
+
+                                      
+
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-light-secondary"
+                                            data-bs-dismiss="modal">
+                                            <i class="bx bx-x d-block d-sm-none"></i>
+                                            <span class="d-none d-sm-block">Cerrar</span>
+                                        </button>
+                                        <button type="submit" class="btn btn-primary">Guardar</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div> </div>
+                        
                             {% endblock %}
 
     {% block script %} 
@@ -301,32 +260,8 @@ Usuarios de IDIAI
         
             $('#myTable1, #myTable2, #myTable3, #myTable4, #myTable5, #myTable6').DataTable(config);
         });
-            function showUserDetails(button) {
-                // Utiliza data attributes para obtener la información
-                var puesto = button.getAttribute('data-puesto');
-                var nombreSesion = button.getAttribute('data-nombreSesion');
-                var nombreUsuarioPrincipal = button.getAttribute('data-nombreUsuarioPrincipal');
-                var nombrePila = button.getAttribute('data-nombrePila');
-                var apellidos = button.getAttribute('data-apellidos');
 
-
-                // ... obtén otros datos usando data attributes
-        
-                // Rellena los datos en el modal
-                document.getElementById("modalPuesto").innerText = "Puesto: " + puesto;
-                document.getElementById("modalnombreSesion").innerText = "Nombre de Sesión: " + nombreSesion;
-                document.getElementById("modalNombreUsuarioPrincipal").innerText = "Usuario Principal: " + nombreUsuarioPrincipal;
-                document.getElementById("modalNombre").innerText = "Nombre : " + nombrePila;
-                document.getElementById("modalApellidos").innerText = "Apellidos : " + apellidos;
-
-                
-                // ... rellena otros campos del modal
-        
-                // Abre el modal
-                var modal = new bootstrap.Modal(document.getElementById('userModal'));
-                modal.show();
-            }
-            function editUser(button) {
+            function creartUser(button) {
                   // Utiliza data attributes para obtener la información
                     var nombre = button.getAttribute('data-nombre');
                     var nombrePila = button.getAttribute('data-nombrePila');
@@ -349,7 +284,7 @@ Usuarios de IDIAI
                     document.getElementById('departamento').value = departamento ;
                     document.getElementById('distinguished_name').value =distinguishedName;
                     // Abre el modal
-                    var modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+                    var modal = new bootstrap.Modal(document.getElementById('crearUserModal'));
                     modal.show();
             }
               
@@ -363,7 +298,7 @@ Usuarios de IDIAI
             // Esperar a que el DOM se cargue completamente
               document.addEventListener("DOMContentLoaded", function() {
                 // Obtener el elemento del modal por su ID
-                var userModal = document.getElementById('editUserModal');
+                var userModal = document.getElementById('crearUserModal');
         
                 // Listener para el evento 'hidden.bs.modal', que se dispara después de que el modal se ha cerrado
                userModal.addEventListener('hidden.bs.modal', function () {
@@ -374,46 +309,6 @@ Usuarios de IDIAI
           
 
 
-            function activarUsuario(nombreUsuario,numeroControlUsuario) {
-                $.ajax({
-                    url: 'activar_usuario/' + nombreUsuario + '/',
-                    method: 'POST',
-                    data: {
-                        'csrfmiddlewaretoken': getCSRFToken() // Asegúrate de obtener el token CSRF
-                    },
-                    success: function(response) {
-                        alert("Usuario  activado correctamente.");
-                        location.reload(); // Recarga la página
-                        // Aquí puedes agregar código para actualizar la UI según sea necesario
-                    },
-                    error: function(error) {
-                        alert("Error al activar el usuario.");
-                        // Manejo de errores
-                    }
-                });
-            }
-            
-            function desactivarUsuario(nombreUsuario,numeroControlUsuario) {
-                $.ajax({
-                    url: 'desactivar_usuario/' + nombreUsuario + '/',
-                    method: 'POST',
-                    data: {
-                        'csrfmiddlewaretoken': getCSRFToken() // Asegúrate de obtener el token CSRF
-                    },
-                    success: function(response) {
-                        alert("Usuario desactivado correctamente.");
-                        location.reload(); // Recarga la página
-                        // Aquí puedes agregar código para actualizar la UI según sea necesario
-                    },
-                    error: function(error) {
-                        alert("Error al desactivar el usuario.");
-                        // Manejo de errores
-                    }
-                });
-            }
-            
-            function getCSRFToken() {
-                return document.querySelector('[name=csrfmiddlewaretoken]').value;
-            }
+  
         </script>
     {% endblock%}

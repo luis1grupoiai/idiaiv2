@@ -4,7 +4,8 @@
         <thead>
                         <tr>
                             <th class="text-center" >Acción</th>
-                            <th class="text-center" >Nombre Completo </th>
+                            <th class="text-center" >Usuario </th>
+                            <th class="text-center" >Nombre  </th>
                             <th class="text-center" style="width: 20%;">Email</th>
                             <th class="text-center" style="width: 20%;">Direccion</th>
                             <th class="text-center" style="width: 20%;">Puesto</th>
@@ -15,35 +16,37 @@
             {% for user in users %}
             <tr>
                 <td class="text-center" >
-                    {% if user.username is  none  %}
-                    <a
-                    name=""
-                    id=""
-                    class="btn btn-primary btn-sm me-1"
-                    href="#"
-                    role="button"
-                    >Alta</a>
-                    {% else %}
-                    <a
-                    name=""
-                    id=""
-                    class="btn btn-danger btn-sm "
-                    href="#"
-                    role="button"
-                    >Solicitar Baja</a >
+                    {% if user.existe_en_ad is  False  %}
+                    
+                    <button type="button" class="btn icon btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#crearUserModal" 
+                    data-nombre="{{ user.username }}"
+                    data-nombrePila ="{{ user.Nombre_ps}}"
+                    data-apellidos ="{{ user.Apaterno_ps}} {{ user.Amaterno_ps}} "
+                    data-puesto ="{{ user.Nombre_ct }}"
+                    data-nombreSesion ="{{ user.username}}"
+                    data-nombreCompleto ="{{ user.NombreCompleto }}"
+                    data-email ="{{ user.email }}"
+                    data-deparamento="{{ user.NombreCompleto}}"
+                    data-distinguishedName="{{ user.username }}"
+                    onclick="creartUser(this);">
+                    <i class="bi bi-person-plus"></i> 
+                    </button>
+                    
                     {% endif %}</td>
                
                    
               
                 
                 </td>
-              
+                <td class="text-center" >
+                    {{ user.username }}
+                   </td>
                 <td class="text-center" >{% if user.NombreCompleto is not none  %}
                                         {{ user.NombreCompleto}}
                                         {% else %}
-                                        {{ user.Nombre_ps }} {{ user.Apaterno_ps }} {{ user.Amaterno_ps }}  {{ user.is_active }} 
+                                        {{ user.Nombre_ps }} {{ user.Apaterno_ps }} {{ user.Amaterno_ps }}  
                                         {% endif %}</td>
-                <td class="text-center" style="width: 20%;">{{ user.nombre_direccion}}</td>
+                <td class="text-center" style="width: 20%;">{{ user.email}}</td>
                 <td class="text-center" style="width: 20%;">{{ user.nombre_direccion}}</td>
                 <td class="text-center" style="width: 20%;">{{ user.Nombre_ct}}</td>
                 

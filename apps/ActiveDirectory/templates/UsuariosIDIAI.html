@@ -33,11 +33,11 @@ Usuarios de IDIAI
 
     <ul class="nav nav-tabs" id="myTab" role="tablist">
         <li class="nav-item" role="presentation">
-            <a class="nav-link" id="all-tab" data-bs-toggle="tab" href="#all" role="tab"
+            <a class="nav-link active" id="all-tab" data-bs-toggle="tab" href="#all" role="tab"
                 aria-controls="all" aria-selected="false">Todos</a>
         </li>
         <li class="nav-item" role="presentation">
-            <a class="nav-link active" id="home-tab" data-bs-toggle="tab" href="#home" role="tab"
+            <a class="nav-link " id="home-tab" data-bs-toggle="tab" href="#home" role="tab"
                 aria-controls="home" aria-selected="true">Administración</a>
         </li>
         <li class="nav-item" role="presentation">
@@ -59,10 +59,10 @@ Usuarios de IDIAI
        
     </ul>
     <div class="tab-content" id="myTabContent">
-        <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+        <div class="tab-pane fade " id="home" role="tabpanel" aria-labelledby="home-tab">
             <p class='my-2'>
                 
-                {% include 'tabla_template.html' with table_id='myTable1' users=usersAdmin %}
+                {% include 'tabla_IDIAI.html' with table_id='myTable1' users=usersAdmin %}
 
 
 
@@ -74,7 +74,7 @@ Usuarios de IDIAI
         <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
             <p class='my-2'>
                 
-                {% include 'tabla_template.html' with table_id='myTable2' users=usersIng %}
+                {% include 'tabla_IDIAI.html' with table_id='myTable2' users=usersIng %}
     
                 </p>
         </div>
@@ -82,7 +82,7 @@ Usuarios de IDIAI
             <p class='my-2'>
                 
                 
-                {% include 'tabla_template.html' with table_id='myTable3' users=usersDCASS %}
+                {% include 'tabla_IDIAI.html' with table_id='myTable3' users=usersDCASS %}
     
     
                 </p>
@@ -91,7 +91,7 @@ Usuarios de IDIAI
             <p class="mt-2">
 
 
-                {% include 'tabla_template.html' with table_id='myTable4' users=usersPS %}
+                {% include 'tabla_IDIAI.html' with table_id='myTable4' users=usersPS %}
 
 
 
@@ -104,16 +104,16 @@ Usuarios de IDIAI
         <div class="tab-pane fade" id="bajas" role="tabpanel" aria-labelledby="bajas-tab">
             <p class="mt-2">
 
-                {% include 'tabla_template.html' with table_id='myTable5' users=usersDown %}
+                {% include 'tabla_IDIAI.html' with table_id='myTable5' users=usersDown %}
    
 
             </p>
         </div>
 
-        <div class="tab-pane fade" id="all" role="tabpanel" aria-labelledby="all-tab">
+        <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
             <p class="mt-2">
 
-                {% include 'tabla_template.html' with table_id='myTable6' users=users %}
+                {% include 'tabla_IDIAI.html' with table_id='myTable6' users=users %}
    
 
             </p>

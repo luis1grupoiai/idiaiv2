@@ -26,12 +26,12 @@ class Direccion(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-
     def __str__(self):
         return self.nombre
         # Personaliza cómo se mostrará el nombre del modelo en la interfaz de administración de Django
         verbose_name = 'Direcciones'
         verbose_name_plural = 'Direcciones'
+
 
 class Gerencia(models.Model):
     nombre = models.CharField(max_length=255)
@@ -40,13 +40,13 @@ class Gerencia(models.Model):
     id_direccion = models.ForeignKey(Direccion, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
 
     def __str__(self):
         return self.nombre
         # Personaliza cómo se mostrará el nombre del modelo en la interfaz de administración de Django
         verbose_name = 'Gerencias'
         verbose_name_plural = 'Gerencias'
+
 
 class Coordinacion(models.Model):
     nombre = models.CharField(max_length=255)
@@ -57,7 +57,6 @@ class Coordinacion(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-
     def __str__(self):
         return self.nombre
         # Personaliza cómo se mostrará el nombre del modelo en la interfaz de administración de Django

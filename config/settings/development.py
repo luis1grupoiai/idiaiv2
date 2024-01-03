@@ -19,16 +19,28 @@ ALLOWED_HOSTS = []
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST'),
-        'PORT': os.environ.get('DB_PORT'),
-        'OPTIONS':{
+        'NAME': os.environ.get('DB_NAME_DEFAULT'),
+        'USER': os.environ.get('DB_USER_DEFAULT'),
+        'PASSWORD': os.environ.get('DB_PASSWORD_DEFAULT'),
+        'HOST': os.environ.get('DB_HOST_DEFAULT'),
+        'PORT': os.environ.get('DB_PORT_DEFAULT'),
+        'OPTIONS': {
             'driver': 'ODBC Driver 17 for SQL Server',
             'unicode_results': True,
         },
     },
+    # 'db2': {
+    #     'ENGINE': 'mssql',
+    #     'NAME': os.environ.get('DB_NAME_DB2'),
+    #     'USER': os.environ.get('DB_USER_DB2'),
+    #     'PASSWORD': os.environ.get('DB_PASSWORD_DB2'),
+    #     'HOST': os.environ.get('DB_HOST_DB2'),
+    #     'PORT': os.environ.get('DB_PORT_DB2'),
+    #     'OPTIONS': {
+    #         'driver': 'ODBC Driver 17 for SQL Server',
+    #         'unicode_results': True,
+    #     },
+    # },
 }
 
 

@@ -4,10 +4,12 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
 # from django.http import HttpResponse
+from django.db import models
 from django.http.response import JsonResponse
 from apps.areas.models import *
 from apps.sistemas.models import *
 from apps.rfacial.models import *
+from apps.AsignarUsuario.models import *
 from passlib.hash import django_pbkdf2_sha256 as handler
 
 from django.shortcuts import render
@@ -182,8 +184,10 @@ class CAutenticacion(APIView):
     def get(self,request):
         # usuarios = list(User.objects.values())
         datos = {'message': 'Conexion exitosa a API AUTH :)'}
+        # dDatosPersonales = self.obtenerDatosPersonales("2")
 
-        self.prueba()
+        # empleados = VallEmpleado.objects.filter(id=2)
+        # self.prueba()
         # if len(usuarios)>0:
         #     # datos = {'message': 'Success','usuarios':usuarios}
         #     datos = {'message': 'Conexión exitosa :)'}

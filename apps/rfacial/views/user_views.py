@@ -2,193 +2,172 @@
 from django.views import View
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-
 # from django.http import HttpResponse
 from django.http.response import JsonResponse
 from apps.areas.models import *
 from apps.sistemas.models import *
 from passlib.hash import django_pbkdf2_sha256 as handler
-
 from django.shortcuts import render
 from django.http import JsonResponse
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-
+from apps.rfacial.models import RasgosFaciales
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from django.core.files.base import ContentFile
+from PIL import Image as PilImage
+from PIL import Image
+
+from django import forms
+from io import BytesIO
 
 
 import json
 import os
 import base64
-# from camera import VideoCamera, IPWebCam
-# import numpy as np
-# import cv2
-# import os, urllib
-# import mediapipe as mp
-
-# def swagger_json(request):
-#         with open('swagger/apiAuth.json', 'r') as json_file:
-#             data = json.load(json_file)
-#         return JsonResponse(data)
-
-class CAutenticacio(APIView):
+import face_recognition
+import cv2
+import numpy as np
 
 
-    @staticmethod
-    def obtenerPermisos(p_nIdSistema):
-        dPermisos = []
-        try:
-            dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema).values())
-        except ValueError as error:
-            sTexto = "%s" % error
-            print(sTexto)
+class CReconFacial(APIView):
 
-        return dPermisos
 
     @method_decorator(csrf_exempt)
     def dispatch(self,request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
     
-    
 
     def get(self,request):
-        # usuarios = list(User.objects.values())
         datos = {'message': 'Conexion exitosa a API AUTH :)'}
-        # if len(usuarios)>0:
-        #     # datos = {'message': 'Success','usuarios':usuarios}
-        #     datos = {'message': 'ConexiÛn exitosa :)'}
-        # else:
-        #     datos = {'message': 'Usuarios no encontrados.'}
-
+    
         return JsonResponse(datos)
        
+    def process_base64_image(self, image_base64):
+        encoded_data = image_base64.split(',')[1]
+        image = Image.open(BytesIO(base64.b64decode(encoded_data)))
+        image_np = np.array(image)
+        return image_np
+    
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'token': openapi.Schema(type=openapi.TYPE_STRING, description='Token de autenticacion.'),
-                'user': openapi.Schema(type=openapi.TYPE_STRING, description='Nombre de usuario.'),
-                'password': openapi.Schema(type=openapi.TYPE_STRING, description='contrasena en base64.'),
-                'idSistema': openapi.Schema(type=openapi.TYPE_INTEGER, description='Id del sistema donde el usuario esta iniciando sesion.'),
+                'imagen_base64': openapi.Schema(type=openapi.TYPE_STRING, description='Imagen en formato base64.'),
+                # Otros campos que necesites
             },
-            required=['token', 'user', 'password','idSistema']
+            required=['imagen_base64']
         ),
-        responses={200: 'Usuario loggeado exitosamente'},
+        responses={200: openapi.Response('Procesamiento exitoso')}
     )
 
-
-    def post(self,request):
-        # Realiza la validaciÛn de las credenciales de los usuarios.
-        #Para realizar un consulta exitosa, envÌa un objeto JSON con los siguientes campos:
+    # Este m√©todo maneja la solicitud POST y utiliza 'process_base64_image'
+    def post(self, request):
+        data = json.loads(request.body)
+        image_base64 = data.get('imagen_base64')  # Extrae directamente la cadena base64
        
-        #Metodo Post
-        #Este metodo se encarga de validar las credenciales del ususario que se esta loggeando al sistema,
-        # como resultado obtiene (mediante el userName, password, idSistema y Token) los permisos y grupos del usuario.
+        if not image_base64:
+            return JsonResponse({'status': 'error', 'message': 'No image data provided'}, status=400)
 
         try:
-            #1. Carga los valores del json obtenido por el metodo post.
-            jd = json.loads(request.body)
-          
-            
-            #DeclaraciÛn y asignaciÛn de variables
-            bValido = True
-            dCamposJson = ['token', 'user', 'password','idSistema']
-            sTexto = ""
-            pwdD64 = ""
-            dUsuario = ""
-            dSistema = ""
-            dPermisos = []
-            password = ""
-            sistema = 0
-            #total de items permitidos en la API, definidos en la diccionario dCamposJson
-            nLenDef = len(dCamposJson) 
-            #Variable que almacenara el numero de items del json recibido por la API.
-            numero_de_items = 0 
-            
+            image_np = self.process_base64_image(image_base64)
+            match = self.detect_faces_dnn(image_np)
+            return JsonResponse({'status': 'success', 'match': match})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+   
 
-            #Valida que el numero de claves del JSON enviado a la API
-            #coincida con el numero de claves declaras en el diccioario dCamposJson
-            nItemJson = len(jd)
-            
-            if nItemJson != nLenDef:
-                sTexto = "El tamano del JSON obtenido no es el esperado, por favor de verificar. "
-                bValido = False
+    # Esta funci√≥n detecta rostros en la imagen y devuelve si hay una coincidencia
+    def detect_faces_dnn(self, image_np):
+        face_locations = face_recognition.face_locations(image_np)
+
+        if face_locations:
+            known_image = face_recognition.load_image_file("staticfiles/admin/img/10972.jpg")
+            known_encoding = face_recognition.face_encodings(known_image)[0]
+            unknown_encoding = face_recognition.face_encodings(image_np, known_face_locations=face_locations)[0]
+
+            results = face_recognition.compare_faces([known_encoding], unknown_encoding, tolerance=0.5)
+            match = results[0].item()  # Convierte np.bool_ a bool
+
+        else:
+            match = False
+
+        return match
 
 
+def convert_to_response_image(image_np):
+    is_success, buffer = cv2.imencode(".jpg", image_np)
+    return ContentFile(buffer.tobytes())
 
-            #ValidaciÛn de las claves json, si alguna clave no se encuentra en el objeto, entonces
-            #el valor de bValido es Falso y regresa un mensaje de error indicando el identificador
-            #  faltante.
-            for item in dCamposJson:
-                if item in jd:
-                    continue
+class ImageUploadForm(forms.Form): 
+    image = forms.ImageField()
+
+class CCompareFaces(APIView):   
+
+    def extract_face_encodings(self, image):
+        # Detectar las caras en la imagen
+        face_locations = face_recognition.face_locations(image, model="hog")
+
+        # Extraer los encodings de cada cara detectada
+        face_encodings = face_recognition.face_encodings(image, known_face_locations=face_locations)
+
+        return face_encodings
+    
+    @staticmethod
+    def extract_encodings_from_images(image_folder):
+        all_encodings = []
+
+        for filename in os.listdir(image_folder):
+            if filename.lower().endswith((".jpg", ".png", ".jpeg")):
+                # Separar el nombre del archivo y su extensi√≥n
+                name_without_extension, _ = os.path.splitext(filename)
+                
+                image_path = os.path.join(image_folder, filename)
+                image = face_recognition.load_image_file(image_path)
+                face_locations = face_recognition.face_locations(image)
+
+                if face_locations:
+                    encodings = face_recognition.face_encodings(image, face_locations)
+                    for encoding in encodings:
+                        all_encodings.append((name_without_extension, encoding))
                 else:
-                    sTexto += "El campo faltante es: "+item+". "
-                    bValido = False
-                    break
-            
-            #si las claves estan correctas, continuara realizando el resto del proceso
-            # de autenticaciÛn
-            if bValido:
+                    print(f"No se encontraron rostros en {filename}")
 
-                #2. Compara el token obtenido del json contra el secretKey de la aplicaciÛn.
-                if(jd['token'] == os.environ.get('SECRET_KEY')):
+        return all_encodings
 
-                    dSistema = list(Sistemas.objects.filter(id=jd['idSistema']).values())
-                    if len(dSistema)>0:
-                        sistema = dSistema[0]['id']
-                    
-                    if sistema>0:
-                        #3. Decodifica el password en base64
-                        pwdD64 = base64.b64decode(jd['password'])
-                    
-                        #Obtiene el registro del usuario mediante el userName.
-                        dUsuario = list(User.objects.filter(username=jd['user'], is_active=1).values())
-                        if len(dUsuario):
-                            password = dUsuario[0]['password']
-                    
-                        #4. Verifica que la contraseÒa en base64 coincida con la password encriptada de BD.
-                        #En caso de coincidir es como devuelve los permisos y grupos del usuario.
-                        if  handler.verify(pwdD64,password):
-                            # print("Las contraseÒas son iguales")
-                            
-                            #Listado de permisos
-                            # dPermisos = list(SistemaPermiso.objects.filter(sistema_id=sistema).values())
-                            dPermisos = self.obtenerPermisos(sistema)
-                             
-                            if len(dPermisos)>0:
-                                print(dPermisos)  
-                            else:
-                                print("Este sistema no tiene permisos")  
+# Ejemplo de usocx
 
-                            
-                            datos = {'message': 'Success', 'datos': dUsuario}
-                        else:
-                            datos = {'message': 'Dato Invalidos', 'error':'la contrasena es incorrecta.'}
-                    else:
-                        datos = {'message': 'Dato Invalidos', 'error':'Id de sistema invalido'}                   
-                else:
-                    datos = {'message': 'Dato invalido.', 'error': 'El Token es incorrecto.'}
-            else:
-                datos = {'message': 'JSON invalido.', 'error': sTexto}
-            
-        except ValueError as error:
-            sTexto = "%s" % error
-            datos = {'message': 'JSON invalido. ', "error": sTexto}
-            # return False
+    def get(self, request):
+         # Cargar una imagen est√°tica desde tu servidor
+         image = face_recognition.load_image_file("staticfiles/admin/img/10972.jpg")
         
+         # Convertir la imagen a formato numpy
+         image_np = np.array(image)
 
-        return JsonResponse(datos)
-    
+         # Extraer encodings de las caras en la imagen
+         face_encodings = self.extract_face_encodings(image_np)
+        
+        
+         db_encodings = [(rasgo.id_personal, np.array(rasgo.rasgos_faciales)) for rasgo in RasgosFaciales.objects.all()]
+         if not db_encodings:
+                return JsonResponse({'status': 'Database is empty'})
 
-    # def put(self,request):
-    #     pass
+            # Preparar una lista de encodings de la base de datos para comparaci√≥n
+         db_encoding_list = [db_encoding[1] for db_encoding in db_encodings]
 
-    # def delete(self,request):
-    #     pass
+         TOLERANCE = 0.5  # Ajusta este valor seg√∫n sea necesario
+         best_match_id = None
+         lowest_distance = float('inf')
 
-    
+         for encoding in face_encodings:
+                distances = face_recognition.face_distance(db_encoding_list, encoding)
+                for db_encoding, distance in zip(db_encodings, distances):
+                    if distance < lowest_distance and distance < TOLERANCE:
+                        lowest_distance = distance
+                        best_match_id = db_encoding[0]
 
+         if best_match_id is None:
+                return JsonResponse({'status': 'No Match'})
+         else:
+                return JsonResponse({'status': 'Match Found', 'best_match_id': best_match_id})

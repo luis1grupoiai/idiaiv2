@@ -90,6 +90,16 @@
             
 
             </li>
+            
+            <li
+            class="sidebar-item {% if active_page == 'Nsolicitud' %}active{% endif %} ">
+            <a href="{% url 'solicitudNuevos' %}" class='sidebar-link'>
+                <i class="bi bi-person-circle"></i>
+                <span>Nuevo Personal</span>
+            </a>
+            
+
+            </li>
             </li>
 
         </ul>
@@ -166,8 +176,8 @@
                                 <a href="#" data-bs-toggle="dropdown" aria-expanded="false">
                                     <div class="user-menu d-flex">
                                         <div class="user-name text-end me-3">
-                                            <h6 class="mb-0 text-gray-600">Python</h6>
-                                            <p class="mb-0 text-sm text-gray-600">Administrador</p>
+                                            <h6 class="mb-0 text-gray-600">Administrador</h6>
+                                            <p class="mb-0 text-sm text-gray-600">{{nombre_usuario}}</p>
                                         </div>
                                         <div class="user-img d-flex align-items-center">
                                             <div class="avatar avatar-md">

@@ -171,3 +171,5 @@ class CCompareFaces(APIView):
                 return JsonResponse({'status': 'No Match'})
          else:
                 return JsonResponse({'status': 'Match Found', 'best_match_id': best_match_id})
+            
+            

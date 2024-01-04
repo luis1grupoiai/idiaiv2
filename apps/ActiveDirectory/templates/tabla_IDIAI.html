@@ -18,6 +18,8 @@
                 <td class="text-center" >
                     {% if user.existe_en_ad is  False  %}
                     
+                    
+                    {% else %}
                     <button type="button" class="btn icon btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#crearUserModal" 
                     data-nombre="{{ user.username }}"
                     data-nombrePila ="{{ user.Nombre_ps}}"
@@ -31,7 +33,12 @@
                     onclick="creartUser(this);">
                     <i class="bi bi-person-plus"></i> 
                     </button>
-                    
+
+
+                    <!--
+                    <button type="button" class="btn icon btn-primary btn-sm" onclick="mensaje();">
+                    <i class="bi bi-check-lg"></i>
+                    </button>-->
                     {% endif %}</td>
                
                    

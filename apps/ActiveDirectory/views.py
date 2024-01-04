@@ -8,7 +8,7 @@ from django.contrib.auth import logout
 from django.contrib.auth import authenticate, login
 from apps.AsignarUsuario.models import VallEmpleado 
 
-
+#https://www.youtube.com/watch?v=dFJvNYdKGrA&list=PLgrNDDl9MxYmUmf19zPiljdg8FKIRmP78
 
 # Create your views here.
 domino='DC=iai,DC=com,DC=mx'
@@ -79,17 +79,26 @@ def consultarUsuariosIDIAI(request):
     
     # Obtiene los usuarios de la base de datos
     usuarios = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='').exclude(is_active=False)
-    usuariosAdmin =VallEmpleado.objects.filter(nombre_direccion="Administración")
-    usuariosIng = VallEmpleado.objects.filter(nombre_direccion="Ingeniería")
-    usuariosDCASS =VallEmpleado.objects.filter(nombre_direccion="Calidad, Ambiental, Seguridad y Salud")
-    UsuariosPS =VallEmpleado.objects.filter(nombre_direccion="Proyectos Especiales")
     UsuaruisDown = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='').exclude(is_active=True)
     
-     # Verifica la existencia en AD para cada conjunto de usuarios y agrega la información al contexto
-    for conjunto_usuarios in [usuarios, usuariosAdmin, usuariosIng, usuariosDCASS, UsuariosPS, UsuaruisDown]:
+    
+    
+    # Verifica la existencia en AD para cada conjunto de usuarios y agrega la información al contexto
+    for conjunto_usuarios in [usuarios,UsuaruisDown]:
         for usuario in conjunto_usuarios:
             # Suponiendo que 'username' es el campo relevante para verificar en AD
-            usuario.existe_en_ad = existeUsuario(usuario.username)
+           # usuario.existe_en_ad = existeUsuario(usuario.username)
+            usuario.existe_en_ad = True
+    
+    
+    usuariosAdmin =usuarios.filter(nombre_direccion="Administración")
+    usuariosIng = usuarios.filter(nombre_direccion="Ingeniería")
+    usuariosDCASS =usuarios.filter(nombre_direccion="Calidad, Ambiental, Seguridad y Salud")
+    UsuariosPS =usuarios.filter(nombre_direccion="Proyectos Especiales")
+
+    
+     
+    
 
     context = {
         'active_page': 'usuariosID',

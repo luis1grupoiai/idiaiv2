@@ -54,7 +54,7 @@ Usuarios de IDIAI
         </li>
         <li class="nav-item" role="presentation">
             <a class="nav-link" id="bajas-tab" data-bs-toggle="tab" href="#bajas" role="tab"
-                aria-controls="bajas" aria-selected="false">Bajas</a>
+                aria-controls="bajas" aria-selected="false">Inactivo</a>
         </li>
        
     </ul>
@@ -179,7 +179,8 @@ Usuarios de IDIAI
                                             <input type="text" class="form-control" name="nombre_completo" id="nombre_completo" required>
                                         </div>
                                         <div class="col-6">
-                                            <div class="mb-2">Dirección:</label>
+                                            <div class="mb-2">
+                                                <label for="departamento" class="form-label">Dirección:</label>
                                                 <select class="form-control select2" name="departamento" id="departamento" required>
     
                                                     <option value="None">Seleccione una Opción </option>
@@ -221,7 +222,8 @@ Usuarios de IDIAI
                                     </div>
                                 </form>
                             </div>
-                        </div> </div>
+                        </div>
+                     </div>
                         
                             {% endblock %}
 
@@ -308,7 +310,16 @@ Usuarios de IDIAI
             });
           
 
+            function mensaje() {
+                Swal.fire({
+                    title: '¡Usuario existe  !',
+                    text: 'en Active Directory.',
+                    icon: 'success'
+                });
+            }
+        
 
   
         </script>
+        
     {% endblock%}

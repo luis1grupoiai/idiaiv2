@@ -21,6 +21,13 @@ from rest_framework.decorators import action
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
+from rest_framework.authtoken.models import Token
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.models import User
+
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
+
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -165,7 +172,24 @@ class CAutenticacion(APIView):
 
         return dGrupoUsuario
 
-    
+    def get_custom_auth_token(self, p_sUsuario):
+        # Generamos token para autenticación del usuario :) 
+        sTexto = ""
+        sToken_encoded = ""
+        try:
+            user = User.objects.get(username=p_sUsuario) 
+            token = default_token_generator.make_token(user)
+            sToken_encoded = urlsafe_base64_encode(force_bytes(token))
+
+        except ValueError as error:
+            sTexto = "%s" % error
+            datos = {'message': 'Ocurrió un error al generar el token para el usuario. ', "error": sTexto}
+
+        # print(type(sToken_encoded))
+        return sToken_encoded
+
+
+
     @staticmethod
     def prueba():
         print("Accede a metodo prueba...")
@@ -245,6 +269,7 @@ class CAutenticacion(APIView):
             idPersonal = 0
             sNombreCompleto = ""
             sUserName = ""
+            tokenApi = ""
             #total de items permitidos en la API, definidos en la diccionario dCamposJson
             nLenDef = len(dCamposJson) 
             #Variable que almacenara el numero de items del json recibido por la API.
@@ -329,7 +354,16 @@ class CAutenticacion(APIView):
                                 
                                 # datos = {'message': 'Success', 'datos': dUsuario}
                                 # datos = {'message': 'Success', 'sistema':self.sNombreSistema,'permisos': dPermisos, 'grupos':dGrupos}
-                                datos = {'message': 'Success','idPersonal':idPersonal,'usuario': jd['user'], 'password': jd['password'],'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'permisos': dPermisos}
+                                # token, created = Token.objects.get_or_create(username=jd['user'])
+
+                                tokenApi = self.get_custom_auth_token(jd['user'])
+
+                                print(tokenApi)
+                                
+
+                                
+
+                                datos = {'message': 'Success','idPersonal':idPersonal,'usuario': jd['user'], 'password': jd['password'],'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'permisos': dPermisos}
                             else:
                                 datos = {'message': 'Sin datos', 'error':'¡Ups! Al parecer no existen registros de este usuario, por favor de verificar los datos proporcionados. '}
 
@@ -355,7 +389,11 @@ class CAutenticacion(APIView):
 
                                 dPermisos.update(dGrupos)
 
-                                datos = {'message': 'Success','idPersonal':idPersonal,'usuario': sUserName, 'password': password,'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'permisos': dPermisos}
+                                tokenApi = self.get_custom_auth_token(sUserName)
+
+                                print(tokenApi)
+
+                                datos = {'message': 'Success','idPersonal':idPersonal,'usuario': sUserName, 'password': password,'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'permisos': dPermisos}
                         else:
                                 datos = {'message': 'Sin datos', 'error':'¡Ups! Al parecer no existen registros de este usuario, por favor de verificar los datos proporcionados. '}
                     else:

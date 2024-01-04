@@ -14,6 +14,69 @@ from apps.AsignarUsuario.models import VallEmpleado
 domino='DC=iai,DC=com,DC=mx'
 @login_required  
 def consultarUsuariosIDIAI(request):
+    
+    
+    
+    if request.method == 'POST':
+        dominio_Principal = '@iai.com.mx'
+        nombre_usuario = request.POST['nombre_usuario']
+        nombre_pila = request.POST['nombre_pila']
+        apellido = request.POST['apellido']
+        nombre_completo = request.POST['nombre_completo']
+        email = request.POST['email']
+        #password = request.POST['password']
+        nombre_inicio_sesion = request.POST['nombre_inicio_sesion']
+        departamento = request.POST['departamento']
+        puesto = request.POST['puesto']
+        # ... otros campos
+       
+        # Preparar la contraseña en formato adecuado para AD
+       # quoted_password = f'"{password}"'.encode('utf-16-le')
+        # Establecer conexión con Active Directory
+        try:
+            server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
+            with Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True) as conn:
+                
+                #user_dn = f"CN={nombre_usuario},CN=Users,DC=iai,DC=com,DC=mx"
+                user_dn = f"CN={nombre_usuario},OU=iaiUsuario,OU=RedGrupoIAI,{domino}"
+                conn.add(user_dn, ['top', 'person', 'organizationalPerson', 'user'], {
+                    'cn': nombre_usuario,
+                    'givenName':nombre_pila,
+                    'sn':apellido,
+                    'mail':email,
+                    'displayName': nombre_completo,
+                    'sAMAccountName':nombre_inicio_sesion,
+                   # 'sAMAccountType':805306368,
+                    'userPrincipalName':nombre_inicio_sesion+dominio_Principal,
+                    'department':departamento,
+                    'title':puesto,
+                   # 'userPassword': password,
+                    #'unicodePwd':quoted_password,
+                    #'userAccountControl':'546', # Habilita la cuenta
+                   
+                    # ... otros atributos
+                })
+                # Verificar el resultado de la creación del usuario
+                if conn.result['result'] == 0:  # éxito
+                    messages.success(request, 'Usuario creado correctamente.')
+                    
+                else:
+                    messages.error(request, f"Error al crear usuario: {conn.result['description']}")
+        except Exception as e:
+            messages.error(request, f"Error al conectar con AD: {str(e)}")
+            
+            return redirect('usuarios')
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     # Obtiene los usuarios de la base de datos
     usuarios = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='').exclude(is_active=False)
     usuariosAdmin =VallEmpleado.objects.filter(nombre_direccion="Administración")
@@ -188,7 +251,6 @@ def agregar_usuario(request):
             messages.error(request, f"Error al conectar con AD: {str(e)}")
             
             return redirect('usuarios')
-            
   # Crear el diccionario de contexto con todas las variables necesarias
     context = {
         'active_page': 'agregar_usuario',

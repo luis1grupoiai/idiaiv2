@@ -64,7 +64,7 @@ class CAutenticacion(APIView):
             if len(dPermisos)>0:
                 # print("El usuario si tiene acceso al sistema con clave: "+ str(p_nIdSistema))
                 # print(dPermisos[0][12])
-                self.sNombreSistema = dPermisos[0][13]
+                # self.sNombreSistema = dPermisos[0][13]
                 for dPermiso in dPermisos:
                     dPermisosUsuario[dPermiso[6]] = dPermiso[7]
 
@@ -78,13 +78,17 @@ class CAutenticacion(APIView):
         return dPermisosUsuario
     
 
-    def obtenerDatosPersonales(self, p_nIdUsuario):
+    def obtenerDatosPersonales(self, p_nIdUsuario=0, p_nIdPersonal=0):
         dDatos = {}
         # dDatosUsuario = {}
         print("Accede a metodo obtenerDatosPersonales.")
         try:
             
-            self.oExecSP.registrarParametros("idUsuario",p_nIdUsuario)
+            if p_nIdUsuario>0:
+                self.oExecSP.registrarParametros("idUsuario",p_nIdUsuario)
+            elif p_nIdPersonal>0:
+                self.oExecSP.registrarParametros("idPersonal",p_nIdPersonal)
+            
             dDatos = self.oExecSP.ejecutarSP("obtenerDatosPersonales")
 
             # if len(dDatos)>0:
@@ -114,7 +118,7 @@ class CAutenticacion(APIView):
             if len(dGrupos)>0:
                 # print("El usuario si tiene acceso al sistema con clave: "+ str(p_nIdSistema))
                 # print(dPermisos[0][12])
-                self.sNombreSistema = dGrupos[0][16]
+                # self.sNombreSistema = dGrupos[0][16]
                 for dGrupo in dGrupos:
                     # sNombreGrupo = dGrupo[9]
                     dGruposUsuario[dGrupo[15]] = dGrupo[13]
@@ -240,6 +244,7 @@ class CAutenticacion(APIView):
             sistema = 0
             idPersonal = 0
             sNombreCompleto = ""
+            sUserName = ""
             #total de items permitidos en la API, definidos en la diccionario dCamposJson
             nLenDef = len(dCamposJson) 
             #Variable que almacenara el numero de items del json recibido por la API.
@@ -272,21 +277,28 @@ class CAutenticacion(APIView):
             if bValido:
 
                 #2. Compara el token obtenido del json contra el secretKey de la aplicación.
-                if(jd['token'] == os.environ.get('SECRET_KEY')):
+                # 2.1. Para el sistema de RF (Reconocimiento Facial) el  token =4  
+                if((jd['token'] == os.environ.get('SECRET_KEY')) or (jd['token'] == 4)):
 
+                    #Valida si el sistema existe en el catalogo de sistemas.
                     dSistema = list(Sistemas.objects.filter(id=jd['idSistema']).values())
                     if len(dSistema)>0:
                         sistema = dSistema[0]['id']
+                        self.sNombreSistema = dSistema[0]['nombre']
                     
-                    if sistema>0:
+                    #Si el sistema obtenido se encuentra en el catalogo de sistemas y el sistema no es el sistema 4 (RF)
+                    if sistema>0 and jd['token']!=4:
+                      
                         #3. Decodifica el password en base64
                         pwdD64 = base64.b64decode(jd['password'])
                     
                         #Obtiene el registro del usuario mediante el userName.
                         dUsuario = list(User.objects.filter(username=jd['user'], is_active=1).values())
+                       
                         if len(dUsuario):
                             password = dUsuario[0]['password']
                             idUsuario = dUsuario[0]['id']
+                       
                         #4. Verifica que la contraseña en base64 coincida con la password encriptada de BD.
                         #En caso de coincidir es como devuelve los permisos y grupos del usuario.
                         if  handler.verify(pwdD64,password):
@@ -294,32 +306,58 @@ class CAutenticacion(APIView):
                             
                             #Listado de permisos
                             # dPermisos = list(SistemaPermiso.objects.filter(sistema_id=sistema).values())
-                            dDatosPersonales = self.obtenerDatosPersonales(idUsuario)
+                            dDatosPersonales = self.obtenerDatosPersonales(idUsuario,0)
                             if len(dDatosPersonales)>0:
                                 print(dDatosPersonales[0][1])
                                 idPersonal = dDatosPersonales[0][1]
                                 sNombreCompleto = dDatosPersonales[0][8]
 
-                            dPermisos = self.obtenerPermisos(sistema,idUsuario)
-                            dGrupos = self.obtenerGrupos(sistema,idUsuario)
+                                dPermisos = self.obtenerPermisos(sistema,idUsuario)
+                                dGrupos = self.obtenerGrupos(sistema,idUsuario)
 
-                            #El listado de permisos de grupos se unen al bloque permisos, todo junto.
-                            dPermisos.update(dGrupos)
-                            # resultados = vUsuarioPermiso.objects.all()
+                                #El listado de permisos de grupos se unen al bloque permisos, todo junto.
+                                dPermisos.update(dGrupos)
+                                # resultados = vUsuarioPermiso.objects.all()
 
-                            # if len(dPermisos)>0:
-                            #     print("resultados :) ")  
+                                # if len(dPermisos)>0:
+                                #     print("resultados :) ")  
+                                    
+                                # else:
                                 
-                            # else:
-                               
-                            #     sTexto += "Este sistema no tiene permisos"
+                                #     sTexto += "Este sistema no tiene permisos"
 
-                            
-                            # datos = {'message': 'Success', 'datos': dUsuario}
-                            # datos = {'message': 'Success', 'sistema':self.sNombreSistema,'permisos': dPermisos, 'grupos':dGrupos}
-                            datos = {'message': 'Success','idPersonal':idPersonal,'usuario': jd['user'], 'password': jd['password'],'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'permisos': dPermisos}
+                                
+                                # datos = {'message': 'Success', 'datos': dUsuario}
+                                # datos = {'message': 'Success', 'sistema':self.sNombreSistema,'permisos': dPermisos, 'grupos':dGrupos}
+                                datos = {'message': 'Success','idPersonal':idPersonal,'usuario': jd['user'], 'password': jd['password'],'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'permisos': dPermisos}
+                            else:
+                                datos = {'message': 'Sin datos', 'error':'¡Ups! Al parecer no existen registros de este usuario, por favor de verificar los datos proporcionados. '}
+
                         else:
                             datos = {'message': 'Dato Invalidos', 'error':'¡Ups! la contraseña es incorrecta.'}
+
+                    elif  sistema>0 and jd['token']==4:
+
+                        print("Petición recibida por parte del API de reconocimiento facial.")
+
+                        idPersonal = int(jd['user'])
+                        dDatosPersonales = self.obtenerDatosPersonales(0,idPersonal)
+
+                        if len(dDatosPersonales)>0:
+                                print(dDatosPersonales[0][1])
+                                idUsuario = dDatosPersonales[0][0]
+                                sNombreCompleto = dDatosPersonales[0][8]
+                                password = dDatosPersonales[0][3]
+                                sUserName = dDatosPersonales[0][2]
+
+                                dPermisos = self.obtenerPermisos(sistema,idUsuario)
+                                dGrupos = self.obtenerGrupos(sistema,idUsuario)
+
+                                dPermisos.update(dGrupos)
+
+                                datos = {'message': 'Success','idPersonal':idPersonal,'usuario': sUserName, 'password': password,'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'permisos': dPermisos}
+                        else:
+                                datos = {'message': 'Sin datos', 'error':'¡Ups! Al parecer no existen registros de este usuario, por favor de verificar los datos proporcionados. '}
                     else:
                         datos = {'message': 'Dato Invalidos', 'error':'Id de sistema invalido'}                   
                 else:

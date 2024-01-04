@@ -7,7 +7,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # Application definition
 
 BASE_APPS = [
-    'unfold',
+    # 'unfold',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -27,8 +27,6 @@ LOCAL_APPS = [
 ]
 
 THIRD_APPS = [
-    # 'material',
-    # 'material.admin',
     "django_components",
     "django_components.safer_staticfiles",
     'drf_yasg',

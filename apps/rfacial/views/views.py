@@ -26,7 +26,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.models import User
 
 from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 
 
 from drf_yasg.utils import swagger_auto_schema
@@ -179,7 +179,25 @@ class CAutenticacion(APIView):
         try:
             user = User.objects.get(username=p_sUsuario) 
             token = default_token_generator.make_token(user)
+            # sToken_encoded = urlsafe_base64_encode(force_bytes(token))
+            # print("token: "+token)
+            # print(type(token))
             sToken_encoded = urlsafe_base64_encode(force_bytes(token))
+
+            # print(type(sToken_encoded))
+
+            # tk = urlsafe_base64_decode(sToken_encoded)
+            # print(tk)
+            
+            # tk = tk.decode('utf-8')
+            # print(tk)
+
+            # is_token_valid = default_token_generator.check_token(user, tk)
+
+            # if is_token_valid:
+            #     print("El token es válido.")
+            # else:
+            #     print("El token no es válido.")
 
         except ValueError as error:
             sTexto = "%s" % error
@@ -270,6 +288,7 @@ class CAutenticacion(APIView):
             sNombreCompleto = ""
             sUserName = ""
             tokenApi = ""
+            nItemJson = 0
             #total de items permitidos en la API, definidos en la diccionario dCamposJson
             nLenDef = len(dCamposJson) 
             #Variable que almacenara el numero de items del json recibido por la API.
@@ -359,6 +378,8 @@ class CAutenticacion(APIView):
                                 tokenApi = self.get_custom_auth_token(jd['user'])
 
                                 print(tokenApi)
+
+                                is_token_valid = default_token_generator.check_token(jd['user'], tokenApi)
                                 
                                 datos = {'message': 'Success','idPersonal':idPersonal,'usuario': jd['user'], 'password': jd['password'],'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'permisos': dPermisos}
                             else:
@@ -427,5 +448,85 @@ class Protegida(APIView):
 
 class CVerificaToken(APIView):
 
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'token': openapi.Schema(type=openapi.TYPE_STRING, description='Token asignado por la aplicación.'),
+                'user': openapi.Schema(type=openapi.TYPE_STRING, description='Nombre de usuario.')
+            },
+            required=['token', 'user']
+        ),
+        responses={200: 'Token Validado'},
+    ) 
     def post(self,request):
-        pass
+        """
+        Realiza la validación del token dado por la api de autenticación.
+
+        Para realizar un consulta exitosa, envía un objeto JSON con los siguientes campos:
+       
+        """
+        try:
+            bValido = True
+            sToken_encoded = ""
+            sUserName = ""
+            tk = ""
+            is_token_valid = ""
+            sTexto = ""
+            nLenDef = 0
+            nItemJson = 0
+
+            dCamposJson = ['token', 'user']
+            
+            jd = json.loads(request.body)
+
+            nLenDef = len(dCamposJson) 
+
+            nItemJson = len(jd)
+            
+            if nItemJson != nLenDef:
+                sTexto = "El tamaño del JSON obtenido no es el esperado, por favor de verificar. "
+                bValido = False
+
+            for item in dCamposJson:
+                if item in jd:
+                    continue
+                else:
+                    sTexto += " El campo faltante es: "+item+". "
+                    bValido = False
+                    break
+
+            if bValido:
+
+                sToken_encoded = jd['token']
+                sUserName = jd['user']
+                
+                user = User.objects.get(username=sUserName) 
+                
+                tk = urlsafe_base64_decode(sToken_encoded)                
+                tk = tk.decode('utf-8')
+
+                is_token_valid = default_token_generator.check_token(user, tk)
+
+                if is_token_valid:
+                    print("El token es válido.")
+                    datos = {'message': 'Success', "descripcion":'El token es válido.'}
+                else:
+                    datos = {'message': 'Error', "descripcion":'El token no es válido.'}
+                    print("El token no es válido.")
+            else:
+                datos = {'message': 'Datos Invalidos ', 'Error': sTexto}
+
+
+            
+            #TODO: ESTA EN CONSTRUCCIÓN TODAVIA...✍
+            # is_token_valid = default_token_generator.check_token(user, token)
+
+            
+
+        except ValueError as error:
+            sTexto = "%s" % error
+            datos = {'message': 'JSON invalido. ', "error": sTexto}
+            # return False
+
+        return JsonResponse(datos)  

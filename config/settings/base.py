@@ -145,5 +145,3 @@ USE_TZ = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_PERMISSION_MODEL = 'apps.areas.Permisos'
-
-DATABASE_ROUTERS = ['apps.areas.routers.DatabaseRouter']

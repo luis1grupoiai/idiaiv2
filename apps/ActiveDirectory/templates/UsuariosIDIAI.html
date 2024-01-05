@@ -218,7 +218,7 @@ Usuarios de IDIAI
                                             <i class="bx bx-x d-block d-sm-none"></i>
                                             <span class="d-none d-sm-block">Cerrar</span>
                                         </button>
-                                        <button type="submit" class="btn btn-primary">Guardar</button>
+                                        <button type="submit" class="btn btn-primary" id="botonGuardar" >Guardar</button>
                                     </div>
                                 </form>
                             </div>
@@ -274,7 +274,7 @@ Usuarios de IDIAI
                     var email = button.getAttribute('data-email');
                     var departamento = button.getAttribute('data-deparamento');
                     var distinguishedName = button.getAttribute('data-distinguishedName');
-
+                    verificarUsuario(nombre);
                     // Rellena los campos del formulario en el modal
                     document.getElementById('nombre_usuario').value = nombre ;
                     document.getElementById('nombre_pila').value = nombrePila;
@@ -317,9 +317,42 @@ Usuarios de IDIAI
                     icon: 'success'
                 });
             }
-        
+
+        function verificarUsuario(nombreUsuario) {
+            fetch(`/verificar-usuario/${nombreUsuario}/`)
+            .then(response => response.json())
+            .then(data => {
+                let botonGuardar = document.getElementById('botonGuardar');
+                if (data.existe) {
+                    botonGuardar.disabled = true;
+                    botonGuardar.innerText = "Usuario Existente"; // Cambia el texto
+                    botonGuardar.classList.add('btn-danger');
+                    botonGuardar.classList.remove('btn-primary');
+                } else {
+                    botonGuardar.disabled = false;
+                    botonGuardar.innerText = "Guardar"; // Restablece el texto original o elige uno nuevo
+                    botonGuardar.classList.add('btn-primary');
+                    botonGuardar.classList.remove('btn-danger');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+            }
 
   
         </script>
+
+        {% if mensaje %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    title: "{{ mensaje.titulo }}",
+                    text: "{{ mensaje.texto }}",
+                    icon: "{{ mensaje.tipo }}",  // 'success', 'error', 'warning', 'info', 'question'
+                    confirmButtonText: 'Ok'
+                });
+            });
+        </script>
+        {% endif %}
+
         
     {% endblock%}

@@ -425,3 +425,7 @@ class Protegida(APIView):
         # return Response({"content": "Esta vista está protegida"})  
         return JsonResponse(datos)  
 
+class CVerificaToken(APIView):
+
+    def post(self,request):
+        pass

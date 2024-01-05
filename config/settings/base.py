@@ -147,3 +147,11 @@ USE_TZ = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_PERMISSION_MODEL = 'apps.areas.Permisos'
+
+# variable de Active Directory NO BORRAR!!!!!!!!!
+AD_SERVER = os.environ.get('ActiveDirectory_SERVER')  # Cambia esto segÃºn tu servidor
+AD_PORT = int(os.environ.get('ActiveDirectory_PORT'))   # El puerto por defecto es 389
+AD_USER = os.environ.get('ActiveDirectory_USER')   # Cambia esto segÃºn tus credenciales
+#dsquery user -name desarrollo
+#dsget user "CN=desarrollo,CN=Users,DC=iai,DC=com,DC=mx"
+AD_PASSWORD = os.environ.get('ActiveDirectory_PASSWORD') 

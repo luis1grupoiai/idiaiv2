@@ -13,72 +13,13 @@ from django.http import JsonResponse
 
 # Create your views here.
 domino='DC=iai,DC=com,DC=mx'
+unidadOrganizativa = ('OU=Bajas','OU=Administracion','OU=Ingeniería','OU=DCASS','OU=Proyectos Especiales')
+
+
 @login_required  
 def consultarUsuariosIDIAI(request):
     mensaje = None
-    
-    
-    if request.method == 'POST':
-        dominio_Principal ='@'+'.'.join(part.replace('DC=', '') for part in domino.split(',') if part.startswith('DC='))
-        nombre_usuario = request.POST['nombre_usuario']
-        nombre_pila = request.POST['nombre_pila']
-        apellido = request.POST['apellido']
-        nombre_completo = request.POST['nombre_completo']
-        email = request.POST['email']
-        #password = request.POST['password']
-        nombre_inicio_sesion = request.POST['nombre_inicio_sesion']
-        departamento = request.POST['departamento']
-        puesto = request.POST['puesto']
-        # ... otros campos
-       # print(dominio_Principal)
-        # Preparar la contraseña en formato adecuado para AD
-       # quoted_password = f'"{password}"'.encode('utf-16-le')
-        # Establecer conexión con Active Directory
-        try:
-            #server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
-            with connect_to_ad() as conn:
-                
-                #user_dn = f"CN={nombre_usuario},CN=Users,DC=iai,DC=com,DC=mx"
-                user_dn = f"CN={nombre_usuario},OU=iaiUsuario,OU=RedGrupoIAI,{domino}"
-                conn.add(user_dn, ['top', 'person', 'organizationalPerson', 'user'], {
-                    'cn': nombre_usuario,
-                    'givenName':nombre_pila,
-                    'sn':apellido,
-                    'mail':email,
-                    'displayName': nombre_completo,
-                    'sAMAccountName':nombre_inicio_sesion,
-                   # 'sAMAccountType':805306368,
-                    'userPrincipalName':nombre_inicio_sesion+dominio_Principal,
-                    'department':departamento,
-                    'title':puesto,
-                   # 'userPassword': password,
-                    #'unicodePwd':quoted_password,
-                    #'userAccountControl':'546', # Habilita la cuenta
-                   
-                    # ... otros atributos
-                })
-                # Verificar el resultado de la creación del usuario
-                if conn.result['result'] == 0:  # éxito
-                    messages.success(request, 'Usuario creado correctamente.')
-                    mensaje = {'titulo': 'Éxito', 'texto': 'Usuario creado correctamente', 'tipo': 'success'}
-                    
-                else:
-                    messages.error(request, f"Error al crear usuario: {conn.result['description']}")
-                    mensaje = {'titulo': 'Error', 'texto': 'Error al crear usuario', 'tipo': 'error'}
-        except Exception as e:
-            messages.error(request, f"Error al conectar con AD: {str(e)}")
-            mensaje = {'titulo': 'Error', 'texto': f'Excepción: {str(e)}', 'tipo': 'error'}
-            
-            return redirect('usuariosID')
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    opc = 0
     
     
     # Obtiene los usuarios de la base de datos
@@ -104,25 +45,85 @@ def consultarUsuariosIDIAI(request):
      
     
 
+
+    if request.method == 'POST':
+        dominio_Principal ='@'+'.'.join(part.replace('DC=', '') for part in domino.split(',') if part.startswith('DC='))
+        nombre_usuario = request.POST['nombre_usuario']
+        nombre_pila = request.POST['nombre_pila']
+        apellido = request.POST['apellido']
+        nombre_completo = request.POST['nombre_completo']
+        email = request.POST['email']
+        #password = request.POST['password']
+        nombre_inicio_sesion = request.POST['nombre_inicio_sesion']
+        departamento = request.POST['departamento']
+        puesto = request.POST['puesto']
+    
+        # ... otros campos
+       # print(dominio_Principal)
+        # Preparar la contraseña en formato adecuado para AD
+       # quoted_password = f'"{password}"'.encode('utf-16-le')
+        # Establecer conexión con Active Directory
+        try:
+            #server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
+            with connect_to_ad() as conn:
+                
+                #user_dn = f"CN={nombre_usuario},CN=Users,DC=iai,DC=com,DC=mx"
+                 #user_dn = f"CN={nombre_usuario},OU=iaiUsuario,OU=RedGrupoIAI,{domino}"
+                user_dn = f"CN={nombre_usuario},{unidadOrganizativa[asignar_Departamento(departamento)]},{domino}"
+                conn.add(user_dn, ['top', 'person', 'organizationalPerson', 'user'], {
+                    'cn': nombre_usuario,
+                    'givenName':nombre_pila,
+                    'sn':apellido,
+                    'mail':email,
+                    'displayName': nombre_completo,
+                    'sAMAccountName':nombre_inicio_sesion,
+                   # 'sAMAccountType':805306368,
+                    'userPrincipalName':nombre_inicio_sesion+dominio_Principal,
+                    'department':departamento,
+                    'title':puesto,
+                   # 'userPassword': password,
+                    #'unicodePwd':quoted_password,
+                    #'userAccountControl':'546', # Habilita la cuenta
+                   
+                    # ... otros atributos
+                })
+                # Verificar el resultado de la creación del usuario
+                if conn.result['result'] == 0:  # éxito
+                    messages.success(request, 'Usuario creado correctamente.')
+                    mensaje = {'titulo': 'Éxito', 'texto': 'Usuario creado correctamente', 'tipo': 'success'}
+                    #return redirect('usuariosID')
+                    
+                    
+                else:
+                    messages.error(request, f"Error al crear usuario: {conn.result['description']}")
+                    mensaje = {'titulo': 'Error', 'texto': 'Error al crear usuario', 'tipo': 'error'}
+                    #return redirect('usuariosID')
+        except Exception as e:
+            messages.error(request, f"Error al conectar con AD: {str(e)}")
+            mensaje = {'titulo': 'Error', 'texto': f'Excepción: {str(e)}', 'tipo': 'error'}
+            
+            return redirect('usuariosID')
+    
     context = {
-        'active_page': 'usuariosID',
-        'nombre_usuario': nameUser(request),
-        'users': usuarios,
-        'usersDown' : UsuaruisDown,
-        'usersAdmin': usuariosAdmin,
-        'usersIng': usuariosIng,
-        'usersDCASS':usuariosDCASS,
-        'usersPS':UsuariosPS,
-        'mensaje': mensaje,
-    }
+                    'active_page': 'usuariosID',
+                    'nombre_usuario': nameUser(request),
+                    'users': usuarios,
+                    'usersDown' : UsuaruisDown,
+                    'usersAdmin': usuariosAdmin,
+                    'usersIng': usuariosIng,
+                    'usersDCASS':usuariosDCASS,
+                    'usersPS':UsuariosPS,
+                    'mensaje': mensaje,
+                    }
+        
+    
+    
     return render(request, 'UsuariosIDIAI.html',context)
 
 
 
 
-def verificar_usuario(request, nombre_usuario):
-    existe = existeUsuario(nombre_usuario)
-    return JsonResponse({'existe': existe})
+
 
 
 
@@ -186,8 +187,8 @@ def consultar_usuarios(request):
                 }
                 #print(entry.cn.value)
                # print(entry.distinguishedName.value if 'distinguishedName' in entry else None)
-                #print(entry.userPrincipalName.value)
-                #print(entry.distinguishedName.value)
+                print(entry.userPrincipalName.value)
+                print(entry.distinguishedName.value)
                 #print(extraer_unidad_organizativa(entry.distinguishedName.value))
               
                 
@@ -254,7 +255,8 @@ def agregar_usuario(request):
             with connect_to_ad() as conn:
                 
                 #user_dn = f"CN={nombre_usuario},CN=Users,DC=iai,DC=com,DC=mx"
-                user_dn = f"CN={nombre_usuario},OU=iaiUsuario,OU=RedGrupoIAI,{domino}"
+                #user_dn = f"CN={nombre_usuario},OU=iaiUsuario,OU=RedGrupoIAI,{domino}"
+                user_dn = f"CN={nombre_usuario},OU={unidadOrganizativa[asignar_Departamento(departamento)]},{domino}"
                 conn.add(user_dn, ['top', 'person', 'organizationalPerson', 'user'], {
                     'cn': nombre_usuario,
                     'givenName':nombre_pila,
@@ -444,3 +446,47 @@ def nameUser(request):
 def connect_to_ad():
     server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
     return Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True)
+
+def verificar_usuario(request, nombre_usuario):
+    existe = existeUsuario(nombre_usuario)
+    return JsonResponse({'existe': existe})
+
+
+def mover_usuario_ou(nombre_usuario, nueva_ou):
+    msj = None
+    try:
+        with connect_to_ad() as conn:
+            # Obtén el Distinguished Name (DN) actual del usuario
+            search_filter = f'(cn={nombre_usuario})'
+            conn.search(search_base=domino, search_filter=search_filter, attributes=['distinguishedName'])
+            if conn.entries:
+                dn_actual = conn.entries[0].distinguishedName.value
+                # Construye el nuevo DN
+                dn_nuevo = f"CN={nombre_usuario},{nueva_ou},{domino}"
+
+                # Mueve el usuario a la nueva OU
+                conn.modify_dn(dn_actual, dn_nuevo)
+                if conn.result['result'] == 0:
+                    msj = 'Usuario movido correctamente.'
+                else:
+                    msj = f"Error al mover usuario: {conn.result['description']}"
+            else:
+                msj = "Usuario no encontrado en AD."
+    except Exception as e:
+        msj =  f"Error al conectar con AD: {str(e)}" 
+        
+    return msj
+
+def asignar_Departamento(departamento):
+    
+    if departamento == "Administración":
+        opc = 1
+    elif departamento == "Ingeniería":
+        opc = 2
+    elif departamento == "Calidad, Ambiental, Seguridad y Salud":
+        opc = 3
+    elif departamento == "Proyectos Especiales":
+        opc = 4
+    else:
+        opc = 0
+    return opc

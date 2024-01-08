@@ -4,6 +4,14 @@ FROM python:3.11.6-bookworm
 # Configura la variable de entorno para que Python no almacene en búfer la salida
 ENV PYTHONUNBUFFERED=1
 
+# Instalar libGL 
+RUN apt-get update && apt-get install -y libgl1-mesa-glx
+
+# Exponer el dispositivo GL
+ENV DISPLAY=:0
+ENV LIBGL_ALWAYS_INDIRECT=0
+ENV GPU_DEVICE /dev/dri
+
 # Descarga e instala Microsoft ODBC Driver 17
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
     curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list && \

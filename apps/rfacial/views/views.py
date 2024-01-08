@@ -24,13 +24,17 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.models import User
+from django.utils import timezone
+
 
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
 
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+
 
 from apps.mycore.views.ejecutarsp import CEjecutarSP
 
@@ -178,7 +182,10 @@ class CAutenticacion(APIView):
         sToken_encoded = ""
         try:
             user = User.objects.get(username=p_sUsuario) 
-            token = default_token_generator.make_token(user)
+            timestamp = int(timezone.now().timestamp())
+            token = default_token_generator.make_token(user)+ ',' + str(timestamp)
+   
+            
             # sToken_encoded = urlsafe_base64_encode(force_bytes(token))
             # print("token: "+token)
             # print(type(token))
@@ -448,6 +455,22 @@ class Protegida(APIView):
 
 class CVerificaToken(APIView):
 
+    # # def is_token_expired(self, user, token, expiration_hours=24):
+    # def is_token_expired(self, token, expiration_hours=5):
+        
+    #     # Verificar si el token ha expirado
+    #      # Obtener la fecha de creación del token del mismo
+    #     timestamp = default_token_generator._timestamp_from_token(token)
+
+    #     # Calcular la fecha de expiración del token
+    #     # expiration_time = timestamp + (expiration_hours * 3600)  # 3600 segundos en una hora
+    #     expiration_time = timestamp + (expiration_hours * 60)  # 60 segundos prueba de 1 minuto...
+
+    #     # Verificar si el token ha expirado
+    #     return expiration_time > timezone.now().timestamp()
+
+
+
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -471,10 +494,12 @@ class CVerificaToken(APIView):
             sToken_encoded = ""
             sUserName = ""
             tk = ""
-            is_token_valid = ""
+            is_token_valid = False
+            is_token_expired = True
             sTexto = ""
             nLenDef = 0
             nItemJson = 0
+            expiration_hours = 1 #TODO: Tiempo de expiración de token por defecto son 5 horas, pero tratar de ver la manera de hacerlo configurable...
 
             dCamposJson = ['token', 'user']
             
@@ -505,14 +530,40 @@ class CVerificaToken(APIView):
                 
                 tk = urlsafe_base64_decode(sToken_encoded)                
                 tk = tk.decode('utf-8')
+                print(tk)
+                 # Separar el token y la marca de tiempo
+                parts = tk.split(',')
 
-                is_token_valid = default_token_generator.check_token(user, tk)
+                print("Token ... :( por favor funciona: ")
+                print(parts[0])
+                token_without_timestamp = '-'.join(parts[:-1])
+                timestamp = int(parts[-1])
+                print("timestamp: ")
+                print(timestamp)
 
-                if is_token_valid:
-                    print("El token es válido.")
-                    datos = {'message': 'Success', "descripcion":'El token es válido.'}
+                # Calcular la fecha de expiración del token
+                expiration_time = timestamp + (expiration_hours * 3600)  # 3600 segundos en una hora
+                # expiration_time = timestamp + (1 * 60)  # 60 segundos prueba de 1 min.
+
+                if expiration_time > timezone.now().timestamp():
+                    print("Aun no expira el token")
+                    is_token_expired = False
                 else:
-                    datos = {'message': 'Error', "descripcion":'El token no es válido.'}
+                    print("El token ya expiro...")
+                    # is_token_expired = True
+
+                # is_token_valid = default_token_generator.check_token(user, tk)
+                is_token_valid = default_token_generator.check_token(user, parts[0])
+                
+
+                if is_token_valid and not is_token_expired:
+                    print("El token es válido y no ha expirado para este usuario...")
+                    # is_token_expired = self.is_token_expired(tk)
+                    # print(type(is_token_expired))
+
+                    datos = {'message': 'Success', "descripcion":'El token es válido y no ha expirado.'}
+                else:
+                    datos = {'message': 'Error', "descripcion":'El token ya no es válido y posiblemente ya expiro'}
                     print("El token no es válido.")
             else:
                 datos = {'message': 'Datos Invalidos ', 'Error': sTexto}

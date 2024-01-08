@@ -127,6 +127,8 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
+    # 'DEFAULT_TOKEN_VALIDITY': 3600  # 1 hora (en segundos)
+    'DEFAULT_TOKEN_VALIDITY': 60  # 1 hora (en segundos)
 }
 
 # Internationalization

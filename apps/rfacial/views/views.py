@@ -180,10 +180,17 @@ class CAutenticacion(APIView):
         # Generamos token para autenticación del usuario :) 
         sTexto = ""
         sToken_encoded = ""
+        expiration_time= 0
+        expiration_hours = 5 # 5 horas
+
         try:
             user = User.objects.get(username=p_sUsuario) 
             timestamp = int(timezone.now().timestamp())
-            token = default_token_generator.make_token(user)+ ',' + str(timestamp)
+
+            # Calcular la fecha de expiración del token
+            expiration_time = timestamp + (expiration_hours * 3600)  # 3600 segundos en una hora
+            
+            token = default_token_generator.make_token(user)+ ',' + str(expiration_time)
    
             
             # sToken_encoded = urlsafe_base64_encode(force_bytes(token))
@@ -499,7 +506,7 @@ class CVerificaToken(APIView):
             sTexto = ""
             nLenDef = 0
             nItemJson = 0
-            expiration_hours = 1 #TODO: Tiempo de expiración de token por defecto son 5 horas, pero tratar de ver la manera de hacerlo configurable...
+            expiration_hours = 1 #TODO: ✍ Tiempo de expiración de token por defecto son 5 horas, pero tratar de ver la manera de hacerlo configurable...
 
             dCamposJson = ['token', 'user']
             
@@ -536,13 +543,15 @@ class CVerificaToken(APIView):
 
                 print("Token ... :( por favor funciona: ")
                 print(parts[0])
+                
                 token_without_timestamp = '-'.join(parts[:-1])
                 timestamp = int(parts[-1])
                 print("timestamp: ")
                 print(timestamp)
 
                 # Calcular la fecha de expiración del token
-                expiration_time = timestamp + (expiration_hours * 3600)  # 3600 segundos en una hora
+                # expiration_time = timestamp + (expiration_hours * 3600)  # 3600 segundos en una hora
+                expiration_time = timestamp  # 3600 segundos en una hora
                 # expiration_time = timestamp + (1 * 60)  # 60 segundos prueba de 1 min.
 
                 if expiration_time > timezone.now().timestamp():
@@ -570,7 +579,7 @@ class CVerificaToken(APIView):
 
 
             
-            #TODO: ESTA EN CONSTRUCCIÓN TODAVIA...✍
+         
             # is_token_valid = default_token_generator.check_token(user, token)
 
             

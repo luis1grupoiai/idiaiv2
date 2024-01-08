@@ -3,6 +3,7 @@
 <head>
     <title>Detección de Rostros en Tiempo Real</title>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+        
     <style>
         body {
             margin: 0;
@@ -28,7 +29,7 @@
     </style>
 </head>
 <body>
-    <video id="video" autoplay muted></video>
+    <video id="video" width="720" height="560" autoplay muted></video>
     <canvas id="canvas"></canvas>
     <script>
         let canvas, displaySize;
@@ -36,21 +37,29 @@
         const video = document.getElementById('video');
         const captureButton = document.getElementById('capture');
 
-        Promise.all([
-            faceapi.nets.tinyFaceDetector.loadFromUri('/static/models'),
-            // Carga aquí otros modelos si los necesitas
-        ]).then(startVideo);
+            Promise.all([
+            faceapi.nets.faceExpressionNet.loadFromUri('/static/models') ,
+                faceapi.nets.tinyFaceDetector.loadFromUri('/static/models'),
+                faceapi.nets.faceLandmark68Net.loadFromUri('/static/models'),
+                // Carga aquí otros modelos si los necesitas
+            ]).then(startVideo);
 
-        function startVideo() {
-            navigator.mediaDevices.getUserMedia({ video: {} })
-                .then(stream => {
+            function startVideo() {
+                navigator.getUserMedia(
+                  { video: {} },
+                  stream => {
                     video.srcObject = stream;
+                    // Esperar a que el video cargue sus metadatos para obtener sus dimensiones
                     video.onloadedmetadata = () => {
-                        video.play();
-                    }
-                })
-                .catch(err => console.error("Error accessing the camera", err));
-        }
+                      video.width = video.videoWidth;
+                      video.height = video.videoHeight;
+                      detectFaces(); // Iniciar detección de rostros después de establecer las dimensiones
+                    };
+                  },
+                  err => console.error(err)
+                )
+              }
+              
 
         video.addEventListener('loadedmetadata', () => {
             // Crear canvas y añadirlo al DOM
@@ -61,22 +70,83 @@
             detectFaces(); // Ya no necesitas pasar canvas y displaySize
         });
 
-        function detectFaces() {
+        async function detectFaces() {
+            const options = new faceapi.TinyFaceDetectorOptions();
+            let detections = await faceapi.detectAllFaces(video, options)
+              .withFaceLandmarks()
+              .withFaceExpressions();
+          
+            const displaySize = { width: video.videoWidth, height: video.videoHeight };
+            faceapi.matchDimensions(canvas, displaySize);
+          
+            const resizedDetections = faceapi.resizeResults(detections, displaySize);
+            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+            faceapi.draw.drawDetections(canvas, resizedDetections);
+            faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+            faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
+          
+            function calculateEyeOpenness(eyePoints) {
+                const verticalDistance = faceapi.euclideanDistance([eyePoints[1].x, eyePoints[1].y], [eyePoints[5].x, eyePoints[5].y]);
+                const horizontalDistance = faceapi.euclideanDistance([eyePoints[0].x, eyePoints[0].y], [eyePoints[3].x, eyePoints[3].y]);
+                return verticalDistance / horizontalDistance; // Proporción de apertura del ojo
+              }
+              
+            let lastBlinkTimestamp = 0;
+            const blinkThreshold = 0.3; // Ajusta este valor
+            const blinkCooldown = 1000; // Tiempo mínimo entre parpadeos, en milisegundos
 
-            if (isFrameSent) {
-                return; // Si ya se envió el frame, no hacer nada
+
+            let eyeOpennessHistory = []; // Para almacenar la historia de la apertura de los ojos
+            const historyLength = 10; // Cuántos frames para calcular el promedio móvil
+
+            // Modifica la función calculateEyeOpenness para actualizar la historia de apertura de ojos
+            function calculateEyeOpenness(eyePoints) {
+                const verticalDistance = faceapi.euclideanDistance([eyePoints[1].x, eyePoints[1].y], [eyePoints[5].x, eyePoints[5].y]);
+                const horizontalDistance = faceapi.euclideanDistance([eyePoints[0].x, eyePoints[0].y], [eyePoints[3].x, eyePoints[3].y]);
+                const openness = verticalDistance / horizontalDistance;
+
+                // Actualiza la historia de apertura de ojos
+                eyeOpennessHistory.push(openness);
+                if (eyeOpennessHistory.length > historyLength) {
+                    eyeOpennessHistory.shift(); // Mantén el tamaño de la historia
+                }
+
+                return openness;
             }
 
-            setInterval(async () => {
-                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions());
-                const resizedDetections = faceapi.resizeResults(detections, displaySize);
-                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-                  if (detections.length > 0) {
-                    sendFrame();
+            
+            resizedDetections.forEach(detection => {
+              const now = Date.now();
+              const landmarks = detection.landmarks.positions;
+            
+              // Índices de los puntos de referencia para los ojos izquierdo y derecho
+              const leftEyeIndices = [36, 37, 38, 39, 40, 41];
+              const rightEyeIndices = [42, 43, 44, 45, 46, 47];
+            
+              const leftEyePoints = leftEyeIndices.map(index => landmarks[index]);
+              const rightEyePoints = rightEyeIndices.map(index => landmarks[index]);
+            
+              const leftEyeOpenness = calculateEyeOpenness(leftEyePoints);
+              const rightEyeOpenness = calculateEyeOpenness(rightEyePoints);
+            
+              // Verifica si la detección de un parpadeo es válida
+              if (leftEyeOpenness < blinkThreshold && rightEyeOpenness < blinkThreshold) {
+                if (now - lastBlinkTimestamp > blinkCooldown) {
+                  console.log("Blink detected!");
+                  lastBlinkTimestamp = now;
                 }
-                faceapi.draw.drawDetections(canvas, resizedDetections);
-            }, 100);
+              }
+            });
+            
+            requestAnimationFrame(detectFaces);
+              
+         
+        
         }
+          
+          // Asegúrate de llamar a detectFaces inicialmente o después de cargar el video
+          detectFaces();
+          
 
         function sendFrame() {
 

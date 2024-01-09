@@ -21,9 +21,20 @@ from rest_framework.decorators import action
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
+from rest_framework.authtoken.models import Token
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.models import User
+from django.utils import timezone
+
+
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+
 
 from apps.mycore.views.ejecutarsp import CEjecutarSP
 
@@ -64,7 +75,7 @@ class CAutenticacion(APIView):
             if len(dPermisos)>0:
                 # print("El usuario si tiene acceso al sistema con clave: "+ str(p_nIdSistema))
                 # print(dPermisos[0][12])
-                self.sNombreSistema = dPermisos[0][13]
+                # self.sNombreSistema = dPermisos[0][13]
                 for dPermiso in dPermisos:
                     dPermisosUsuario[dPermiso[6]] = dPermiso[7]
 
@@ -78,13 +89,17 @@ class CAutenticacion(APIView):
         return dPermisosUsuario
     
 
-    def obtenerDatosPersonales(self, p_nIdUsuario):
+    def obtenerDatosPersonales(self, p_nIdUsuario=0, p_nIdPersonal=0):
         dDatos = {}
         # dDatosUsuario = {}
         print("Accede a metodo obtenerDatosPersonales.")
         try:
             
-            self.oExecSP.registrarParametros("idUsuario",p_nIdUsuario)
+            if p_nIdUsuario>0:
+                self.oExecSP.registrarParametros("idUsuario",p_nIdUsuario)
+            elif p_nIdPersonal>0:
+                self.oExecSP.registrarParametros("idPersonal",p_nIdPersonal)
+            
             dDatos = self.oExecSP.ejecutarSP("obtenerDatosPersonales")
 
             # if len(dDatos)>0:
@@ -114,7 +129,7 @@ class CAutenticacion(APIView):
             if len(dGrupos)>0:
                 # print("El usuario si tiene acceso al sistema con clave: "+ str(p_nIdSistema))
                 # print(dPermisos[0][12])
-                self.sNombreSistema = dGrupos[0][16]
+                # self.sNombreSistema = dGrupos[0][16]
                 for dGrupo in dGrupos:
                     # sNombreGrupo = dGrupo[9]
                     dGruposUsuario[dGrupo[15]] = dGrupo[13]
@@ -161,7 +176,52 @@ class CAutenticacion(APIView):
 
         return dGrupoUsuario
 
-    
+    def get_custom_auth_token(self, p_sUsuario):
+        # Generamos token para autenticación del usuario :) 
+        sTexto = ""
+        sToken_encoded = ""
+        expiration_time= 0
+        expiration_hours = 5 # 5 horas
+
+        try:
+            user = User.objects.get(username=p_sUsuario) 
+            timestamp = int(timezone.now().timestamp())
+
+            # Calcular la fecha de expiración del token
+            expiration_time = timestamp + (expiration_hours * 3600)  # 3600 segundos en una hora
+            
+            token = default_token_generator.make_token(user)+ ',' + str(expiration_time)
+   
+            
+            # sToken_encoded = urlsafe_base64_encode(force_bytes(token))
+            # print("token: "+token)
+            # print(type(token))
+            sToken_encoded = urlsafe_base64_encode(force_bytes(token))
+
+            # print(type(sToken_encoded))
+
+            # tk = urlsafe_base64_decode(sToken_encoded)
+            # print(tk)
+            
+            # tk = tk.decode('utf-8')
+            # print(tk)
+
+            # is_token_valid = default_token_generator.check_token(user, tk)
+
+            # if is_token_valid:
+            #     print("El token es válido.")
+            # else:
+            #     print("El token no es válido.")
+
+        except ValueError as error:
+            sTexto = "%s" % error
+            datos = {'message': 'Ocurrió un error al generar el token para el usuario. ', "error": sTexto}
+
+        # print(type(sToken_encoded))
+        return sToken_encoded
+
+
+
     @staticmethod
     def prueba():
         print("Accede a metodo prueba...")
@@ -240,6 +300,9 @@ class CAutenticacion(APIView):
             sistema = 0
             idPersonal = 0
             sNombreCompleto = ""
+            sUserName = ""
+            tokenApi = ""
+            nItemJson = 0
             #total de items permitidos en la API, definidos en la diccionario dCamposJson
             nLenDef = len(dCamposJson) 
             #Variable que almacenara el numero de items del json recibido por la API.
@@ -272,21 +335,28 @@ class CAutenticacion(APIView):
             if bValido:
 
                 #2. Compara el token obtenido del json contra el secretKey de la aplicación.
-                if(jd['token'] == os.environ.get('SECRET_KEY')):
+                # 2.1. Para el sistema de RF (Reconocimiento Facial) el  token =4  
+                if((jd['token'] == os.environ.get('SECRET_KEY')) or (jd['token'] == 4)):
 
+                    #Valida si el sistema existe en el catalogo de sistemas.
                     dSistema = list(Sistemas.objects.filter(id=jd['idSistema']).values())
                     if len(dSistema)>0:
                         sistema = dSistema[0]['id']
+                        self.sNombreSistema = dSistema[0]['nombre']
                     
-                    if sistema>0:
+                    #Si el sistema obtenido se encuentra en el catalogo de sistemas y el sistema no es el sistema 4 (RF)
+                    if sistema>0 and jd['token']!=4:
+                      
                         #3. Decodifica el password en base64
                         pwdD64 = base64.b64decode(jd['password'])
                     
                         #Obtiene el registro del usuario mediante el userName.
                         dUsuario = list(User.objects.filter(username=jd['user'], is_active=1).values())
+                       
                         if len(dUsuario):
                             password = dUsuario[0]['password']
                             idUsuario = dUsuario[0]['id']
+                       
                         #4. Verifica que la contraseña en base64 coincida con la password encriptada de BD.
                         #En caso de coincidir es como devuelve los permisos y grupos del usuario.
                         if  handler.verify(pwdD64,password):
@@ -294,32 +364,70 @@ class CAutenticacion(APIView):
                             
                             #Listado de permisos
                             # dPermisos = list(SistemaPermiso.objects.filter(sistema_id=sistema).values())
-                            dDatosPersonales = self.obtenerDatosPersonales(idUsuario)
+                            dDatosPersonales = self.obtenerDatosPersonales(idUsuario,0)
                             if len(dDatosPersonales)>0:
                                 print(dDatosPersonales[0][1])
                                 idPersonal = dDatosPersonales[0][1]
                                 sNombreCompleto = dDatosPersonales[0][8]
 
-                            dPermisos = self.obtenerPermisos(sistema,idUsuario)
-                            dGrupos = self.obtenerGrupos(sistema,idUsuario)
+                                dPermisos = self.obtenerPermisos(sistema,idUsuario)
+                                dGrupos = self.obtenerGrupos(sistema,idUsuario)
 
-                            #El listado de permisos de grupos se unen al bloque permisos, todo junto.
-                            dPermisos.update(dGrupos)
-                            # resultados = vUsuarioPermiso.objects.all()
+                                #El listado de permisos de grupos se unen al bloque permisos, todo junto.
+                                dPermisos.update(dGrupos)
+                                # resultados = vUsuarioPermiso.objects.all()
 
-                            # if len(dPermisos)>0:
-                            #     print("resultados :) ")  
+                                # if len(dPermisos)>0:
+                                #     print("resultados :) ")  
+                                    
+                                # else:
                                 
-                            # else:
-                               
-                            #     sTexto += "Este sistema no tiene permisos"
+                                #     sTexto += "Este sistema no tiene permisos"
 
-                            
-                            # datos = {'message': 'Success', 'datos': dUsuario}
-                            # datos = {'message': 'Success', 'sistema':self.sNombreSistema,'permisos': dPermisos, 'grupos':dGrupos}
-                            datos = {'message': 'Success','idPersonal':idPersonal,'usuario': jd['user'], 'password': jd['password'],'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'permisos': dPermisos}
+                                
+                                # datos = {'message': 'Success', 'datos': dUsuario}
+                                # datos = {'message': 'Success', 'sistema':self.sNombreSistema,'permisos': dPermisos, 'grupos':dGrupos}
+                                # token, created = Token.objects.get_or_create(username=jd['user'])
+
+                                tokenApi = self.get_custom_auth_token(jd['user'])
+
+                                print(tokenApi)
+
+                                is_token_valid = default_token_generator.check_token(jd['user'], tokenApi)
+                                
+                                datos = {'message': 'Success','idPersonal':idPersonal,'usuario': jd['user'], 'password': jd['password'],'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'permisos': dPermisos}
+                            else:
+                                datos = {'message': 'Sin datos', 'error':'¡Ups! Al parecer no existen registros de este usuario, por favor de verificar los datos proporcionados. '}
+
                         else:
                             datos = {'message': 'Dato Invalidos', 'error':'¡Ups! la contraseña es incorrecta.'}
+
+                    elif  sistema>0 and jd['token']==4:
+
+                        print("Petición recibida por parte del API de reconocimiento facial.")
+
+                        idPersonal = int(jd['user'])
+                        dDatosPersonales = self.obtenerDatosPersonales(0,idPersonal)
+
+                        if len(dDatosPersonales)>0:
+                                print(dDatosPersonales[0][1])
+                                idUsuario = dDatosPersonales[0][0]
+                                sNombreCompleto = dDatosPersonales[0][8]
+                                password = dDatosPersonales[0][3]
+                                sUserName = dDatosPersonales[0][2]
+
+                                dPermisos = self.obtenerPermisos(sistema,idUsuario)
+                                dGrupos = self.obtenerGrupos(sistema,idUsuario)
+
+                                dPermisos.update(dGrupos)
+
+                                tokenApi = self.get_custom_auth_token(sUserName)
+
+                                print(tokenApi)
+
+                                datos = {'message': 'Success','idPersonal':idPersonal,'usuario': sUserName, 'password': password,'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'permisos': dPermisos}
+                        else:
+                                datos = {'message': 'Sin datos', 'error':'¡Ups! Al parecer no existen registros de este usuario, por favor de verificar los datos proporcionados. '}
                     else:
                         datos = {'message': 'Dato Invalidos', 'error':'Id de sistema invalido'}                   
                 else:
@@ -352,3 +460,133 @@ class Protegida(APIView):
         # return Response({"content": "Esta vista está protegida"})  
         return JsonResponse(datos)  
 
+class CVerificaToken(APIView):
+
+    # # def is_token_expired(self, user, token, expiration_hours=24):
+    # def is_token_expired(self, token, expiration_hours=5):
+        
+    #     # Verificar si el token ha expirado
+    #      # Obtener la fecha de creación del token del mismo
+    #     timestamp = default_token_generator._timestamp_from_token(token)
+
+    #     # Calcular la fecha de expiración del token
+    #     # expiration_time = timestamp + (expiration_hours * 3600)  # 3600 segundos en una hora
+    #     expiration_time = timestamp + (expiration_hours * 60)  # 60 segundos prueba de 1 minuto...
+
+    #     # Verificar si el token ha expirado
+    #     return expiration_time > timezone.now().timestamp()
+
+
+
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'token': openapi.Schema(type=openapi.TYPE_STRING, description='Token asignado por la aplicación.'),
+                'user': openapi.Schema(type=openapi.TYPE_STRING, description='Nombre de usuario.')
+            },
+            required=['token', 'user']
+        ),
+        responses={200: 'Token Validado'},
+    ) 
+    def post(self,request):
+        """
+        Realiza la validación del token dado por la api de autenticación.
+
+        Para realizar un consulta exitosa, envía un objeto JSON con los siguientes campos:
+       
+        """
+        try:
+            bValido = True
+            sToken_encoded = ""
+            sUserName = ""
+            tk = ""
+            is_token_valid = False
+            is_token_expired = True
+            sTexto = ""
+            nLenDef = 0
+            nItemJson = 0
+            expiration_hours = 1 #TODO: ✍ Tiempo de expiración de token por defecto son 5 horas, pero tratar de ver la manera de hacerlo configurable...
+
+            dCamposJson = ['token', 'user']
+            
+            jd = json.loads(request.body)
+
+            nLenDef = len(dCamposJson) 
+
+            nItemJson = len(jd)
+            
+            if nItemJson != nLenDef:
+                sTexto = "El tamaño del JSON obtenido no es el esperado, por favor de verificar. "
+                bValido = False
+
+            for item in dCamposJson:
+                if item in jd:
+                    continue
+                else:
+                    sTexto += " El campo faltante es: "+item+". "
+                    bValido = False
+                    break
+
+            if bValido:
+
+                sToken_encoded = jd['token']
+                sUserName = jd['user']
+                
+                user = User.objects.get(username=sUserName) 
+                
+                tk = urlsafe_base64_decode(sToken_encoded)                
+                tk = tk.decode('utf-8')
+                print(tk)
+                 # Separar el token y la marca de tiempo
+                parts = tk.split(',')
+
+                print("Token ... :( por favor funciona: ")
+                print(parts[0])
+                
+                token_without_timestamp = '-'.join(parts[:-1])
+                timestamp = int(parts[-1])
+                print("timestamp: ")
+                print(timestamp)
+
+                # Calcular la fecha de expiración del token
+                # expiration_time = timestamp + (expiration_hours * 3600)  # 3600 segundos en una hora
+                expiration_time = timestamp  # 3600 segundos en una hora
+                # expiration_time = timestamp + (1 * 60)  # 60 segundos prueba de 1 min.
+
+                if expiration_time > timezone.now().timestamp():
+                    print("Aun no expira el token")
+                    is_token_expired = False
+                else:
+                    print("El token ya expiro...")
+                    # is_token_expired = True
+
+                # is_token_valid = default_token_generator.check_token(user, tk)
+                is_token_valid = default_token_generator.check_token(user, parts[0])
+                
+
+                if is_token_valid and not is_token_expired:
+                    print("El token es válido y no ha expirado para este usuario...")
+                    # is_token_expired = self.is_token_expired(tk)
+                    # print(type(is_token_expired))
+
+                    datos = {'message': 'Success', "descripcion":'El token es válido y no ha expirado.'}
+                else:
+                    datos = {'message': 'Error', "descripcion":'El token ya no es válido y posiblemente ya expiro'}
+                    print("El token no es válido.")
+            else:
+                datos = {'message': 'Datos Invalidos ', 'Error': sTexto}
+
+
+            
+         
+            # is_token_valid = default_token_generator.check_token(user, token)
+
+            
+
+        except ValueError as error:
+            sTexto = "%s" % error
+            datos = {'message': 'JSON invalido. ', "error": sTexto}
+            # return False
+
+        return JsonResponse(datos)  

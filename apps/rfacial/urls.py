@@ -1,6 +1,7 @@
 from django.urls import path, re_path
 from .views import CAutenticacion
 from .views import Protegida
+from .views import CVerificaToken
 # from .views import swagger_json
 
 # from django.urls import re_path
@@ -45,6 +46,8 @@ urlpatterns = [
    path('ReconFacial/', CReconFacial.as_view(), name='ReconFacial'),
    path('CompareFaces/', CCompareFaces.as_view(), name='CompareFaces'),
    path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+   path('verifytk/', CVerificaToken.as_view(), name='verifytk'),
+   
    #  path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
    #  re_path(r'^swagger(?P<format>\.json)$', swagger_json, name='swagger-json'),
    # path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),

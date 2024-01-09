@@ -181,7 +181,7 @@ class CAutenticacion(APIView):
         sTexto = ""
         sToken_encoded = ""
         expiration_time= 0
-        expiration_hours = p_sTiempoExp # 3 horas por defecto en caso de que no se asigne un tiempo en la app.
+        expiration_hours = int(p_sTiempoExp) # 3 horas por defecto en caso de que no se asigne un tiempo en la app.
 
         try:
             user = User.objects.get(username=p_sUsuario) 

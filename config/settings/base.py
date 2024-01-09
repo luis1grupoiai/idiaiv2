@@ -1,5 +1,7 @@
 import os
+
 from pathlib import Path
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -13,6 +15,7 @@ BASE_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'sslserver',
     # 'django.contrib.staticfiles',
 ]
 
@@ -149,3 +152,4 @@ USE_TZ = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_PERMISSION_MODEL = 'apps.areas.Permisos'
+

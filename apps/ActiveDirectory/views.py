@@ -147,6 +147,7 @@ def consultar_usuarios(request):
         with connect_to_ad() as connection:
             search_base = domino
             search_filter = '(objectClass=user)'
+            #search_filter = '(&(objectClass=user)(!(distinguishedName=*,CN=Users,*)))'
             attributes = ['cn', 
                           'sn', 
                           'givenName', 
@@ -187,27 +188,28 @@ def consultar_usuarios(request):
                 }
                 #print(entry.cn.value)
                # print(entry.distinguishedName.value if 'distinguishedName' in entry else None)
-                print(entry.userPrincipalName.value)
+                #print(entry.userPrincipalName.value)
                 print(entry.distinguishedName.value)
                 #print(extraer_unidad_organizativa(entry.distinguishedName.value))
               
-                
+                #if 'cn' in entry and entry.cn.value.lower() != 'administrador':
                 usuarios.append(usuario)
-                #print(entry.department.value)
-                if entry.department.value == 'Administración' and not is_account_disabled(useraccountcontrol_str) :
-                    usuariosAdmin.append(usuario)
-                
-                if entry.department.value == 'Ingeniería'and not is_account_disabled(useraccountcontrol_str) :
-                    usuariosIng.append(usuario)
-                
-                if entry.department.value == 'Calidad, Ambiental, Seguridad y Salud'and not is_account_disabled(useraccountcontrol_str) :
-                    usuariosDCASS.append(usuario)
-                
-                if entry.department.value == 'Proyectos Especiales'and not is_account_disabled(useraccountcontrol_str) :
-                    UsuariosPS.append(usuario)
-                    
-                if is_account_disabled(useraccountcontrol_str):
-                    UsuaruisDown.append(usuario)
+
+                if 'department' in entry:
+                    if entry.department.value == 'Administración' and not is_account_disabled(useraccountcontrol_str):
+                        usuariosAdmin.append(usuario)
+
+                    elif entry.department.value == 'Ingeniería' and not is_account_disabled(useraccountcontrol_str):
+                        usuariosIng.append(usuario)
+
+                    elif entry.department.value == 'Calidad, Ambiental, Seguridad y Salud' and not is_account_disabled(useraccountcontrol_str):
+                        usuariosDCASS.append(usuario)
+
+                    elif entry.department.value == 'Proyectos Especiales' and not is_account_disabled(useraccountcontrol_str):
+                        UsuariosPS.append(usuario)
+
+                    elif is_account_disabled(useraccountcontrol_str):
+                        UsuaruisDown.append(usuario)
                 
                 
                 
@@ -256,7 +258,7 @@ def agregar_usuario(request):
                 
                 #user_dn = f"CN={nombre_usuario},CN=Users,DC=iai,DC=com,DC=mx"
                 #user_dn = f"CN={nombre_usuario},OU=iaiUsuario,OU=RedGrupoIAI,{domino}"
-                user_dn = f"CN={nombre_usuario},OU={unidadOrganizativa[asignar_Departamento(departamento)]},{domino}"
+                user_dn = f"CN={nombre_usuario},{unidadOrganizativa[asignar_Departamento(departamento)]},{domino}"
                 conn.add(user_dn, ['top', 'person', 'organizationalPerson', 'user'], {
                     'cn': nombre_usuario,
                     'givenName':nombre_pila,
@@ -295,7 +297,7 @@ def agregar_usuario(request):
 
 @login_required  
 def editar_usuario(request):
-    print("Vista editar Usuario ")
+    #print("Vista de editar Usuario ")
     if request.method == 'POST':
          # Captura los datos enviados desde el formulario
         nombre_usuario = request.POST.get('nombre_usuario')
@@ -308,8 +310,8 @@ def editar_usuario(request):
         nombre_inicio_sesion = request.POST.get('nombre_inicio_sesion')
         user_dn = request.POST.get('distinguished_name')
         # ... otros campos ....
-        print(nombre_usuario)
-        print(user_dn)
+        #print(nombre_usuario)
+        #print(user_dn)
         # Conectar a Active Directory
         try:
             #server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
@@ -331,14 +333,16 @@ def editar_usuario(request):
                 # Verificar resultado de la modificación
                 if conn.result['result'] == 0:  # éxito
                    # messages.success(request, 'Usuario editado correctamente.')
-                    print(request, 'Usuario editado correctamente.')
+                    print('Usuario editado correctamente.')
                 else:
                    # messages.error(request, f"Error al editar usuario: {conn.result['description']}")
-                    print(request, f"Error al editar usuario: {conn.result['description']}")
+                    print( f"Error al editar usuario: {conn.result['description']}")
         except Exception as e:
            # messages.error(request, f"Error al conectar con AD: {str(e)}")
-            print(request, f"Error al conectar con AD: {str(e)}")
+            print(f"Error al conectar con AD: {str(e)}")
     # Redireccionar de vuelta a la lista de usuarios
+    
+    print(mover_usuario_ou(nombre_inicio_sesion, unidadOrganizativa[asignar_Departamento(departamento)]))
     return redirect('usuarios')
 
  
@@ -389,14 +393,14 @@ def activar_usuario(request, nombre_usuario):
             conn.modify(user_dn, {'userAccountControl': [(MODIFY_REPLACE, [544])]})
             if conn.result['result'] == 0:
                 #messages.success(request, 'Usuario activado correctamente.')
-                print(request, 'Usuario activado correctamente.')
+                print('Usuario activado correctamente.')
                 return redirect('usuarios')
             else:
                 #messages.error(request, f"Error al activar usuario: {conn.result['description']}")
-                print(request, f"Error al activar usuario: {conn.result['description']}")
+                print(f"Error al activar usuario: {conn.result['description']}")
     except Exception as e:
         #messages.error(request, f"Error al conectar con AD: {str(e)}")
-        print(request, f"Error al conectar con AD: {str(e)}")
+        print(f"Error al conectar con AD: {str(e)}")
 
     
     
@@ -413,14 +417,14 @@ def desactivar_usuario(request, nombre_usuario):
             conn.modify(user_dn, {'userAccountControl': [(MODIFY_REPLACE, [66050])]})
             if conn.result['result'] == 0:
                 #messages.success(request, 'Usuario desactivado correctamente.')
-                print(request, 'Usuario desactivado correctamente.')
+                print('Usuario desactivado correctamente.')
                 return redirect('usuarios')
             else:
                 #messages.error(request, f"Error al desactivar usuario: {conn.result['description']}")
-                print(request, f"Error al desactivar usuario: {conn.result['description']}")
+                print(f"Error al desactivar usuario: {conn.result['description']}")
     except Exception as e:
         #messages.error(request, f"Error al conectar con AD: {str(e)}")
-        print(request, f"Error al conectar con AD: {str(e)}")
+        print(f"Error al conectar con AD: {str(e)}")
 
 
 
@@ -453,29 +457,36 @@ def verificar_usuario(request, nombre_usuario):
 
 
 def mover_usuario_ou(nombre_usuario, nueva_ou):
-    msj = None
+    mensaje = None
     try:
         with connect_to_ad() as conn:
-            # Obtén el Distinguished Name (DN) actual del usuario
-            search_filter = f'(cn={nombre_usuario})'
+            # Buscar el Distinguished Name (DN) actual del usuario
+            search_filter = f'(sAMAccountName={nombre_usuario})'
             conn.search(search_base=domino, search_filter=search_filter, attributes=['distinguishedName'])
+
             if conn.entries:
                 dn_actual = conn.entries[0].distinguishedName.value
-                # Construye el nuevo DN
-                dn_nuevo = f"CN={nombre_usuario},{nueva_ou},{domino}"
+                print(f"DN actual: {dn_actual}")
 
-                # Mueve el usuario a la nueva OU
-                conn.modify_dn(dn_actual, dn_nuevo)
+                # Construir el nuevo DN
+                nuevo_rdn = f"CN={nombre_usuario}"
+                nueva_ou_completa = f"{nueva_ou},{domino}"
+                print(f"Nuevo DN: {nuevo_rdn}, en OU: {nueva_ou_completa}")
+
+                # Mover el usuario a la nueva OU
+                conn.modify_dn(dn_actual, nuevo_rdn, new_superior=nueva_ou_completa)
+                
                 if conn.result['result'] == 0:
-                    msj = 'Usuario movido correctamente.'
+                    mensaje = 'Usuario movido correctamente.'
                 else:
-                    msj = f"Error al mover usuario: {conn.result['description']}"
+                    mensaje = f"Error al mover usuario: {conn.result['description']}"
             else:
-                msj = "Usuario no encontrado en AD."
+                mensaje = "Usuario no encontrado en AD."
     except Exception as e:
-        msj =  f"Error al conectar con AD: {str(e)}" 
-        
-    return msj
+        mensaje = f"Error al conectar con AD o al realizar la operación: {e}"
+
+    return mensaje
+
 
 def asignar_Departamento(departamento):
     

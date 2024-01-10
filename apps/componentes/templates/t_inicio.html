@@ -74,22 +74,19 @@
             if (!isMobile || framesSinceLastDetection++ >= detectionFrequency) {
                 let detections = await faceapi
                     .detectAllFaces(video, options)
-                    .withFaceLandmarks(isMobile ? false : true)
-                    .withFaceExpressions(isMobile ? false : true);
+                    .withFaceLandmarks(isMobile ? false : true) // Puedes mantener o quitar esta condición según tus necesidades
+                    .withFaceExpressions(); // Habilitar expresiones faciales para todos los dispositivos
         
                 const resizedDetections = faceapi.resizeResults(detections, displaySize);
                 canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
                 faceapi.draw.drawDetections(canvas, resizedDetections);
-                if (!isMobile) {
-                    faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
-                    faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
-                }
+                faceapi.draw.drawFaceLandmarks(canvas, resizedDetections); // Dibuja los puntos de referencia faciales si están habilitados
+                faceapi.draw.drawFaceExpressions(canvas, resizedDetections); // Dibuja las expresiones faciales
         
                 framesSinceLastDetection = 0;
             }
             requestAnimationFrame(detectFaces);
         }
-    
 
 
       function sendFrame() {

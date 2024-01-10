@@ -1,190 +1,166 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Detección de Rostros en Tiempo Real</title>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-<style>
-    body {
+    <style>
+      body {
         margin: 0;
         position: relative;
         height: 100vh;
         display: flex;
         justify-content: center;
         align-items: center;
-    }
+      }
 
-    canvas, video {
+      canvas,
+      video {
         position: absolute;
         top: 0;
         left: 50%;
         transform: translateX(-50%);
         width: 100%; /* Establece el ancho al 50% de la ventana */
         height: auto; /* Mantiene la relación de aspecto */
-    }
-</style>
-
-</head>
-<body>
-    <video id="video" width="720" height="560" autoplay muted></video>
+      }
+    </style>
+  </head>
+  <body>
+    <video id="video" autoplay muted></video>
     <canvas id="canvas"></canvas>
     <script>
         let canvas, displaySize;
-        let isFrameSent = false; // Variable de control para evitar envíos múltiples
         const video = document.getElementById('video');
-        const captureButton = document.getElementById('capture');
-
-            Promise.all([
-            faceapi.nets.faceExpressionNet.loadFromUri('/static/models') ,
-                faceapi.nets.tinyFaceDetector.loadFromUri('/static/models'),
-                faceapi.nets.faceLandmark68Net.loadFromUri('/static/models'),
-                // Carga aquí otros modelos si los necesitas
-            ]).then(startVideo);
-
-
-            function startVideo() {
-                navigator.getUserMedia(
-                  { video: {} },
-                  stream => {
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const inputSize = isMobile ? 160 : 512; // Menor tamaño de entrada para móviles
+        const scoreThreshold = 0.5;
+        const options = new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold });
+        
+        let framesSinceLastDetection = 0;
+        const detectionFrequency = isMobile ? 5 : 1;
+        
+        Promise.all([
+            faceapi.nets.tinyFaceDetector.loadFromUri("/static/models"),
+            faceapi.nets.faceLandmark68Net.loadFromUri("/static/models"), // Modelo completo para dispositivos no móviles
+            faceapi.nets.faceLandmark68TinyNet.loadFromUri("/static/models"), // Modelo más ligero para móviles
+            faceapi.nets.faceExpressionNet.loadFromUri("/static/models"),
+            // Carga aquí otros modelos si los necesitas
+        ]).then(startVideo);
+        
+        function startVideo() {
+            navigator.getUserMedia(
+                { video: {} },
+                (stream) => {
                     video.srcObject = stream;
                     video.onloadedmetadata = () => {
-                      video.play();
-                      detectFaces(); // Iniciar detección de rostros después de que el video comienza a reproducirse
+                        video.play();
+                        if (isMobile) {
+                            video.width = video.videoWidth / 2;
+                            video.height = video.videoHeight / 2;
+                        }
+        
+                        canvas = faceapi.createCanvasFromMedia(video);
+                        document.body.append(canvas);
+                        displaySize = { width: video.videoWidth, height: video.videoHeight };
+                        faceapi.matchDimensions(canvas, displaySize);
+        
+                        detectFaces();
                     };
-                  },
-                  err => console.error(err)
-                );
-              }
-              
-
-        video.addEventListener('loadedmetadata', () => {
-            // Crear canvas y añadirlo al DOM
-            canvas = faceapi.createCanvasFromMedia(video);
-            document.body.append(canvas);
-            displaySize = { width: video.videoWidth, height: video.videoHeight };
-            faceapi.matchDimensions(canvas, displaySize);
-            detectFaces(); // Ya no necesitas pasar canvas y displaySize
-        });
-
+                },
+                (err) => console.error(err)
+            );
+        }
+        
         async function detectFaces() {
-            const options = new faceapi.TinyFaceDetectorOptions();
-            let detections = await faceapi.detectAllFaces(video, options)
-              .withFaceLandmarks()
-              .withFaceExpressions();
-          
-            const displaySize = { width: video.videoWidth, height: video.videoHeight };
-            faceapi.matchDimensions(canvas, displaySize);
-          
-            const resizedDetections = faceapi.resizeResults(detections, displaySize);
-            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-            faceapi.draw.drawDetections(canvas, resizedDetections);
-            faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
-            faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
-          
-            function calculateEyeOpenness(eyePoints) {
-                const verticalDistance = faceapi.euclideanDistance([eyePoints[1].x, eyePoints[1].y], [eyePoints[5].x, eyePoints[5].y]);
-                const horizontalDistance = faceapi.euclideanDistance([eyePoints[0].x, eyePoints[0].y], [eyePoints[3].x, eyePoints[3].y]);
-                return verticalDistance / horizontalDistance; // Proporción de apertura del ojo
-              }
-              
-            let lastBlinkTimestamp = 0;
-            const blinkThreshold = 0.3; // Ajusta este valor
-            const blinkCooldown = 1000; // Tiempo mínimo entre parpadeos, en milisegundos
-
-
-           
-            resizedDetections.forEach(detection => {
-              const now = Date.now();
-              const landmarks = detection.landmarks.positions;
-            
-              // Índices de los puntos de referencia para los ojos izquierdo y derecho
-              const leftEyeIndices = [36, 37, 38, 39, 40, 41];
-              const rightEyeIndices = [42, 43, 44, 45, 46, 47];
-            
-              const leftEyePoints = leftEyeIndices.map(index => landmarks[index]);
-              const rightEyePoints = rightEyeIndices.map(index => landmarks[index]);
-            
-              const leftEyeOpenness = calculateEyeOpenness(leftEyePoints);
-              const rightEyeOpenness = calculateEyeOpenness(rightEyePoints);
-
-    
-            
-            });
-                         
+            if (!isMobile || framesSinceLastDetection++ >= detectionFrequency) {
+                let detections = await faceapi
+                    .detectAllFaces(video, options)
+                    .withFaceLandmarks(isMobile ? false : true)
+                    .withFaceExpressions(isMobile ? false : true);
+        
+                const resizedDetections = faceapi.resizeResults(detections, displaySize);
+                canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+                faceapi.draw.drawDetections(canvas, resizedDetections);
+                if (!isMobile) {
+                    faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+                    faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
+                }
+        
+                framesSinceLastDetection = 0;
+            }
             requestAnimationFrame(detectFaces);
         }
-          
-          // Asegúrate de llamar a detectFaces inicialmente o después de cargar el video
-          detectFaces();
-          
+    
 
-        function sendFrame() {
 
-            if (isFrameSent) {
-                return; // Evitar que la función se ejecute si ya se ha enviado el frame
+      function sendFrame() {
+ 
+        if (isFrameSent) {
+            return; // Evitar que la función se ejecute si ya se ha enviado el frame
+        }
+
+        isFrameSent = true; // Actualizar la variable de control
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        const data = canvas.toDataURL('image/jpeg');
+        fetch('../api/ReconFacial/', {
+            method: 'POST',
+            body: JSON.stringify({ imagen_base64: data }),
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
             }
-
-            isFrameSent = true; // Actualizar la variable de control
-
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            const data = canvas.toDataURL('image/jpeg');
-            fetch('../api/ReconFacial/', {
-                method: 'POST',
-                body: JSON.stringify({ imagen_base64: data }),
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data);
-                    if (data.match) {
-                        // Si hay coincidencia, ocultamos el video y el canvas
-                        video.style.display = 'none';
-                        canvas.style.display = 'none';
-                        // Detener la detección y el stream de la cámara
-                        stopCameraStream();
-                    } else {
-                        alert("usuario no encontrado");
-                        // Opcional: resetear isFrameSent si quieres permitir reintentos
-                        isFrameSent = false;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error al enviar la imagen:', error);
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                if (data.match) {
+                    // Si hay coincidencia, ocultamos el video y el canvas
+                    video.style.display = 'none';
+                    canvas.style.display = 'none';
+                    // Detener la detección y el stream de la cámara
+                    stopCameraStream();
+                } else {
+                    alert("usuario no encontrado");
                     // Opcional: resetear isFrameSent si quieres permitir reintentos
                     isFrameSent = false;
-                });
-
-        }
-
-        function stopCameraStream() {
-            let stream = video.srcObject;
-            if (stream) {
-                let tracks = stream.getTracks();
-                tracks.forEach(track => track.stop());
-            }
-            video.srcObject = null;
-        }
-
-
-        // Función para obtener el CSRF token de Django
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
                 }
-            }
-            return cookieValue;
+            })
+            .catch(error => {
+                console.error('Error al enviar la imagen:', error);
+                // Opcional: resetear isFrameSent si quieres permitir reintentos
+                isFrameSent = false;
+            });
+
+    }
+
+      function stopCameraStream() {
+        let stream = video.srcObject;
+        if (stream) {
+          let tracks = stream.getTracks();
+          tracks.forEach((track) => track.stop());
         }
+        video.srcObject = null;
+      }
+
+      // Función para obtener el CSRF token de Django
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+          const cookies = document.cookie.split(";");
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === name + "=") {
+              cookieValue = decodeURIComponent(
+                cookie.substring(name.length + 1)
+              );
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
     </script>
-</body>
+  </body>
 </html>

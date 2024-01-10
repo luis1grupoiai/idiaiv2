@@ -183,7 +183,7 @@ Usuarios de IDIAI
                                                 <label for="departamento" class="form-label">Dirección:</label>
                                                 <select class="form-control select2" name="departamento" id="departamento" required>
     
-                                                    <option value="None">Seleccione una Opción </option>
+                                                
                                                     <option value="Administración">Administración</option>
                                                     <option value="Calidad, Ambiental, Seguridad y Salud">Calidad, Ambiental, Seguridad y Salud</option>
                                                     <option value="Proyectos Especiales">Proyectos Especiales</option>
@@ -290,23 +290,13 @@ Usuarios de IDIAI
                     modal.show();
             }
               
-            $('#userModal').on('hidden.bs.modal', function () {
-                // Restaura el desplazamiento aquí
-                document.body.style.overflow = 'auto';
-            });
-            
+      
 
            
-            // Esperar a que el DOM se cargue completamente
-              document.addEventListener("DOMContentLoaded", function() {
-                // Obtener el elemento del modal por su ID
-                var userModal = document.getElementById('crearUserModal');
-        
-                // Listener para el evento 'hidden.bs.modal', que se dispara después de que el modal se ha cerrado
-               userModal.addEventListener('hidden.bs.modal', function () {
-                    // Refrescar la página
-                   location.reload();
-               });
+           
+
+            $('#crearUserModal').on('hidden.bs.modal', function () {
+                $('.modal-backdrop').remove();
             });
           
 

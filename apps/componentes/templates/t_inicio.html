@@ -91,59 +91,7 @@
             const blinkCooldown = 1000; // Tiempo mínimo entre parpadeos, en milisegundos
 
 
-            let eyeOpennessHistory = []; // Para almacenar la historia de la apertura de los ojos
-            const historyLength = 10; // Cuántos frames para calcular el promedio móvil
-
-            // Modifica la función calculateEyeOpenness para actualizar la historia de apertura de ojos
-            function calculateEyeOpenness(eyePoints) {
-                const verticalDistance = faceapi.euclideanDistance([eyePoints[1].x, eyePoints[1].y], [eyePoints[5].x, eyePoints[5].y]);
-                const horizontalDistance = faceapi.euclideanDistance([eyePoints[0].x, eyePoints[0].y], [eyePoints[3].x, eyePoints[3].y]);
-                const openness = verticalDistance / horizontalDistance;
-
-                // Actualiza la historia de apertura de ojos
-                eyeOpennessHistory.push(openness);
-                if (eyeOpennessHistory.length > historyLength) {
-                    eyeOpennessHistory.shift(); // Mantén el tamaño de la historia
-                }
-
-                return openness;
-            }
-
-
-            function drawCenterLines(canvas) {
-                const ctx = canvas.getContext('2d');
-                // Línea horizontal
-                ctx.beginPath();
-                ctx.moveTo(0, canvas.height / 2);
-                ctx.lineTo(canvas.width, canvas.height / 2);
-                ctx.strokeStyle = 'red';
-                ctx.stroke();
-            
-                // Línea vertical
-                ctx.beginPath();
-                ctx.moveTo(canvas.width / 2, 0);
-                ctx.lineTo(canvas.width / 2, canvas.height);
-                ctx.strokeStyle = 'red';
-                ctx.stroke();
-            }
-
-            function calculateCenterPoint(points) {
-                return points.reduce((center, point) => {
-                    return { x: center.x + point.x / points.length, y: center.y + point.y / points.length };
-                }, { x: 0, y: 0 });
-            }
-            
-
-            function getIdealReferencePosition(videoElement) {
-    // Esto puede ser basado en la altura típica del usuario y la posición de la cámara
-    const yOffset = videoElement.height * 0.3; // Ajustar según sea necesario
-    return {
-        x: videoElement.width / 2,
-        y: videoElement.height / 2 + yOffset
-    };
-}
-
-            
+           
             resizedDetections.forEach(detection => {
               const now = Date.now();
               const landmarks = detection.landmarks.positions;
@@ -158,32 +106,11 @@
               const leftEyeOpenness = calculateEyeOpenness(leftEyePoints);
               const rightEyeOpenness = calculateEyeOpenness(rightEyePoints);
 
-            // Dibuja las líneas de centro fijas
-            drawCenterLines(canvas);
-
-            // Informar al usuario
-            const ctx = canvas.getContext('2d');
-            const faceCenter = calculateCenterPoint(detection.landmarks.positions);
-            const canvasCenter = { x: canvas.width / 2, y: canvas.height / 2 };
-
-            // Determina si el rostro está centrado (puedes ajustar el umbral de 'tolerance' según sea necesario)
-            const tolerance = 10; // pixels
-            const isCenteredHorizontally = Math.abs(faceCenter.x - canvasCenter.x) < tolerance;
-            const isCenteredVertically = Math.abs(faceCenter.y - canvasCenter.y) < tolerance;              
+    
             
-            
-              // Verifica si la detección de un parpadeo es válida
-              if (leftEyeOpenness < blinkThreshold && rightEyeOpenness < blinkThreshold) {
-                if (now - lastBlinkTimestamp > blinkCooldown) {
-                  console.log("Blink detected!");
-                  lastBlinkTimestamp = now;
-                }
-              }
             });
                          
             requestAnimationFrame(detectFaces);
-
-        
         }
           
           // Asegúrate de llamar a detectFaces inicialmente o después de cargar el video

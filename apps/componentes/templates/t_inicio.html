@@ -3,30 +3,26 @@
 <head>
     <title>Detección de Rostros en Tiempo Real</title>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-        
-    <style>
-        body {
-            margin: 0;
-            position: relative;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+<style>
+    body {
+        margin: 0;
+        position: relative;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
 
-        canvas {
-            position: absolute;
-            top: -5px; /* Ajusta este valor para subir el cuadro de detección */
-            left: 0;
-        }
+    canvas, video {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%; /* Establece el ancho al 50% de la ventana */
+        height: auto; /* Mantiene la relación de aspecto */
+    }
+</style>
 
-
-        video {
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-    </style>
 </head>
 <body>
     <video id="video" width="720" height="560" autoplay muted></video>
@@ -44,20 +40,19 @@
                 // Carga aquí otros modelos si los necesitas
             ]).then(startVideo);
 
+
             function startVideo() {
                 navigator.getUserMedia(
                   { video: {} },
                   stream => {
                     video.srcObject = stream;
-                    // Esperar a que el video cargue sus metadatos para obtener sus dimensiones
                     video.onloadedmetadata = () => {
-                      video.width = video.videoWidth;
-                      video.height = video.videoHeight;
-                      detectFaces(); // Iniciar detección de rostros después de establecer las dimensiones
+                      video.play();
+                      detectFaces(); // Iniciar detección de rostros después de que el video comienza a reproducirse
                     };
                   },
                   err => console.error(err)
-                )
+                );
               }
               
 
@@ -114,6 +109,40 @@
                 return openness;
             }
 
+
+            function drawCenterLines(canvas) {
+                const ctx = canvas.getContext('2d');
+                // Línea horizontal
+                ctx.beginPath();
+                ctx.moveTo(0, canvas.height / 2);
+                ctx.lineTo(canvas.width, canvas.height / 2);
+                ctx.strokeStyle = 'red';
+                ctx.stroke();
+            
+                // Línea vertical
+                ctx.beginPath();
+                ctx.moveTo(canvas.width / 2, 0);
+                ctx.lineTo(canvas.width / 2, canvas.height);
+                ctx.strokeStyle = 'red';
+                ctx.stroke();
+            }
+
+            function calculateCenterPoint(points) {
+                return points.reduce((center, point) => {
+                    return { x: center.x + point.x / points.length, y: center.y + point.y / points.length };
+                }, { x: 0, y: 0 });
+            }
+            
+
+            function getIdealReferencePosition(videoElement) {
+    // Esto puede ser basado en la altura típica del usuario y la posición de la cámara
+    const yOffset = videoElement.height * 0.3; // Ajustar según sea necesario
+    return {
+        x: videoElement.width / 2,
+        y: videoElement.height / 2 + yOffset
+    };
+}
+
             
             resizedDetections.forEach(detection => {
               const now = Date.now();
@@ -128,6 +157,20 @@
             
               const leftEyeOpenness = calculateEyeOpenness(leftEyePoints);
               const rightEyeOpenness = calculateEyeOpenness(rightEyePoints);
+
+            // Dibuja las líneas de centro fijas
+            drawCenterLines(canvas);
+
+            // Informar al usuario
+            const ctx = canvas.getContext('2d');
+            const faceCenter = calculateCenterPoint(detection.landmarks.positions);
+            const canvasCenter = { x: canvas.width / 2, y: canvas.height / 2 };
+
+            // Determina si el rostro está centrado (puedes ajustar el umbral de 'tolerance' según sea necesario)
+            const tolerance = 10; // pixels
+            const isCenteredHorizontally = Math.abs(faceCenter.x - canvasCenter.x) < tolerance;
+            const isCenteredVertically = Math.abs(faceCenter.y - canvasCenter.y) < tolerance;              
+            
             
               // Verifica si la detección de un parpadeo es válida
               if (leftEyeOpenness < blinkThreshold && rightEyeOpenness < blinkThreshold) {
@@ -137,10 +180,9 @@
                 }
               }
             });
-            
+                         
             requestAnimationFrame(detectFaces);
-              
-         
+
         
         }
           

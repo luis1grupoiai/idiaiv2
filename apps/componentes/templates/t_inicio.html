@@ -34,7 +34,9 @@
         const inputSize = isMobile ? 160 : 512; // Menor tamaño de entrada para móviles
         const scoreThreshold = 0.5;
         const options = new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold });
-        
+        let expressionHistory = [];
+        const requiredConsistency = 20; // Número de cuadros consecutivos requeridos
+
         let framesSinceLastDetection = 0;
         const detectionFrequency = isMobile ? 5 : 1;
         
@@ -74,20 +76,46 @@
             if (!isMobile || framesSinceLastDetection++ >= detectionFrequency) {
                 let detections = await faceapi
                     .detectAllFaces(video, options)
-                    .withFaceLandmarks(isMobile ? false : true) // Puedes mantener o quitar esta condición según tus necesidades
-                    .withFaceExpressions(); // Habilitar expresiones faciales para todos los dispositivos
+                    .withFaceLandmarks(isMobile ? false : true)
+                    .withFaceExpressions(); 
+                    
         
                 const resizedDetections = faceapi.resizeResults(detections, displaySize);
                 canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
                 faceapi.draw.drawDetections(canvas, resizedDetections);
-                faceapi.draw.drawFaceLandmarks(canvas, resizedDetections); // Dibuja los puntos de referencia faciales si están habilitados
-                faceapi.draw.drawFaceExpressions(canvas, resizedDetections); // Dibuja las expresiones faciales
+                faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+                faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
+        
+                // Agrega aquí la lógica para evaluar las expresiones
+                const expressions = resizedDetections.map(d => d.expressions);
+                expressionHistory.push(expressions);
+        
+                if (expressionHistory.length > requiredConsistency) {
+                    expressionHistory.shift();
+                }
+        
+                if (isExpressionConsistent(expressionHistory, 'happy')) {
+                    alert("Validación exitosa para happy");
+                    // Realiza alguna acción cuando la expresión sea consistente
+                }
+                 if (isExpressionConsistent(expressionHistory, 'neutral')) {
+                    alert("Validación exitosa para Neutral");
+                    // Realiza alguna acción cuando la expresión sea consistente
+                }
         
                 framesSinceLastDetection = 0;
             }
+        
             requestAnimationFrame(detectFaces);
         }
-
+        
+        function isExpressionConsistent(history, expression) {
+            // Asegúrate de que cada historial de expresiones contenga la expresión deseada como la más prominente
+            return history.every(h => {
+                const maxExpression = h.length > 0 ? h[0].asSortedArray()[0].expression : '';
+                return maxExpression === expression;
+            });
+        }
 
       function sendFrame() {
  

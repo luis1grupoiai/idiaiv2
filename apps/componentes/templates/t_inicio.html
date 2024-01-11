@@ -22,12 +22,72 @@
         width: 100%; /* Establece el ancho al 50% de la ventana */
         height: auto; /* Mantiene la relación de aspecto */
       }
+
+      /* Estilo base para el toast */
+
+      .toast {
+        display: flex;
+        align-items: center;
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        font-family: "Lucida Console", "Courier New", monospace;
+        transform: translateX(-50%);
+        background-color: rgba(255, 255, 255, 0.9); /* Fondo semitransparente para ver el efecto de desenfoque */
+        color: #3c763d;
+        padding: 2%;
+        border-radius: 4px;
+        font-size: 10px; /* Tamaño del icono */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        border: 1px solid #d6e9c6;
+        min-width: 70%;
+        justify-content: space-between;
+
+      }
+      
+      /* Icono del toast */
+      .toast-icon {
+        font-size: 10px; /* Tamaño del icono */
+        margin-right: 12px;
+      }
+
+      /* Mensaje del toast */
+      .toast-message {
+        flex-grow: 1;
+      }
+
+      /* Botón de cerrar */
+      .toast-close {
+        font-size: 12px; /* Tamaño del botón de cerrar */
+        cursor: pointer;
+        margin-left: 12px;
+      }
+
+      /* Clase para ocultar el toast */
+      .hidden {
+        display: none;
+      }
+
     </style>
   </head>
   <body>
+
+    <div id="toast-inicio" class="toast hidden" style=" backdrop-filter:sepia(90%) !important; ">
+      <div class="toast-icon">&#10004;</div> <!-- Checkmark icon -->
+      <div class="toast-message">Hello, world! This is a toast message.</div>
+      <div class="toast-close">&times;</div> <!-- Close button -->
+    </div> 
+    <div id="toast" class="toast hidden" style=" backdrop-filter:sepia(90%) !important; ">
+      <div class="toast-icon">&#10004;</div> <!-- Checkmark icon -->
+      <div class="toast-message">Hello, world! This is a toast message.</div>
+      <div class="toast-close">&times;</div> <!-- Close button -->
+    </div> 
     <video id="video" autoplay muted></video>
     <canvas id="canvas"></canvas>
     <script>
+    // Asegúrate de llamar a showToast cuando quieras mostrar el toast y eliminar el mensaje de carga
+    
         let canvas, displaySize;
         const video = document.getElementById('video');
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -45,7 +105,7 @@
         
         Promise.all([
             faceapi.nets.tinyFaceDetector.loadFromUri("/static/models"),
-            faceapi.nets.faceLandmark68Net.loadFromUri("/static/models"), // Modelo completo para dispositivos no móviles
+            faceapi.nets.faceLandmark68Net.loadFromUri("/static/models"), // Modelo completo para dispositivos nxo móviles
             faceapi.nets.faceLandmark68TinyNet.loadFromUri("/static/models"), // Modelo más ligero para móviles
             faceapi.nets.faceExpressionNet.loadFromUri("/static/models"),
             // Carga aquí otros modelos si los necesitas
@@ -75,88 +135,143 @@
             );
         }
         
-        async function detectFaces() {
-            if (!isMobile || framesSinceLastDetection++ >= detectionFrequency) {
-                let detections = await faceapi
-                    .detectAllFaces(video, options)
-                    .withFaceLandmarks(isMobile ? false : true)
-                    .withFaceExpressions(); 
-                    
+        function showToast(message, duration = 5000) {
+          const toast = document.getElementById("toast");
+          const toastMessage = toast.querySelector(".toast-message");
+          toastMessage.textContent = message;
+          
+          toast.classList.remove("hidden");
+          
+          setTimeout(() => {
+              toast.classList.add("hidden");
+          }, duration);
+      }
+
+      function showToastInicio(message, duration = 5000) {
+        const toaste = document.getElementById("toast-inicio");
+        const toastMessage = toaste.querySelector(".toast-message");
+        toastMessage.textContent = message;
         
-                const resizedDetections = faceapi.resizeResults(detections, displaySize);
-                canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
-                faceapi.draw.drawDetections(canvas, resizedDetections);
-                faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
-                faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
+        toaste.classList.remove("hidden");
         
-                // Agrega aquí la lógica para evaluar las expresiones
-                const expressions = resizedDetections.map(d => d.expressions);
-                expressionHistory.push(expressions);
+        setTimeout(() => {
+          toaste.classList.add("hidden");
+        }, duration);
+    }
 
-                if (resizedDetections.length > 0) {
-                  if (!faceDetected) {
-                      faceDetected = true;
-                      // Inicia un temporizador si aún no ha comenzado
-                      if (detectionTimer === null) {
-                          detectionTimer = setTimeout(() => {
-                              // Aquí colocas la acción que quieres ejecutar después de 5 segundos
-                              console.log("Rostro detectado continuamente durante 2 segundos.");
-                              if (cuentaregresiva === null) {
-                                cuentaregresiva = setTimeout(() => {
-                                console.log("Se ejecuta la cuenta regresiva ....");
+      
+      
+      // Añade un listener al botón de cerrar para ocultar el toast
+      document.querySelector('.toast-close').addEventListener('click', function() {
+          document.getElementById("toast").classList.add("hidden");
+      });
+      
+       // Añade un listener al botón de cerrar para ocultar el toast
+       document.querySelector('.toast-close').addEventListener('click', function() {
+        document.getElementById("toast-inicio").classList.add("hidden");
+    });
+    
+      
 
-                                     // Ejecuta la acción deseada aquí
-                              if (expressionHistory.length > requiredConsistency) {
-                                expressionHistory.shift();
-                            }
-                    
-                            if (isExpressionConsistent(expressionHistory, 'happy')) {
-                                alert("Validación exitosa para happy");
-                                // Realiza alguna acción cuando la expresión sea consistente
-                            }
-                             if (isExpressionConsistent(expressionHistory, 'neutral')) {
-                                alert("Validación exitosa para Neutral");
-                                // Realiza alguna acción cuando la expresión sea consistente
-                            }
-                                        // Luego, limpia el temporizador y reinicia las variables para la próxima vez
-                                        clearTimeout(cuentaregresiva);
-                                        cuentaregresiva = null;
+    
+      // Función para verificar la consistencia de la expresión
+      function isExpressionConsistent(history, expression) {
+        // Asegúrate de que cada historial de expresiones contenga la expresión deseada como la más prominente
+        return history.every(h => {
+            const maxExpression = h.length > 0 ? h[0].asSortedArray()[0].expression : '';
+            return maxExpression === expression;
+        });
+      }
 
-                              }, 5000);
-                            
-                            }
-
-                         
-                              // Luego, limpia el temporizador y reinicia las variables para la próxima vez
-                              clearTimeout(detectionTimer);
-                              detectionTimer = null;
-                              faceDetected = false;
-                          }, 2000); // 5000 milisegundos = 5 segundos
-                      }
-                  }
-              } else {
-                  // Si no se detecta un rostro, reinicia el temporizador y la variable de detección
-                  if (detectionTimer !== null) {
-                      clearTimeout(detectionTimer);
-                      detectionTimer = null;
-                  }
-                  faceDetected = false;
-              }
-       
-                framesSinceLastDetection = 0;
+      // Función para mostrar notificaciones tipo "toast"
+      function showToast(message, countdown) {
+        let duration = countdown;
+        const toast = document.getElementById("toast");
+        toast.textContent = `${message} en ${duration} segundos.`;
+        toast.style.display = "block";
+    
+        // Actualizar el toast cada segundo
+        const intervalId = setInterval(() => {
+            duration -= 1;
+            toast.textContent = `${message} en ${duration} segundos.`;
+    
+            // Cuando la duración llega a 0, limpia el intervalo y oculta el toast
+            if (duration <= 0) {
+                clearInterval(intervalId);
+                toast.style.display = "none";
             }
-        
-            requestAnimationFrame(detectFaces);
-        }
-        
-        function isExpressionConsistent(history, expression) {
-            // Asegúrate de que cada historial de expresiones contenga la expresión deseada como la más prominente
-            return history.every(h => {
-                const maxExpression = h.length > 0 ? h[0].asSortedArray()[0].expression : '';
-                return maxExpression === expression;
-            });
-        }
+        }, 1000);
+    
+        // Asegúrate de que el toast también se oculte después del tiempo total si el intervalo no se ha despejado
+        setTimeout(() => {
+            clearInterval(intervalId);
+            toast.style.display = "none";
+        }, countdown * 1000);
+    }
+    
 
+      // Función principal para detectar rostros
+      async function detectFaces() {
+        if (!isMobile || framesSinceLastDetection++ >= detectionFrequency) {
+            let detections = await faceapi
+                .detectAllFaces(video, options)
+                .withFaceLandmarks(isMobile ? false : true)
+                .withFaceExpressions(); 
+
+            const resizedDetections = faceapi.resizeResults(detections, displaySize);
+            const ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            faceapi.draw.drawDetections(canvas, resizedDetections);
+            faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+            faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
+
+            // Actualiza el historial de expresiones
+            const expressions = resizedDetections.map(d => d.expressions);
+            expressionHistory.push(expressions);
+            if (expressionHistory.length > requiredConsistency) {
+                expressionHistory.shift();
+            }
+
+            // Manejo de la detección y temporizadores
+            if (resizedDetections.length > 0) {
+                if (!faceDetected) {
+                  showToastInicio("Detectando rosto, por favor no se mueva.", 3000);
+                    faceDetected = true;
+                    if (detectionTimer === null) {
+                        detectionTimer = setTimeout(() => {
+                            showToast("Rostro detectado, por favor sonria", 5);
+                            if (cuentaregresiva === null) {
+                                cuentaregresiva = setTimeout(() => {
+                                    if (isExpressionConsistent(expressionHistory, 'happy')) {
+                                        alert("Te la creiste we, no hay acceso");
+                                    } else if (isExpressionConsistent(expressionHistory, 'neutral')) {
+                                        alert("Validación exitosa para Neutral");
+                                    }
+                                    // Reiniciar el estado
+                                    cuentaregresiva = null;
+                                    expressionHistory = []; // Posiblemente limpiar el historial
+                                }, 5000);
+                            }
+                            // No es necesario reiniciar detectionTimer porque se ejecuta solo una vez
+                        }, 2000);
+                    }
+                }
+            } else {
+                if (detectionTimer !== null) {
+                    clearTimeout(detectionTimer);
+                    detectionTimer = null;
+                }
+                faceDetected = false;
+                if (cuentaregresiva !== null) {
+                    clearTimeout(cuentaregresiva);
+                    cuentaregresiva = null;
+                }
+                expressionHistory = []; // Limpiar el historial cuando no hay rostro
+            }
+            framesSinceLastDetection = 0;
+        }
+        requestAnimationFrame(detectFaces);
+      }
       function sendFrame() {
  
         if (isFrameSent) {

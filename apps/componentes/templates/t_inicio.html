@@ -45,6 +45,29 @@
         justify-content: space-between;
 
       }
+
+      @media (max-width: 600px) {
+        canvas,
+        video {
+          width: 100%; /* Ocupa todo el ancho */
+          height: auto; /* Mantiene la relación de aspecto */
+          top: 60px; /* Aumenta el espacio para el toast */
+        }
+      
+        .toast {
+          font-size: 14px; /* Tamaño del texto más grande para pantallas pequeñas */
+          padding: 10px; /* Más relleno para que sea más fácil de leer */
+          min-width: 90%; /* Ancho mínimo más grande para mejor legibilidad */
+          top: 10px; /* Posiciona el toast más cerca del borde superior */
+        }
+      }
+    
+        /* Ajusta el toast para que no se superponga con el video */
+        .toast {
+            font-size: 27px !important; /* Posiciona el toast más arriba */
+        }
+    }
+      
       
       /* Icono del toast */
       .toast-icon {

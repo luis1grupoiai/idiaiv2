@@ -36,6 +36,9 @@
         const options = new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold });
         let expressionHistory = [];
         const requiredConsistency = 20; // Número de cuadros consecutivos requeridos
+        let faceDetected = false;
+        let detectionTimer = null;
+        let cuentaregresiva = null;
 
         let framesSinceLastDetection = 0;
         const detectionFrequency = isMobile ? 5 : 1;
@@ -89,20 +92,57 @@
                 // Agrega aquí la lógica para evaluar las expresiones
                 const expressions = resizedDetections.map(d => d.expressions);
                 expressionHistory.push(expressions);
-        
-                if (expressionHistory.length > requiredConsistency) {
-                    expressionHistory.shift();
-                }
-        
-                if (isExpressionConsistent(expressionHistory, 'happy')) {
-                    alert("Validación exitosa para happy");
-                    // Realiza alguna acción cuando la expresión sea consistente
-                }
-                 if (isExpressionConsistent(expressionHistory, 'neutral')) {
-                    alert("Validación exitosa para Neutral");
-                    // Realiza alguna acción cuando la expresión sea consistente
-                }
-        
+
+                if (resizedDetections.length > 0) {
+                  if (!faceDetected) {
+                      faceDetected = true;
+                      // Inicia un temporizador si aún no ha comenzado
+                      if (detectionTimer === null) {
+                          detectionTimer = setTimeout(() => {
+                              // Aquí colocas la acción que quieres ejecutar después de 5 segundos
+                              console.log("Rostro detectado continuamente durante 2 segundos.");
+                              if (cuentaregresiva === null) {
+                                cuentaregresiva = setTimeout(() => {
+                                console.log("Se ejecuta la cuenta regresiva ....");
+
+                                     // Ejecuta la acción deseada aquí
+                              if (expressionHistory.length > requiredConsistency) {
+                                expressionHistory.shift();
+                            }
+                    
+                            if (isExpressionConsistent(expressionHistory, 'happy')) {
+                                alert("Validación exitosa para happy");
+                                // Realiza alguna acción cuando la expresión sea consistente
+                            }
+                             if (isExpressionConsistent(expressionHistory, 'neutral')) {
+                                alert("Validación exitosa para Neutral");
+                                // Realiza alguna acción cuando la expresión sea consistente
+                            }
+                                        // Luego, limpia el temporizador y reinicia las variables para la próxima vez
+                                        clearTimeout(cuentaregresiva);
+                                        cuentaregresiva = null;
+
+                              }, 5000);
+                            
+                            }
+
+                         
+                              // Luego, limpia el temporizador y reinicia las variables para la próxima vez
+                              clearTimeout(detectionTimer);
+                              detectionTimer = null;
+                              faceDetected = false;
+                          }, 2000); // 5000 milisegundos = 5 segundos
+                      }
+                  }
+              } else {
+                  // Si no se detecta un rostro, reinicia el temporizador y la variable de detección
+                  if (detectionTimer !== null) {
+                      clearTimeout(detectionTimer);
+                      detectionTimer = null;
+                  }
+                  faceDetected = false;
+              }
+       
                 framesSinceLastDetection = 0;
             }
         

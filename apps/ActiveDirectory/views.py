@@ -24,7 +24,8 @@ unidadOrganizativa = ('OU=Bajas','OU=Administracion','OU=Ingeniería','OU=DCASS'
 @login_required  
 def bitacora(request):
     mensaje=None
-    registros= TRegistroAccionesModulo.objects.all()
+    #registros= TRegistroAccionesModulo.objects.all()
+    registros = TRegistroAccionesModulo.objects.order_by('-FechaHora')[:1000] # solo muestra los ultimos  mil registros 
     context = {
                     'active_page': 'bitacora',
                     'nombre_usuario': nameUser(request),
@@ -113,6 +114,15 @@ def consultarUsuariosIDIAI(request):
                 if conn.result['result'] == 0:  # éxito
                     messages.success(request, 'Usuario creado correctamente.')
                     mensaje = {'titulo': 'Éxito', 'texto': 'Usuario creado correctamente', 'tipo': 'success'}
+                    insertar_registro_accion(
+                    nameUser(request),
+                    'Modulo AD',
+                    'Crear',
+                    f"El usuario '{nombre_usuario}' fue creado ",
+                    get_client_ip(request),
+                    request.META.get('HTTP_USER_AGENT'),
+                    'N/A'
+                    )
                     #return redirect('usuariosID')
                     
                     
@@ -374,7 +384,7 @@ def editar_usuario(request):
             print(f"Error al conectar con AD: {str(e)}")
     # Redireccionar de vuelta a la lista de usuarios
     
-    print(mover_usuario_ou(nombre_inicio_sesion, unidadOrganizativa[asignar_Departamento(departamento)]))
+    print(mover_usuario_ou(nombre_inicio_sesion, unidadOrganizativa[asignar_Departamento(departamento)],request))
     return redirect('usuarios')
 
  
@@ -428,7 +438,7 @@ def activar_usuario(request, nombre_usuario):
                 #messages.success(request, 'Usuario activado correctamente.')
                 print('Usuario activado correctamente.')
                 mover = buscar_usuario_por_dn(nombre_usuario)
-                print(mover_usuario_ou(mover['cn'], unidadOrganizativa[asignar_Departamento(mover['department'])]))
+                print(mover_usuario_ou(mover['cn'], unidadOrganizativa[asignar_Departamento(mover['department'])],request))
                 insertar_registro_accion(
                 nameUser(request),
                 'Modulo AD',
@@ -469,7 +479,7 @@ def desactivar_usuario(request, nombre_usuario):
                 #department=mover['department']
                 #print(cn)
                 #print(department)
-                print(mover_usuario_ou(mover['cn'], unidadOrganizativa[0]))
+                print(mover_usuario_ou(mover['cn'], unidadOrganizativa[0],request))
                 insertar_registro_accion(
                 nameUser(request),
                 'Modulo AD',
@@ -518,7 +528,7 @@ def verificar_usuario(request, nombre_usuario):
     return JsonResponse({'existe': existe})
 
 
-def mover_usuario_ou(nombre_usuario, nueva_ou):
+def mover_usuario_ou(nombre_usuario, nueva_ou,request):
     mensaje = None
     try:
         with connect_to_ad() as conn:
@@ -540,6 +550,15 @@ def mover_usuario_ou(nombre_usuario, nueva_ou):
                 
                 if conn.result['result'] == 0:
                     mensaje = 'Usuario movido correctamente.'
+                    insertar_registro_accion(
+                    nameUser(request),
+                    'Modulo AD',
+                    'Mover',
+                    f"El usuario '{nombre_usuario}' fue movido a  {nueva_ou_completa}",
+                    get_client_ip(request),
+                    request.META.get('HTTP_USER_AGENT'),
+                    'N/A'
+                    )
                 else:
                     mensaje = f"Error al mover usuario: {conn.result['description']}"
             else:

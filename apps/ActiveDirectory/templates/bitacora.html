@@ -43,7 +43,7 @@ Registros de Acciones
         </thead>
         <tbody>
             {% for registro in registros %}
-            <tr>
+            <tr> 
                 <td class="text-center" >{{ registro.NombreAccion}}</td>           
                 <td class="text-center" >{{ registro.NombreUsuario}}</td>
                 <td class="text-center" >{{ registro.Descripcion}}</td>
@@ -79,6 +79,7 @@ Registros de Acciones
     $(document).ready(function() {
         var config = {
             "pageLength": 10,
+            "order": [[3, 'desc']],
             "language": {
                 "lengthMenu": "Mostrar _MENU_ usuarios por página",
                 "zeroRecords": "No se encontraron resultados",

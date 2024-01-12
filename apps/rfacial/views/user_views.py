@@ -29,6 +29,7 @@ import base64
 import face_recognition
 import cv2
 import numpy as np
+import dlib
 
 
 class CReconFacial(APIView):
@@ -137,6 +138,31 @@ class CCompareFaces(APIView):
         return all_encodings
 
 # Ejemplo de usocx
+
+    def eye_aspect_ratio(eye):
+        # Calcula las distancias euclidianas entre los dos sets de puntos verticales (x, y) - coordenadas
+        A = np.linalg.norm(eye[1] - eye[5])
+        B = np.linalg.norm(eye[2] - eye[4])
+
+        # Calcula la distancia euclidiana entre los puntos horizontales
+        C = np.linalg.norm(eye[0] - eye[3])
+
+        # Calcula el eye aspect ratio
+        ear = (A + B) / (2.0 * C)
+
+        return ear
+
+    def detect_blink(self, eye_points, facial_landmarks):
+        # Obtiene las coordenadas de los puntos del ojo
+        eye = np.array([(facial_landmarks.part(eye_points[i]).x, 
+                        facial_landmarks.part(eye_points[i]).y) for i in range(6)])
+        ear = self.eye_aspect_ratio(eye)
+
+        # Umbral para determinar si hay parpadeo
+        EAR_THRESHOLD = 0.3  
+
+        return ear < EAR_THRESHOLD
+
 
     def get(self, request):
          # Cargar una imagen estática desde tu servidor

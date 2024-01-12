@@ -25,7 +25,7 @@
                     <span class="text-white"><i class="bi bi-info-circle"></i></span>
                     </button>
                     <button type="button" class="btn icon btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editUserModal" 
-                    data-nombre="{{ user.nombre }}"
+                    data-nombre="{{ user.nombre }}" 
                     data-nombrePila ="{{ user.nombre_de_pila}}"
                     data-apellidos ="{{ user.apellidos}}"
                     data-puesto ="{{ user.puesto}}"
@@ -47,11 +47,11 @@
                 
                     {% if not user.esta_deshabilitado %}
                     <button type="button" class="btn icon btn-danger btn-sm" onclick="desactivarUsuario('{{ user.DistinguishedName}}',{{ user.userAccountControl}})">
-                        Desactivar
+                        Baja
                     </button>
                 {% else %}
                     <button type="button" class="btn icon btn-success " onclick="activarUsuario('{{ user.DistinguishedName }}',{{ user.userAccountControl}})">
-                        Activar
+                        Alta
                     </button>
                 {% endif %}
         

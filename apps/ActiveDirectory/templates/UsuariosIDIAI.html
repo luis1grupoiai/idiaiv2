@@ -327,8 +327,34 @@ Usuarios de IDIAI
             })
             .catch(error => console.error('Error:', error));
             }
+            //identifar el navegador
+           
 
-  
+            function createUniqueId() {
+                return 'id_' + Math.random().toString(36).substr(2, 9);
+            }
+            
+            function setCookie(cname, cvalue, exdays) {
+                var d = new Date();
+                d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+                var expires = "expires="+d.toUTCString();
+                document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+            }
+            
+            // Comprobar si ya existe un ID del navegador
+            var browserId = document.cookie.replace(/(?:(?:^|.*;\s*)browserId\s*\=\s*([^;]*).*$)|^.*$/, "$1");
+            
+            if (!browserId) {
+                browserId = createUniqueId();
+                setCookie('browserId', browserId, 365);
+            }
+            
+            console.log("Browser ID: " + browserId);
+
+            
+
+            
+            //fin de identificar el navegador 
         </script>
 
         {% if mensaje %}

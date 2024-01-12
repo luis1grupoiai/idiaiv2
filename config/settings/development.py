@@ -55,3 +55,11 @@ AD_USER = os.environ.get('ActiveDirectory_USER')   # Cambia esto segÃºn tus cr
 #dsquery user -name desarrollo
 #dsget user "CN=desarrollo,CN=Users,DC=iai,DC=com,DC=mx"
 AD_PASSWORD = os.environ.get('ActiveDirectory_PASSWORD') 
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.office365.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'sistemas.iai@grupo-iai.com.mx'
+EMAIL_HOST_PASSWORD = 'hLW*t37l_'

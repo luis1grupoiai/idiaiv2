@@ -16,7 +16,7 @@ from django.utils import timezone
 # Create your views here.
 domino='OU=UsersIAI,DC=iai,DC=com,DC=mx'
 dominoRaiz='DC=iai,DC=com,DC=mx'
-unidadOrganizativa = ('OU=Bajas','OU=Administracion','OU=Ingeniería','OU=DCASS','OU=Proyectos Especiales')
+unidadOrganizativa = ('OU=Bajas','OU=Administracion','OU=Ingeniería','OU=DCASS','OU=Proyectos Especiales') #esta variable esta relacionada con las funcionses de   mover_usuario_ou y asignar_Departamento
 
 
 
@@ -25,7 +25,7 @@ unidadOrganizativa = ('OU=Bajas','OU=Administracion','OU=Ingeniería','OU=DCASS'
 def bitacora(request):
     mensaje=None
     #registros= TRegistroAccionesModulo.objects.all()
-    registros = TRegistroAccionesModulo.objects.order_by('-FechaHora')[:1000] # solo muestra los ultimos  mil registros 
+    registros = TRegistroAccionesModulo.objects.filter(Modulo='Modulo AD').order_by('-FechaHora')[:1000] # solo muestra los ultimos  mil registros 
     context = {
                     'active_page': 'bitacora',
                     'nombre_usuario': nameUser(request),
@@ -114,15 +114,17 @@ def consultarUsuariosIDIAI(request):
                 if conn.result['result'] == 0:  # éxito
                     messages.success(request, 'Usuario creado correctamente.')
                     mensaje = {'titulo': 'Éxito', 'texto': 'Usuario creado correctamente', 'tipo': 'success'}
+                    #codigo para guardar en la bitacora -------
                     insertar_registro_accion(
                     nameUser(request),
                     'Modulo AD',
                     'Crear',
-                    f"El usuario '{nombre_usuario}' fue creado ",
+                    f"El usuario '{nombre_usuario}' fue creado en AD",
                     get_client_ip(request),
                     request.META.get('HTTP_USER_AGENT'),
                     'N/A'
                     )
+                    
                     #return redirect('usuariosID')
                     
                     
@@ -268,7 +270,7 @@ def consultar_usuarios(request):
 
 
 @login_required  
-def agregar_usuario(request):
+def agregar_usuario(request): # esta funcion o vista la deje por que tal vez se utilice en el futuro , solo revisien bien las variables porque se han modificado el domino.....
     if request.method == 'POST':
         dominio_Principal = '@'+'.'.join(part.replace('DC=', '') for part in domino.split(',') if part.startswith('DC='))
         nombre_usuario = request.POST['nombre_usuario']
@@ -433,7 +435,7 @@ def activar_usuario(request, nombre_usuario):
             user_dn = nombre_usuario;
             #print(user_dn)
             # Establecer userAccountControl a 512 para activar la cuenta
-            conn.modify(user_dn, {'userAccountControl': [(MODIFY_REPLACE, [544])]})
+            conn.modify(user_dn, {'userAccountControl': [(MODIFY_REPLACE, [544])]}) # debe activarse con el 512 pero eso lo vamos a dejar a ultimos ajajajajaj
             if conn.result['result'] == 0:
                 #messages.success(request, 'Usuario activado correctamente.')
                 print('Usuario activado correctamente.')
@@ -554,7 +556,7 @@ def mover_usuario_ou(nombre_usuario, nueva_ou,request):
                     nameUser(request),
                     'Modulo AD',
                     'Mover',
-                    f"El usuario '{nombre_usuario}' fue movido a  {nueva_ou_completa}",
+                    f"El usuario  '{nombre_usuario}' ha sido trasladado  a la nueva ubicación : {extraer_unidad_organizativa(nueva_ou_completa)[0]}",
                     get_client_ip(request),
                     request.META.get('HTTP_USER_AGENT'),
                     'N/A'

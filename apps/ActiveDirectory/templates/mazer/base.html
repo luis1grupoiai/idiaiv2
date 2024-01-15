@@ -21,6 +21,7 @@
 </head>
 
 <body>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="/static/assets/static/js/initTheme.js"></script>
     <div id="app">
         <div id="sidebar">
@@ -88,12 +89,6 @@
             
 
             </li>
-            <li
-            class="sidebar-item {% if active_page == 'agregar_usuario' %}active{% endif %} ">
-            <a href="{% url 'agregar_usuario' %}" class='sidebar-link'>
-                <i class="bi bi-person-fill"></i>
-                <span>Agregar Usuarios AD</span>
-            </a>
             
             <li
             class="sidebar-item {% if active_page == 'usuariosID' %}active{% endif %} ">
@@ -103,8 +98,28 @@
             </a>
             
 
+           
             </li>
+
+
+            <li
+            class="sidebar-item {% if active_page == 'bitacora' %}active{% endif %} ">
+            <a href="{% url 'bitacora' %}" class='sidebar-link'>
+                <i class="bi bi-book"></i>
+                <span>Bitácora</span>
+            </a>
+            
+
+           
             </li>
+            <!--
+            <li
+            class="sidebar-item {% if active_page == 'agregar_usuario' %}active{% endif %} ">
+            <a href="{% url 'agregar_usuario' %}" class='sidebar-link'>
+                <i class="bi bi-person-fill"></i>
+                <span>Agregar Usuarios AD</span>
+            </a>
+        </li> -->
 
         </ul>
     </div>
@@ -203,7 +218,7 @@
                                     <li>
                                         <hr class="dropdown-divider">
                                     </li>-->
-                                    <li><a class="dropdown-item" href="{% url 'salir' %}"><i
+                                    <li><a class="dropdown-item" href="{% url 'salir' %}" onclick="return confirmarSalida();"><i
                                                 class="icon-mid bi bi-box-arrow-left me-2"></i> Logout</a></li>
                                 </ul>
                             </div><!--fin de la etiqueta de DIV  ms-auto-->
@@ -267,10 +282,29 @@
     <script src="/static/assets/static/js/components/dark.js"></script>
     <script src="/static/assets/extensions/perfect-scrollbar/perfect-scrollbar.min.js"></script>
     <script src="/static/assets/compiled/js/app.js"></script>
-  
+    <script>
+    function confirmarSalida() {
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: "¿Quieres cerrar sesión?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = "{% url 'salir' %}";
+            }
+        });
+        return false; // Previene la navegación inmediata
+    }
+    </script>
     {% block script %} 
     <!-- Scripts específicos de cada página -->
     {% endblock %}
+
+    
 
 </body>
 

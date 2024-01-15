@@ -1,5 +1,7 @@
 import os
+
 from pathlib import Path
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -13,6 +15,7 @@ BASE_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'sslserver',
     # 'django.contrib.staticfiles',
 ]
 
@@ -125,6 +128,8 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
+    # 'DEFAULT_TOKEN_VALIDITY': 3600  # 1 hora (en segundos)
+    'DEFAULT_TOKEN_VALIDITY': 60  # 1 hora (en segundos)
 }
 
 # Internationalization
@@ -144,4 +149,15 @@ USE_TZ = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AUTH_PERMISSION_MODEL = 'apps.areas.Permisos'
+# AUTH_PERMISSION_MODEL = 'apps.areas.Permisos'
+
+LOGIN_REDIRECT_URL = 'home' 
+LOGOUT_REDIRECT_URL = 'home'
+
+# variable de Active Directory NO BORRAR!!!!!!!!!
+AD_SERVER = os.environ.get('ActiveDirectory_SERVER')  # Cambia esto segÃºn tu servidor
+AD_PORT = int(os.environ.get('ActiveDirectory_PORT'))   # El puerto por defecto es 389
+AD_USER = os.environ.get('ActiveDirectory_USER')   # Cambia esto segÃºn tus credenciales
+#dsquery user -name desarrollo
+#dsget user "CN=desarrollo,CN=Users,DC=iai,DC=com,DC=mx"
+AD_PASSWORD = os.environ.get('ActiveDirectory_PASSWORD') 

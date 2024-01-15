@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin, GroupAdmin
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Permission
 from django.contrib.auth.forms import UserChangeForm
 from .models import UserCoordinacion, Coordinacion, Gerencia, Direccion
 
@@ -164,7 +164,14 @@ class DireccionAdmin(admin.ModelAdmin):
 admin.site.register(Direccion, DireccionAdmin) 
 
 
+class PermissionAdmin(admin.ModelAdmin):
+    list_display = ( 'name', 'codename', 'descripcion', 'status')
+    
+    def get_queryset(self, request):
+        # Filtra los permisos por app_label, en este caso, "sistemas-iai"
+        return super().get_queryset(request).filter(content_type__app_label='sistemas-iai')
 
-
+# Registra el modelo Permission en la interfaz de administración de Django, utilizando la configuración personalizada definida en la clase PermissionAdmin
+admin.site.register(Permission, PermissionAdmin)
 
 

@@ -259,7 +259,7 @@ Usuarios de Activate Directory
                                     </form>
                                 </div>
                             </div>
-                        </div>
+                            </div>
    
                             {% endblock %}
 
@@ -372,25 +372,71 @@ Usuarios de Activate Directory
 
 
             function activarUsuario(nombreUsuario,numeroControlUsuario) {
-                $.ajax({
-                    url: 'activar_usuario/' + nombreUsuario + '/',
-                    method: 'POST',
-                    data: {
-                        'csrfmiddlewaretoken': getCSRFToken() // Asegúrate de obtener el token CSRF
-                    },
-                    success: function(response) {
-                        alert("Usuario  activado correctamente.");
-                        location.reload(); // Recarga la página
-                        // Aquí puedes agregar código para actualizar la UI según sea necesario
-                    },
-                    error: function(error) {
-                        alert("Error al activar el usuario.");
-                        // Manejo de errores
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "¿Quieres activar este usuario?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Sí, activar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+
+
+                //inicio sin alerta sweetAlert
+                            $.ajax({
+                                url: 'activar_usuario/' + nombreUsuario + '/',
+                                method: 'POST',
+                                data: {
+                                    'csrfmiddlewaretoken': getCSRFToken() // Asegúrate de obtener el token CSRF
+                                },
+                                success: function(response) {
+                                 //   alert("Usuario  activado correctamente.");
+                                    
+                                    Swal.fire({
+                                        position: "top-center",
+                                        icon: "success",
+                                        title: "Usuario  activado correctamente.",
+                                        showConfirmButton: false,
+                                        timer: 1500
+                                      });
+                                    location.reload(); // Recarga la página
+                                    // Aquí puedes agregar código para actualizar la UI según sea necesario
+                                },
+                                error: function(error) {
+                                 //   alert("Error al activar el usuario.");
+                                 Swal.fire({
+                                    position: "top-center",
+                                    icon: "error",
+                                    title: "Error al activar el usuario.",
+                                    showConfirmButton: false,
+                                    timer: 1500
+                                  });
+                                    // Manejo de errores
+                                }
+                            });
+                //fin sin alerta sweetAlert
                     }
                 });
+
             }
             
             function desactivarUsuario(nombreUsuario,numeroControlUsuario) {
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "¿Quieres Desactivar este usuario?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Sí, Desactivar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+
+               
+               
+               
                 $.ajax({
                     url: 'desactivar_usuario/' + nombreUsuario + '/',
                     method: 'POST',
@@ -398,15 +444,34 @@ Usuarios de Activate Directory
                         'csrfmiddlewaretoken': getCSRFToken() // Asegúrate de obtener el token CSRF
                     },
                     success: function(response) {
-                        alert("Usuario desactivado correctamente.");
+                        //alert("Usuario desactivado correctamente.");
+                        Swal.fire({
+                            position: "top-center",
+                            icon: "success",
+                            title: "Usuario  desactivado correctamente.",
+                            showConfirmButton: false,
+                            timer: 1500
+                          });
                         location.reload(); // Recarga la página
                         // Aquí puedes agregar código para actualizar la UI según sea necesario
                     },
                     error: function(error) {
-                        alert("Error al desactivar el usuario.");
+                       // alert("Error al desactivar el usuario.");
+                        
+                        Swal.fire({
+                            position: "top-center",
+                            icon: "error",
+                            title: "Error al desactivar el usuario.",
+                            showConfirmButton: false,
+                            timer: 1500
+                          });
                         // Manejo de errores
                     }
                 });
+
+                    }
+                });
+
             }
             
             function getCSRFToken() {

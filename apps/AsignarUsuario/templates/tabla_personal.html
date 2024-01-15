@@ -15,13 +15,18 @@
             <tr>
                 <td class="text-center" >
                     {% if user.username is  none  %}
-                    <a
-                    name=""
-                    id=""
-                    class="btn btn-primary btn-sm me-1"
-                    href="#"
-                    role="button"
-                    >Solicitar Alta</a>
+                    <button type="button"
+                    class="btn btn-primary btn-sm "
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalAlta"
+                    data-nombre="{{ user.Nombre_ps }} {{ user.Apaterno_ps }} {{ user.Amaterno_ps }}"
+                    data-categoria="{{ user.Nombre_ct}}"
+                    data-email=""
+                    onclick="SolicitarAlta(this);"
+                    >
+                    Solicitar Alta</button>
+
+                   
                     {% else %}
                     <a
                     name=""
@@ -40,7 +45,7 @@
                 <td class="text-center" >{% if user.NombreCompleto is not none  %}
                                         {{ user.NombreCompleto}}
                                         {% else %}
-                                        {{ user.Nombre_ps }} {{ user.Apaterno_ps }} {{ user.Amaterno_ps }}  {{ user.is_active }} 
+                                        {{ user.Nombre_ps }} {{ user.Apaterno_ps }} {{ user.Amaterno_ps }}  
                                         {% endif %}</td>
              
                 <td class="text-center" style="width: 25%;">{{ user.nombre_direccion}}</td>

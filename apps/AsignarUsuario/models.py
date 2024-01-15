@@ -23,3 +23,22 @@ class VallEmpleado(models.Model):
     class Meta:
         managed = False
         db_table = 'vAllEmpleados'
+        
+        
+
+class TRegistroAccionesModulo(models.Model):
+    NombreUsuario = models.CharField(max_length=255)
+    Modulo = models.CharField(max_length=255)
+    NombreAccion = models.CharField(max_length=255)
+    FechaHora = models.DateTimeField()
+    Descripcion = models.TextField(blank=True, null=True)
+    IpUsuario = models.CharField(max_length=50, blank=True, null=True)
+    UserAgent = models.CharField(max_length=255, blank=True, null=True)
+    BrowserId = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'TRegistroAccionesModulo'
+
+    def __str__(self):
+        return f"{self.NombreUsuario} realizó '{self.NombreAccion}' en '{self.Modulo}' - {self.FechaHora} - {self.IpUsuario} "

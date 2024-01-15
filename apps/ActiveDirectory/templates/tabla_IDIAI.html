@@ -1,0 +1,70 @@
+<div class="table-responsive ">
+
+    <table id="{{ table_id }}" class="table table-hover table-striped"> 
+        <thead>
+                        <tr>
+                            <th class="text-center" >Acción</th>
+                            <th class="text-center" >Usuario </th>
+                            <th class="text-center" >Nombre  </th>
+                            <th class="text-center" style="width: 20%;">Email</th>
+                            <th class="text-center" style="width: 20%;">Direccion</th>
+                            <th class="text-center" style="width: 20%;">Puesto</th>
+                            
+                        </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td class="text-center" >
+                    {% if user.existe_en_ad is  False  %}
+                    
+                    
+                    {% else %}
+                    <button type="button" class="btn icon btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#crearUserModal" 
+                    data-nombre="{{ user.username }}"
+                    data-nombrePila ="{{ user.Nombre_ps}}"
+                    data-apellidos ="{{ user.Apaterno_ps}} {{ user.Amaterno_ps}} "
+                    data-puesto ="{{ user.Nombre_ct }}"
+                    data-nombreSesion ="{{ user.username}}"
+                    data-nombreCompleto ="{{ user.NombreCompleto }}"
+                    data-email ="{{ user.email }}"
+                    data-deparamento="{{ user.NombreCompleto}}"
+                    data-distinguishedName="{{ user.username }}"
+                    onclick="creartUser(this);">
+                    <i class="bi bi-person-plus"></i> 
+                    </button>
+
+
+                    <!--
+                    <button type="button" class="btn icon btn-primary btn-sm" onclick="mensaje();">
+                    <i class="bi bi-check-lg"></i>
+                    </button>-->
+                    {% endif %}</td>
+               
+                   
+              
+                
+                </td>
+                <td class="text-center" >
+                    {{ user.username }}
+                   </td>
+                <td class="text-center" >{% if user.NombreCompleto is not none  %}
+                                        {{ user.NombreCompleto}}
+                                        {% else %}
+                                        {{ user.Nombre_ps }} {{ user.Apaterno_ps }} {{ user.Amaterno_ps }}  
+                                        {% endif %}</td>
+                <td class="text-center" style="width: 20%;">{{ user.email}}</td>
+                <td class="text-center" style="width: 20%;">{{ user.nombre_direccion}}</td>
+                <td class="text-center" style="width: 20%;">{{ user.Nombre_ct}}</td>
+                
+                
+            </tr>
+                        {% endfor %}
+         </tbody>
+    </table> 
+    
+         
+    
+    
+    
+ </div>

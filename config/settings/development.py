@@ -19,12 +19,12 @@ ALLOWED_HOSTS = []
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST'),
-        'PORT': os.environ.get('DB_PORT'),
-        'OPTIONS':{
+        'NAME': os.environ.get('DB_NAME_DEFAULT'),
+        'USER': os.environ.get('DB_USER_DEFAULT'),
+        'PASSWORD': os.environ.get('DB_PASSWORD_DEFAULT'),
+        'HOST': os.environ.get('DB_HOST_DEFAULT'),
+        'PORT': os.environ.get('DB_PORT_DEFAULT'),
+        'OPTIONS': {
             'driver': 'ODBC Driver 17 for SQL Server',
             'unicode_results': True,
         },
@@ -48,6 +48,7 @@ STATICFILES_DIRS = [
     BASE_DIR / "components",
 ]
 
+<<<<<<< HEAD
 # variable de Active Directory NO BORRAR!!!!!!!!!
 AD_SERVER = os.environ.get('ActiveDirectory_SERVER')  # Cambia esto segÃºn tu servidor
 AD_PORT = 389#int(os.environ.get('ActiveDirectory_PORT'))   # El puerto por defecto es 389
@@ -57,6 +58,8 @@ AD_USER = os.environ.get('ActiveDirectory_USER')   # Cambia esto segÃºn tus cr
 AD_PASSWORD = os.environ.get('ActiveDirectory_PASSWORD') 
 
 
+=======
+>>>>>>> 7ed056a12a6bc90ff88907379ec37b74ed3bf742
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.office365.com'
 EMAIL_PORT = 587

@@ -4,10 +4,6 @@ from django.contrib.auth.models import User, Permission
 from django.contrib.auth.forms import UserChangeForm
 from .models import UserCoordinacion, Coordinacion, Gerencia, Direccion
 
-admin.site.site_header = 'IDIAI v2'
-admin.site.site_title = 'IDIAI V2'
-admin.site.index_title = 'Sitio Administrativo IDIAI V2'
-
 class CustomUserChangeForm(UserChangeForm):
     # Define la metadata del formulario
     class Meta:

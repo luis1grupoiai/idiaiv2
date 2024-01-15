@@ -21,11 +21,11 @@ ALLOWED_HOSTS = [ '*' ]
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME': os.environ.get('DB_NAME_DEFAULT'),
-        'USER': os.environ.get('DB_USER_DEFAULT'),
-        'PASSWORD': os.environ.get('DB_PASSWORD_DEFAULT'),
-        'HOST': os.environ.get('DB_HOST_DEFAULT'),
-        'PORT': os.environ.get('DB_PORT_DEFAULT'),
+        'NAME': os.environ.get('DB_NAME'),
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
+        'HOST': os.environ.get('DB_HOST'),
+        'PORT': os.environ.get('DB_PORT'),
         'OPTIONS':{
             'driver': 'ODBC Driver 17 for SQL Server',
             'unicode_results': True,

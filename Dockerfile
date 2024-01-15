@@ -30,5 +30,8 @@ RUN python -m pip install -r requirements.txt
 # Copia todos los archivos del directorio local al directorio de trabajo en el contenedor
 COPY ./ ./
 
+COPY  ./venv/Lib/site-packages/django/contrib/auth/migrations/0013_permission_created_at_permission_descripcion_and_more.py /usr/local/lib/python3.11/site-packages/django/contrib/auth/migrations/0013_permission_created_at_permission_descripcion_and_more.py
+COPY ./venv/Lib/site-packages/django/contrib/auth/models.py /usr/local/lib/python3.11/site-packages/django/contrib/auth/models.py
+
 # Define el comando predeterminado al iniciar el contenedor
 CMD ["sh", "entrypoint.sh"]

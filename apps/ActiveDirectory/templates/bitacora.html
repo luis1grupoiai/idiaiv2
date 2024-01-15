@@ -1,0 +1,109 @@
+{% extends "mazer\base.html" %}
+
+{% block title%}
+Dashboard - Bitácora
+{% endblock title %}
+
+{% block extra_css %}
+
+<link rel="stylesheet" href="/static/assets/extensions/datatables.net-bs5/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="/static/assets/compiled/css/table-datatable-jquery.css">
+<!-- Espacio para CSS adicional de plantillas hijas -->
+{% endblock %}
+
+
+{% block Encabezado %}
+<h3>Bienvenido a la bitácora de  Active Directory:</h3>
+<p class="text-subtitle text-muted">Su plataforma para visualizar las acciones.</p>
+{% endblock %}
+
+{% block EncabezadoNav%}
+Consulta
+{% endblock EncabezadoNav %}
+
+
+{% block EncabezadoCard%}
+Registros de Acciones
+{% endblock EncabezadoCard %}
+
+{% block contenido %}
+
+<div class="table-responsive ">
+
+    <table id="myTable1" class="table table-hover table-striped"> 
+        <thead>
+                        <tr>
+                            <th class="text-center" >Acción</th>
+                            <th class="text-center" >Usuario </th>
+                            <th class="text-center" >Descripción </th>
+                            <th class="text-center" >Fecha/Hora</th>
+                            <th class="text-center" >IP</th>
+                            
+                        </tr>
+        </thead>
+        <tbody>
+            {% for registro in registros %}
+            <tr> 
+                <td class="text-center" >{{ registro.NombreAccion}}</td>           
+                <td class="text-center" >{{ registro.NombreUsuario}}</td>
+                <td class="text-center" >{{ registro.Descripcion}}</td>
+                <td class="text-center">{{ registro.FechaHora}}</td>
+                <td class="text-center" >{{ registro.IpUsuario}}</td>
+                
+                
+            </tr>
+                        {% endfor %}
+         </tbody>
+    </table> 
+    
+         
+    
+    
+    
+ </div>
+
+
+
+
+
+{% endblock %}
+
+
+{% block script %} 
+
+<script src="/static/assets/extensions/jquery/jquery.min.js"></script>
+<script src="/static/assets/extensions/datatables.net/js/jquery.dataTables.min.js"></script>
+<script src="/static/assets/extensions/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="/static/assets/static/js/pages/datatables.js"></script>
+<script>
+    $(document).ready(function() {
+        var config = {
+            "pageLength": 10,
+            "order": [[3, 'desc']],
+            "language": {
+                "lengthMenu": "Mostrar _MENU_ usuarios por página",
+                "zeroRecords": "No se encontraron resultados",
+                "info": "Mostrando página _PAGE_ de _PAGES_",
+                "infoEmpty": "No hay usuarios disponibles",
+                "infoFiltered": "(filtrado de _MAX_ registros totales)",
+                "search": "Buscar:",
+                "paginate": {
+                    "first": "Primero",
+                    "last": "Último",
+                    "next": "Siguiente",
+                    "previous": "Anterior"
+                },
+                "loadingRecords": "Cargando...",
+                "processing": "Procesando...",
+                "emptyTable": "No hay datos disponibles en la tabla",
+                "aria": {
+                    "sortAscending": ": activar para ordenar la columna de manera ascendente",
+                    "sortDescending": ": activar para ordenar la columna de manera descendente"
+                }
+            }
+        };
+    
+        $('#myTable1').DataTable(config);
+    });
+</script>
+{% endblock%}

@@ -189,6 +189,7 @@ class CAutenticacion(APIView):
 
             # Calcular la fecha de expiración del token
             expiration_time = timestamp + (expiration_hours * 3600)  # 3600 segundos en una hora
+            # expiration_time = timestamp + (expiration_hours * 60)  # 60 segundos en un minuto, solo para terminos de prueba ...
             
             token = default_token_generator.make_token(user)+ ',' + str(expiration_time)
    
@@ -322,8 +323,8 @@ class CAutenticacion(APIView):
                 keySis = base64.b64decode(jd['token'])
                 keySis = keySis.decode('utf-8')
 
-                print(keySis)
-                print(os.environ.get('KEY_RF'))
+                # print(keySis)
+                # print(os.environ.get('KEY_RF'))
                
                  
                 if((keySis == os.environ.get('SECRET_KEY')) or (keySis == os.environ.get('KEY_RF'))):

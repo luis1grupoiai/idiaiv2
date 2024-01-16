@@ -508,7 +508,7 @@ class CVerificaToken(APIView):
             sTexto = ""
             nLenDef = 0
             nItemJson = 0
-            expiration_hours = 1 #TODO: ✍ Tiempo de expiración de token por defecto son 5 horas, pero tratar de ver la manera de hacerlo configurable...
+            # expiration_hours = 1 #TODO: ✍ Tiempo de expiración de token por defecto son 5 horas, pero tratar de ver la manera de hacerlo configurable...
 
             dCamposJson = ['token', 'user']
             
@@ -592,3 +592,6 @@ class CVerificaToken(APIView):
             # return False
 
         return JsonResponse(datos)  
+    
+    def get(self,request):
+        print("")

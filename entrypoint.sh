@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# echo 'Running collecstatic...'
-# python manage.py collectstatic --noinput --verbosity 2 --settings=config.settings.production
+echo 'Running collecstatic...'
+python manage.py collectstatic --noinput --verbosity 2 --settings=config.settings.production
 
 echo 'Applying migrations...'
 python manage.py wait_for_db --settings=config.settings.production

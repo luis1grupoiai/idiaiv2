@@ -176,12 +176,12 @@ class CAutenticacion(APIView):
 
         return dGrupoUsuario
 
-    def get_custom_auth_token(self, p_sUsuario):
+    def get_custom_auth_token(self, p_sUsuario, p_sTiempoExp = 3):
         # Generamos token para autenticación del usuario :) 
         sTexto = ""
         sToken_encoded = ""
         expiration_time= 0
-        expiration_hours = 5 # 5 horas
+        expiration_hours = int(p_sTiempoExp) # 3 horas por defecto en caso de que no se asigne un tiempo en la app.
 
         try:
             user = User.objects.get(username=p_sUsuario) 
@@ -189,29 +189,11 @@ class CAutenticacion(APIView):
 
             # Calcular la fecha de expiración del token
             expiration_time = timestamp + (expiration_hours * 3600)  # 3600 segundos en una hora
+            # expiration_time = timestamp + (expiration_hours * 60)  # 60 segundos en un minuto, solo para terminos de prueba ...
             
             token = default_token_generator.make_token(user)+ ',' + str(expiration_time)
    
-            
-            # sToken_encoded = urlsafe_base64_encode(force_bytes(token))
-            # print("token: "+token)
-            # print(type(token))
             sToken_encoded = urlsafe_base64_encode(force_bytes(token))
-
-            # print(type(sToken_encoded))
-
-            # tk = urlsafe_base64_decode(sToken_encoded)
-            # print(tk)
-            
-            # tk = tk.decode('utf-8')
-            # print(tk)
-
-            # is_token_valid = default_token_generator.check_token(user, tk)
-
-            # if is_token_valid:
-            #     print("El token es válido.")
-            # else:
-            #     print("El token no es válido.")
 
         except ValueError as error:
             sTexto = "%s" % error
@@ -261,12 +243,13 @@ class CAutenticacion(APIView):
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'token': openapi.Schema(type=openapi.TYPE_STRING, description='Token de autenticación.'),
+                'token': openapi.Schema(type=openapi.TYPE_STRING, description='Llave que identifica el sistema, en base 64.'),
                 'user': openapi.Schema(type=openapi.TYPE_STRING, description='Nombre de usuario.'),
                 'password': openapi.Schema(type=openapi.TYPE_STRING, description='contraseña en base64.'),
                 'idSistema': openapi.Schema(type=openapi.TYPE_INTEGER, description='Id del sistema donde el usuario esta iniciando sesión.'),
+                'timeExp': openapi.Schema(type=openapi.TYPE_INTEGER, description='Número de horas de la vigencia del token; si número de horas es 0, entonces por default el token durara 3 hrs.'),
             },
-            required=['token', 'user', 'password','idSistema']
+            required=['token', 'user', 'password','idSistema','timeExp']
         ),
         responses={200: 'Usuario loggeado exitosamente'},
     )    
@@ -288,7 +271,7 @@ class CAutenticacion(APIView):
             
             #Declaración y asignación de variables
             bValido = True
-            dCamposJson = ['token', 'user', 'password','idSistema']
+            dCamposJson = ['token', 'user', 'password','idSistema', 'timeExp']
             sTexto = ""
             pwdD64 = ""
             dUsuario = ""
@@ -303,6 +286,7 @@ class CAutenticacion(APIView):
             sUserName = ""
             tokenApi = ""
             nItemJson = 0
+            keySis = ""
             #total de items permitidos en la API, definidos en la diccionario dCamposJson
             nLenDef = len(dCamposJson) 
             #Variable que almacenara el numero de items del json recibido por la API.
@@ -335,9 +319,16 @@ class CAutenticacion(APIView):
             if bValido:
 
                 #2. Compara el token obtenido del json contra el secretKey de la aplicación.
-                # 2.1. Para el sistema de RF (Reconocimiento Facial) el  token =4  
-                if((jd['token'] == os.environ.get('SECRET_KEY')) or (jd['token'] == 4)):
+                # 2.1. Para el sistema de RF (Reconocimiento Facial) el  token =4  - KEY_RF
+                keySis = base64.b64decode(jd['token'])
+                keySis = keySis.decode('utf-8')
 
+                # print(keySis)
+                # print(os.environ.get('KEY_RF'))
+               
+                 
+                if((keySis == os.environ.get('SECRET_KEY')) or (keySis == os.environ.get('KEY_RF'))):
+                   
                     #Valida si el sistema existe en el catalogo de sistemas.
                     dSistema = list(Sistemas.objects.filter(id=jd['idSistema']).values())
                     if len(dSistema)>0:
@@ -345,7 +336,7 @@ class CAutenticacion(APIView):
                         self.sNombreSistema = dSistema[0]['nombre']
                     
                     #Si el sistema obtenido se encuentra en el catalogo de sistemas y el sistema no es el sistema 4 (RF)
-                    if sistema>0 and jd['token']!=4:
+                    if sistema>0 and keySis!=os.environ.get('KEY_RF'):
                       
                         #3. Decodifica el password en base64
                         pwdD64 = base64.b64decode(jd['password'])
@@ -388,12 +379,16 @@ class CAutenticacion(APIView):
                                 # datos = {'message': 'Success', 'datos': dUsuario}
                                 # datos = {'message': 'Success', 'sistema':self.sNombreSistema,'permisos': dPermisos, 'grupos':dGrupos}
                                 # token, created = Token.objects.get_or_create(username=jd['user'])
+                                if jd['timeExp'] == 0:
+                                    print("El tiempo de expiración es 0, por lo tanto por default el token durara 3 horas.")
+                                    tokenApi = self.get_custom_auth_token(jd['user'])
+                                else:
+                                    print("El tiempo de expiración no es igual 0, por lo tanto por default el token durara "+str(jd['timeExp'])+" horas.")
+                                    tokenApi = self.get_custom_auth_token(jd['user'],jd['timeExp'])
 
-                                tokenApi = self.get_custom_auth_token(jd['user'])
+                                # print(tokenApi)
 
-                                print(tokenApi)
-
-                                is_token_valid = default_token_generator.check_token(jd['user'], tokenApi)
+                                # is_token_valid = default_token_generator.check_token(jd['user'], tokenApi)
                                 
                                 datos = {'message': 'Success','idPersonal':idPersonal,'usuario': jd['user'], 'password': jd['password'],'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'permisos': dPermisos}
                             else:
@@ -402,7 +397,7 @@ class CAutenticacion(APIView):
                         else:
                             datos = {'message': 'Dato Invalidos', 'error':'¡Ups! la contraseña es incorrecta.'}
 
-                    elif  sistema>0 and jd['token']==4:
+                    elif  sistema>0 and keySis==os.environ.get('KEY_RF'):
 
                         print("Petición recibida por parte del API de reconocimiento facial.")
 
@@ -421,9 +416,16 @@ class CAutenticacion(APIView):
 
                                 dPermisos.update(dGrupos)
 
-                                tokenApi = self.get_custom_auth_token(sUserName)
+                                # tokenApi = self.get_custom_auth_token(sUserName)
 
-                                print(tokenApi)
+                                # print(tokenApi)
+
+                                if jd['timeExp'] == 0:
+                                    print("El tiempo de expiración es 0, por lo tanto por default el token durara 3 horas.")
+                                    tokenApi = self.get_custom_auth_token(sUserName)
+                                else:
+                                    print("El tiempo de expiración no es igual 0, por lo tanto por default el token durara "+str(jd['timeExp'])+" horas.")
+                                    tokenApi = self.get_custom_auth_token(sUserName,jd['timeExp'])
 
                                 datos = {'message': 'Success','idPersonal':idPersonal,'usuario': sUserName, 'password': password,'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'permisos': dPermisos}
                         else:
@@ -431,7 +433,7 @@ class CAutenticacion(APIView):
                     else:
                         datos = {'message': 'Dato Invalidos', 'error':'Id de sistema invalido'}                   
                 else:
-                    datos = {'message': 'Dato invalido.', 'error': 'El Token es incorrecto.'}
+                    datos = {'message': 'Dato invalido.', 'error': 'El key del sistema es incorrecto.'}
             else:
                 datos = {'message': 'JSON invalido.', 'error': sTexto}
             
@@ -506,7 +508,7 @@ class CVerificaToken(APIView):
             sTexto = ""
             nLenDef = 0
             nItemJson = 0
-            expiration_hours = 1 #TODO: ✍ Tiempo de expiración de token por defecto son 5 horas, pero tratar de ver la manera de hacerlo configurable...
+            # expiration_hours = 1 #TODO: ✍ Tiempo de expiración de token por defecto son 5 horas, pero tratar de ver la manera de hacerlo configurable...
 
             dCamposJson = ['token', 'user']
             
@@ -590,3 +592,6 @@ class CVerificaToken(APIView):
             # return False
 
         return JsonResponse(datos)  
+    
+    def get(self,request):
+        print("")

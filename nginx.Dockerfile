@@ -8,7 +8,7 @@ RUN rm /etc/nginx/conf.d/default.conf
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Exponer el puerto en el que Nginx estará escuchando
-EXPOSE 80
+EXPOSE 85
 
 # Define el comando predeterminado al iniciar el contenedor
 CMD ["nginx", "-g", "daemon off;"]

@@ -1,5 +1,6 @@
 venv/
 !venv/Lib/site-packages/django/contrib/auth/models.py
+!venv/Lib/site-packages/django/contrib/auth/migrations/0013_permission_created_at_permission_descripcion_and_more.py
 __pycache__/
 *.pyc
 .venv/

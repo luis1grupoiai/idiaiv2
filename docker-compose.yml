@@ -1,33 +1,18 @@
-version: '3.9' # version de docker-compose
+version: '3.9'
 
-services: #declaracion de servicios para el contenedor 
+services:
   web:
     build: .
-    # command: ["./entrypoint.sh"]
     volumes:
       - .:/app
     ports:
       - "333:333"
 
-# version: '3.9' # version de docker-compose
-
-# services: #declaracion de servicios para el contenedor 
-  # db:
-  #   image: postgres
-  #   environment:
-  #     - POSTGRES_DB=postgres
-  #     - POSTGRES_USER=postgres
-  #     - POSTGRES_PASSWORD=postgres
-  #   volumes:
-  #     - postgres-data:/var/lib/postgresql/data
-  # web:
-  #   build: .
-  #   volumes:
-  #     - .:/app
-  #   ports:
-  #     - "8000:8000"
-#     depends_on:
-#       - db
-
-# volumes:
-#   postgres-data:
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx.Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - web

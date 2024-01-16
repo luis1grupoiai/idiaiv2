@@ -6,14 +6,36 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 from django.contrib.auth import authenticate, login
-from apps.AsignarUsuario.models import VallEmpleado 
+from apps.AsignarUsuario.models import VallEmpleado, TRegistroAccionesModulo
 from django.http import JsonResponse
+from django.utils import timezone
+
 
 #https://www.youtube.com/watch?v=dFJvNYdKGrA&list=PLgrNDDl9MxYmUmf19zPiljdg8FKIRmP78
 
 # Create your views here.
 domino='OU=UsersIAI,DC=iai,DC=com,DC=mx'
-unidadOrganizativa = ('OU=Bajas','OU=Administracion','OU=Ingeniería','OU=DCASS','OU=Proyectos Especiales')
+dominoRaiz='DC=iai,DC=com,DC=mx'
+unidadOrganizativa = ('OU=Bajas','OU=Administracion','OU=Ingeniería','OU=DCASS','OU=Proyectos Especiales') #esta variable esta relacionada con las funcionses de   mover_usuario_ou y asignar_Departamento
+
+
+
+
+@login_required  
+def bitacora(request):
+    mensaje=None
+    #registros= TRegistroAccionesModulo.objects.all()
+    registros = TRegistroAccionesModulo.objects.filter(Modulo='Modulo AD').order_by('-FechaHora')[:1000] # solo muestra los ultimos  mil registros 
+    context = {
+                    'active_page': 'bitacora',
+                    'nombre_usuario': nameUser(request),
+                    'mensaje': mensaje,
+                    'registros':registros
+                    }
+        
+    
+    
+    return render(request, 'bitacora.html',context)
 
 
 @login_required  
@@ -25,6 +47,7 @@ def consultarUsuariosIDIAI(request):
     # Obtiene los usuarios de la base de datos
     usuarios = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='').exclude(is_active=False)
     UsuaruisDown = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='').exclude(is_active=True)
+   
     
     
     
@@ -91,6 +114,17 @@ def consultarUsuariosIDIAI(request):
                 if conn.result['result'] == 0:  # éxito
                     messages.success(request, 'Usuario creado correctamente.')
                     mensaje = {'titulo': 'Éxito', 'texto': 'Usuario creado correctamente', 'tipo': 'success'}
+                    #codigo para guardar en la bitacora -------
+                    insertar_registro_accion(
+                    nameUser(request),
+                    'Modulo AD',
+                    'Crear',
+                    f"El usuario '{nombre_usuario}' fue creado en AD",
+                    get_client_ip(request),
+                    request.META.get('HTTP_USER_AGENT'),
+                    'N/A'
+                    )
+                    
                     #return redirect('usuariosID')
                     
                     
@@ -145,7 +179,7 @@ def consultar_usuarios(request):
     try:
         #server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
         with connect_to_ad() as connection:
-            search_base = domino
+            search_base = dominoRaiz
             #search_filter = '(objectClass=user)'
             search_filter = '(&(objectClass=user)(!(OU=Administracion)))'
             attributes = ['cn', 
@@ -189,7 +223,7 @@ def consultar_usuarios(request):
                 #print(entry.cn.value)
                # print(entry.distinguishedName.value if 'distinguishedName' in entry else None)
                 #print(entry.userPrincipalName.value)
-                print(entry.distinguishedName.value)
+                #print(entry.distinguishedName.value)
                 #print(extraer_unidad_organizativa(entry.distinguishedName.value))
               
                 #if 'cn' in entry and entry.cn.value.lower() != 'administrador':
@@ -236,7 +270,7 @@ def consultar_usuarios(request):
 
 
 @login_required  
-def agregar_usuario(request):
+def agregar_usuario(request): # esta funcion o vista la deje por que tal vez se utilice en el futuro , solo revisien bien las variables porque se han modificado el domino.....
     if request.method == 'POST':
         dominio_Principal = '@'+'.'.join(part.replace('DC=', '') for part in domino.split(',') if part.startswith('DC='))
         nombre_usuario = request.POST['nombre_usuario']
@@ -314,6 +348,15 @@ def editar_usuario(request):
         #print(nombre_usuario)
         #print(user_dn)
         # Conectar a Active Directory
+        insertar_registro_accion(
+        nameUser(request),
+        'Modulo AD',
+        'Editar',
+        f"Se han modificado los datos del usuario '{nombre_usuario}'  en AD ",
+        get_client_ip(request),
+        request.META.get('HTTP_USER_AGENT'),
+        'N/A'
+        )
         try:
             #server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
             with connect_to_ad() as conn:
@@ -343,7 +386,7 @@ def editar_usuario(request):
             print(f"Error al conectar con AD: {str(e)}")
     # Redireccionar de vuelta a la lista de usuarios
     
-    print(mover_usuario_ou(nombre_inicio_sesion, unidadOrganizativa[asignar_Departamento(departamento)]))
+    print(mover_usuario_ou(nombre_inicio_sesion, unidadOrganizativa[asignar_Departamento(departamento)],request))
     return redirect('usuarios')
 
  
@@ -373,7 +416,7 @@ def existeUsuario(nombreUsuario):
     try:
        # server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
         with connect_to_ad() as conn:
-            search_base = domino  # Asegúrate de que domino está definido y es correcto.
+            search_base = dominoRaiz  # Asegúrate de que domino está definido y es correcto.
             search_filter = f'(cn={nombreUsuario})'  # Filtro para buscar por Common Name
             conn.search(search_base, search_filter, attributes=['cn'])
             return len(conn.entries) > 0
@@ -392,12 +435,21 @@ def activar_usuario(request, nombre_usuario):
             user_dn = nombre_usuario;
             #print(user_dn)
             # Establecer userAccountControl a 512 para activar la cuenta
-            conn.modify(user_dn, {'userAccountControl': [(MODIFY_REPLACE, [544])]})
+            conn.modify(user_dn, {'userAccountControl': [(MODIFY_REPLACE, [544])]}) # debe activarse con el 512 pero eso lo vamos a dejar a ultimos ajajajajaj
             if conn.result['result'] == 0:
                 #messages.success(request, 'Usuario activado correctamente.')
                 print('Usuario activado correctamente.')
                 mover = buscar_usuario_por_dn(nombre_usuario)
-                print(mover_usuario_ou(mover['cn'], unidadOrganizativa[asignar_Departamento(mover['department'])]))
+                print(mover_usuario_ou(mover['cn'], unidadOrganizativa[asignar_Departamento(mover['department'])],request))
+                insertar_registro_accion(
+                nameUser(request),
+                'Modulo AD',
+                'Alta',
+                f"El usuario '{mover['cn']}' fue dado de alta en AD ",
+                get_client_ip(request),
+                request.META.get('HTTP_USER_AGENT'),
+                'N/A'
+                )
                 return redirect('usuarios')
             else:
                 #messages.error(request, f"Error al activar usuario: {conn.result['description']}")
@@ -429,7 +481,17 @@ def desactivar_usuario(request, nombre_usuario):
                 #department=mover['department']
                 #print(cn)
                 #print(department)
-                print(mover_usuario_ou(mover['cn'], unidadOrganizativa[0]))
+                print(mover_usuario_ou(mover['cn'], unidadOrganizativa[0],request))
+                insertar_registro_accion(
+                nameUser(request),
+                'Modulo AD',
+                'Baja',
+                f"El usuario '{mover['cn']}' fue dado de baja en AD ",
+                get_client_ip(request),
+                request.META.get('HTTP_USER_AGENT'),
+                'N/A'
+                )
+                
                 return redirect('usuarios')
             else:
                 #messages.error(request, f"Error al desactivar usuario: {conn.result['description']}")
@@ -468,13 +530,13 @@ def verificar_usuario(request, nombre_usuario):
     return JsonResponse({'existe': existe})
 
 
-def mover_usuario_ou(nombre_usuario, nueva_ou):
+def mover_usuario_ou(nombre_usuario, nueva_ou,request):
     mensaje = None
     try:
         with connect_to_ad() as conn:
             # Buscar el Distinguished Name (DN) actual del usuario
             search_filter = f'(sAMAccountName={nombre_usuario})'
-            conn.search(search_base=domino, search_filter=search_filter, attributes=['distinguishedName'])
+            conn.search(search_base=dominoRaiz, search_filter=search_filter, attributes=['distinguishedName'])
 
             if conn.entries:
                 dn_actual = conn.entries[0].distinguishedName.value
@@ -490,6 +552,15 @@ def mover_usuario_ou(nombre_usuario, nueva_ou):
                 
                 if conn.result['result'] == 0:
                     mensaje = 'Usuario movido correctamente.'
+                    insertar_registro_accion(
+                    nameUser(request),
+                    'Modulo AD',
+                    'Mover',
+                    f"El usuario  '{nombre_usuario}' ha sido trasladado  a la nueva ubicación : {extraer_unidad_organizativa(nueva_ou_completa)[0]}",
+                    get_client_ip(request),
+                    request.META.get('HTTP_USER_AGENT'),
+                    'N/A'
+                    )
                 else:
                     mensaje = f"Error al mover usuario: {conn.result['description']}"
             else:
@@ -534,3 +605,47 @@ def buscar_usuario_por_dn(dn_usuario):
         resultado['error'] = f"Error de conexión con AD: {e}"
 
     return resultado
+
+def insertar_registro_accion(nombre_usuario, modulo, nombre_accion, descripcion, ip_usuario, user_agent, browser_id):
+    nuevo_registro = TRegistroAccionesModulo(
+        NombreUsuario=nombre_usuario,
+        Modulo=modulo,
+        NombreAccion=nombre_accion,
+        FechaHora=timezone.now(),  # Asigna la fecha y hora actual
+        Descripcion=descripcion,
+        IpUsuario=ip_usuario,
+        UserAgent=user_agent,
+        BrowserId=browser_id
+    )
+    
+    nuevo_registro.save()
+    print(nuevo_registro)
+    
+def get_client_ip(request):
+    """
+    Intenta obtener la dirección IP real del cliente a partir de una solicitud HTTP en Django.
+    Esta función tiene en cuenta cabeceras comunes utilizadas por proxies y balanceadores de carga.
+    """
+    # Lista de posibles cabeceras HTTP que pueden contener la dirección IP real
+    ip_headers = [
+        'HTTP_X_FORWARDED_FOR',  # Usual en configuraciones con proxies
+        'HTTP_X_REAL_IP',        # Usual con ciertos servidores/proxies, como Nginx
+        'HTTP_CLIENT_IP',        # Otra posible cabecera con la IP del cliente
+        'HTTP_X_FORWARDED',      # Otra cabecera de proxy
+        'HTTP_X_CLUSTER_CLIENT_IP',  # Cabecera utilizada por algunos balanceadores de carga
+        'HTTP_FORWARDED_FOR',    # Otra variante de la cabecera FORWARDED_FOR
+        'HTTP_FORWARDED'         # Versión simplificada de la cabecera FORWARDED
+    ]
+
+    # Intentar obtener la IP desde las cabeceras definidas
+    for header in ip_headers:
+        ip = request.META.get(header)
+        if ip:
+            # En algunos casos, la cabecera puede contener múltiples IPs,
+            # entonces se toma la primera que generalmente es la del cliente
+            ip = ip.split(',')[0].strip()
+            if ip:
+                return ip
+
+    # Si no se encuentra en las cabeceras, tomar la dirección del remitente de la solicitud
+    return request.META.get('REMOTE_ADDR')

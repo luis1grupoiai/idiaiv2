@@ -3,6 +3,7 @@ from django.contrib.auth.admin import UserAdmin, GroupAdmin
 from django.contrib.auth.models import User, Permission
 from django.contrib.auth.forms import UserChangeForm
 from .models import UserCoordinacion, Coordinacion, Gerencia, Direccion
+from django import forms
 
 class CustomUserChangeForm(UserChangeForm):
     # Define la metadata del formulario
@@ -163,10 +164,20 @@ class DireccionAdmin(admin.ModelAdmin):
 # Registra el modelo Direccion en la interfaz de administración de Django, utilizando la configuración personalizada definida en la clase DireccionAdmin
 admin.site.register(Direccion, DireccionAdmin) 
 
+# class PermissionForm(forms.ModelForm):
+#     class Meta:
+#         model = Permission
+#         fields = '__all__'
+
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         # Filtra el queryset del campo content_type para mostrar solo la aplicación 'sistemas-iai'
+#         self.fields['content_type'].queryset = self.fields['content_type'].queryset.filter(app_label='sistemas-iai')
 
 class PermissionAdmin(admin.ModelAdmin):
     list_display = ( 'name', 'codename', 'descripcion', 'status')
-    
+    # form = PermissionForm
+
     def get_queryset(self, request):
         # Filtra los permisos por app_label, en este caso, "sistemas-iai"
         return super().get_queryset(request).filter(content_type__app_label='sistemas-iai')

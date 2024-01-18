@@ -202,8 +202,6 @@ class CAutenticacion(APIView):
         # print(type(sToken_encoded))
         return sToken_encoded
 
-
-
     @staticmethod
     def prueba():
         print("Accede a metodo prueba...")
@@ -220,7 +218,6 @@ class CAutenticacion(APIView):
     @method_decorator(csrf_exempt)
     def dispatch(self,request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
-    
     
 
     def get(self,request):
@@ -253,6 +250,8 @@ class CAutenticacion(APIView):
         ),
         responses={200: 'Usuario loggeado exitosamente'},
     )    
+
+
     def post(self,request):
         """
         Realiza la validación de las credenciales de los usuarios.
@@ -386,7 +385,7 @@ class CAutenticacion(APIView):
                                     print("El tiempo de expiración no es igual 0, por lo tanto por default el token durara "+str(jd['timeExp'])+" horas.")
                                     tokenApi = self.get_custom_auth_token(jd['user'],jd['timeExp'])
 
-                                # print(tokenApi)
+                                print(tokenApi)
 
                                 # is_token_valid = default_token_generator.check_token(jd['user'], tokenApi)
                                 
@@ -418,7 +417,7 @@ class CAutenticacion(APIView):
 
                                 # tokenApi = self.get_custom_auth_token(sUserName)
 
-                                # print(tokenApi)
+                                
 
                                 if jd['timeExp'] == 0:
                                     print("El tiempo de expiración es 0, por lo tanto por default el token durara 3 horas.")
@@ -454,31 +453,95 @@ class CAutenticacion(APIView):
 
 
 class Protegida(APIView):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
     
-    def get(self, request):
+    # def get(self, request):
         
-        datos = {'content': 'Esta vista está protegida'}
-        # return Response({"content": "Esta vista está protegida"})  
-        return JsonResponse(datos)  
+    #     datos = {'content': 'Esta vista está protegida'}
+    #     # return Response({"content": "Esta vista está protegida"})  
+    #     return JsonResponse(datos)  
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self,request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+    
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'user': openapi.Schema(type=openapi.TYPE_STRING, description='Nombre de usuario.')
+            },
+            required=['user']
+        ),
+        responses={200: 'Token invalido'},
+    ) 
+    def post(self,request):
+        """
+        Realiza la revocación del token dado por la api de autenticación.
+
+        Para realizar un consulta exitosa, envía un objeto JSON con los siguientes campos:
+       
+        """
+
+        nLenDef = 0
+        nItemJson = 0
+        sTexto = ""
+        bValido = True
+        sToken_encoded = ""
+        sUserName = ""
+
+        dCamposJson = ['user']
+            
+        jd = json.loads(request.body)
+
+        nLenDef = len(dCamposJson) 
+
+        nItemJson = len(jd)
+            
+        if nItemJson != nLenDef:
+            sTexto = "El tamaño del JSON obtenido no es el esperado, por favor de verificar. "
+            bValido = False
+
+        for item in dCamposJson:
+            if item in jd:
+                continue
+            else:
+                sTexto += " El campo faltante es: "+item+". "
+                bValido = False
+                break
+
+        try:
+            if bValido:
+                sUserName = jd['user']
+                user = User.objects.get(username=sUserName) 
+                timestamp = int(timezone.now().timestamp())
+
+                # Calcular la fecha de expiración del token
+                expiration_time = timestamp + (1 * 1)  # El tipo de vida del token una vez que se cierre sesión será de 1 minuto.
+                
+                token = default_token_generator.make_token(user)+ ',' + str(expiration_time)
+    
+                sToken_encoded = urlsafe_base64_encode(force_bytes(token))
+
+                # print("Token de 1 minuto: ")
+                # print(sToken_encoded)
+
+                datos = {'message': 'Success'}
+            else:
+                datos = {'message': 'Error en la recepción de datos.', "error": sTexto}
+        except ValueError as error:
+            sTexto = "%s" % error
+            datos = {'message': 'Ocurrió un error al generar el token para el usuario. ', "error": sTexto}
+
+        return JsonResponse(datos)
+    
+
 
 class CVerificaToken(APIView):
 
-    # # def is_token_expired(self, user, token, expiration_hours=24):
-    # def is_token_expired(self, token, expiration_hours=5):
-        
-    #     # Verificar si el token ha expirado
-    #      # Obtener la fecha de creación del token del mismo
-    #     timestamp = default_token_generator._timestamp_from_token(token)
-
-    #     # Calcular la fecha de expiración del token
-    #     # expiration_time = timestamp + (expiration_hours * 3600)  # 3600 segundos en una hora
-    #     expiration_time = timestamp + (expiration_hours * 60)  # 60 segundos prueba de 1 minuto...
-
-    #     # Verificar si el token ha expirado
-    #     return expiration_time > timezone.now().timestamp()
-
-
+    @method_decorator(csrf_exempt)
+    def dispatch(self,request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
     @swagger_auto_schema(
         request_body=openapi.Schema(
@@ -508,7 +571,6 @@ class CVerificaToken(APIView):
             sTexto = ""
             nLenDef = 0
             nItemJson = 0
-            # expiration_hours = 1 #TODO: ✍ Tiempo de expiración de token por defecto son 5 horas, pero tratar de ver la manera de hacerlo configurable...
 
             dCamposJson = ['token', 'user']
             
@@ -539,17 +601,17 @@ class CVerificaToken(APIView):
                 
                 tk = urlsafe_base64_decode(sToken_encoded)                
                 tk = tk.decode('utf-8')
-                print(tk)
+                # print(tk)
                  # Separar el token y la marca de tiempo
                 parts = tk.split(',')
 
-                print("Token ... :( por favor funciona: ")
-                print(parts[0])
+                # print("Token ... :( por favor funciona: ")
+                # print(parts[0])
                 
                 token_without_timestamp = '-'.join(parts[:-1])
                 timestamp = int(parts[-1])
-                print("timestamp: ")
-                print(timestamp)
+                # print("timestamp: ")
+                # print(timestamp)
 
                 # Calcular la fecha de expiración del token
                 # expiration_time = timestamp + (expiration_hours * 3600)  # 3600 segundos en una hora
@@ -557,10 +619,10 @@ class CVerificaToken(APIView):
                 # expiration_time = timestamp + (1 * 60)  # 60 segundos prueba de 1 min.
 
                 if expiration_time > timezone.now().timestamp():
-                    print("Aun no expira el token")
+                    # print("Aun no expira el token")
                     is_token_expired = False
-                else:
-                    print("El token ya expiro...")
+                # else:
+                #     print("El token ya expiro...")
                     # is_token_expired = True
 
                 # is_token_valid = default_token_generator.check_token(user, tk)
@@ -593,5 +655,6 @@ class CVerificaToken(APIView):
 
         return JsonResponse(datos)  
     
-    def get(self,request):
-        print("")
+
+    
+

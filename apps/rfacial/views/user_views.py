@@ -18,6 +18,9 @@ from drf_yasg import openapi
 from django.core.files.base import ContentFile
 from PIL import Image as PilImage
 from PIL import Image
+from PIL import Image, UnidentifiedImageError
+from uuid import uuid4
+
 
 from django import forms
 from io import BytesIO
@@ -162,40 +165,86 @@ class CCompareFaces(APIView):
         EAR_THRESHOLD = 0.3  
 
         return ear < EAR_THRESHOLD
+    
+
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'imagen': openapi.Schema(type=openapi.TYPE_STRING, description='Imagen en formato base64.'),
+                # Otros campos que necesites
+            },
+            required=['imagen']
+        ),
+        responses={200: openapi.Response('Procesamiento exitoso')}
+    )
 
 
-    def get(self, request):
-         # Cargar una imagen estática desde tu servidor
-         image = face_recognition.load_image_file("staticfiles/admin/img/10972.jpg")
-        
-         # Convertir la imagen a formato numpy
-         image_np = np.array(image)
+    def post(self, request):
+            # Parsear el cuerpo de la solicitud como JSON
+            try:
+                data = json.loads(request.body)
+            except json.JSONDecodeError:
+                return JsonResponse({'status': 'error', 'message': 'Invalid JSON'})
 
-         # Extraer encodings de las caras en la imagen
-         face_encodings = self.extract_face_encodings(image_np)
-        
-        
-         db_encodings = [(rasgo.id_personal, np.array(rasgo.rasgos_faciales)) for rasgo in RasgosFaciales.objects.all()]
-         if not db_encodings:
-                return JsonResponse({'status': 'Database is empty'})
+            # Obtener la imagen en base64 del JSON
+            base64_image = data.get('imagen')
+            if not base64_image:
+                return JsonResponse({'status': 'error', 'message': 'No image data provided'})
 
-            # Preparar una lista de encodings de la base de datos para comparación
-         db_encoding_list = [db_encoding[1] for db_encoding in db_encodings]
+            # Eliminar el prefijo de la cadena base64
+            _, base64_data = base64_image.split(',', 1)
 
-         TOLERANCE = 0.5  # Ajusta este valor según sea necesario
-         best_match_id = None
-         lowest_distance = float('inf')
+            try:
+                # Decodificar la imagen de base64
+                image_data = base64.b64decode(base64_data)
+                image = Image.open(BytesIO(image_data))
+            except (ValueError, UnidentifiedImageError):
+                return JsonResponse({'status': 'error', 'message': 'Invalid image data'})
 
-         for encoding in face_encodings:
-                distances = face_recognition.face_distance(db_encoding_list, encoding)
-                for db_encoding, distance in zip(db_encodings, distances):
-                    if distance < lowest_distance and distance < TOLERANCE:
-                        lowest_distance = distance
-                        best_match_id = db_encoding[0]
+            # Generar un nombre de archivo único para la imagen
+            temp_file_name = f"{uuid4()}.jpg"
+            temp_file_path = os.path.join('staticfiles', 'admin', 'img', temp_file_name)
 
-         if best_match_id is None:
-                return JsonResponse({'status': 'No Match'})
-         else:
-                return JsonResponse({'status': 'Match Found', 'best_match_id': best_match_id})
+            # Guardar la imagen en un archivo temporal
+            image.save(temp_file_path)
+
+            try:
+                # Procesar la imagen
+                image_np = face_recognition.load_image_file(temp_file_path)
+                
+                # Extraer encodings de las caras en la imagen
+                face_encodings = self.extract_face_encodings(image_np)
+
+                db_encodings = [(rasgo.id_personal, rasgo.rasgos_faciales) for rasgo in RasgosFaciales.objects.all()]
+                if not db_encodings:
+                    return JsonResponse({'status': 'Database is empty'})
+
+                # Preparar una lista de encodings de la base de datos para comparación
+                db_encoding_list = [db_encoding[1] for db_encoding in db_encodings]
+
+                TOLERANCE = 0.5  # Ajusta este valor según sea necesario
+                best_match_id = None
+                lowest_distance = float('inf')
+
+                for encoding in face_encodings:
+                    distances = face_recognition.face_distance(db_encoding_list, encoding)
+                    for db_encoding, distance in zip(db_encodings, distances):
+                        if distance < lowest_distance and distance < TOLERANCE:
+                            lowest_distance = distance
+                            best_match_id = db_encoding[0]
+
+                if best_match_id is None:
+                    return JsonResponse({'status': 'No Match'})
+                else:
+                    return JsonResponse({'status': 'Match Found', 'best_match_id': best_match_id})
             
-            
+            finally:
+                # Eliminar el archivo temporal
+                if os.path.exists(temp_file_path):
+                    os.remove(temp_file_path)
+
+        # Método auxiliar para extraer encodings (ajustar según tu implementación)
+    def extract_face_encodings(self, image_np):
+            # Implementa la lógica para extraer los encodings de las caras
+            return face_recognition.face_encodings(image_np)

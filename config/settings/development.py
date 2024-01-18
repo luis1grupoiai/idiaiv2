@@ -48,6 +48,7 @@ STATICFILES_DIRS = [
     BASE_DIR / "components",
 ]
 
+# variable de Active Directory NO BORRAR!!!!!!!!!
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

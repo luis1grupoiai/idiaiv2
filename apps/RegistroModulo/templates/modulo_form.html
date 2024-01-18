@@ -1,0 +1,53 @@
+
+{% extends "base.html" %}
+
+
+{% block title%}
+Dashboard - Modulos
+{% endblock title %}
+
+
+{% block extra_css %}
+
+{% endblock %}
+
+
+{% block Encabezado %}
+<h3>Lista de Modulos</h3>
+<p class="text-subtitle text-muted"></p>
+{% endblock %}
+
+
+{% block EncabezadoNav%}
+Modulos
+{% endblock EncabezadoNav %}
+
+
+{% block EncabezadoCard%}
+Nombre de los Modulos 
+{% endblock EncabezadoCard %}
+
+{% block contenido %}
+
+
+<form method="post" class="mt-4">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="id_nombre">Nombre:</label>
+        {{ form.nombre }}
+    </div>
+    <div class="form-group">
+        <label for="id_descripcion">Descripción:</label>
+        {{ form.descripcion }}
+    </div>
+    <button type="submit" class="btn btn-primary">Guardar</button> 
+    <a href="{% url 'modulo_list'  %}" class="btn btn-danger">Cancelar</a>
+</form>
+
+
+{% endblock %}
+
+    {% block script %} 
+    
+ 
+    {% endblock%}

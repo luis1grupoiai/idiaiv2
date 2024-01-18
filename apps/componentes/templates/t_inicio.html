@@ -130,7 +130,7 @@
       let faceDetected = false;
       let detectionTimer = null;
       let cuentaregresiva = null;
-
+      let isFrameSent =null ;
       let framesSinceLastDetection = 0;
       const detectionFrequency = isMobile ? 5 : 1;
 
@@ -280,7 +280,7 @@
                   if (cuentaregresiva === null) {
                     cuentaregresiva = setTimeout(() => {
                       if (isExpressionConsistent(expressionHistory, "happy")) {
-                        alert("Te la creiste we, no hay acceso");
+                        sendFrame();
                       } else if (
                         isExpressionConsistent(expressionHistory, "neutral")
                       ) {
@@ -322,9 +322,17 @@
         canvas.height = video.videoHeight;
         canvas.getContext("2d").drawImage(video, 0, 0);
         const data = canvas.toDataURL("image/jpeg");
-        fetch("../api/ReconFacial/", {
+        console.log(data);
+        fetch("../api/CompareFaces/", {
           method: "POST",
-          body: JSON.stringify({ imagen_base64: data }),
+          body: JSON.stringify({ 
+          /*  token: 'FSePS(VdLK_Zsqb+mex!',
+            user: 109729,
+            password: "",
+            idSistema:4,
+            timeExp: 12, */ 
+            imagen: data,
+           }),
           headers: {
             "Content-Type": "application/json",
             "X-CSRFToken": getCookie("csrftoken"),
@@ -333,12 +341,43 @@
           .then((response) => response.json())
           .then((data) => {
             console.log(data);
-            if (data.match) {
+            if (data.status == 'Match Found') {
               // Si hay coincidencia, ocultamos el video y el canvas
               video.style.display = "none";
               canvas.style.display = "none";
               // Detener la detección y el stream de la cámara
               stopCameraStream();
+              let codificado = btoa('FSePS(VdLK_Zsqb+mex!');
+
+              // consumo de api login 
+              fetch("../api/auth/", {
+                method: "POST",
+                body: JSON.stringify({ 
+                 token: codificado ,
+                  user: data.best_match_id,
+                  password: "",
+                  idSistema:1,
+                  timeExp: 12, 
+                 }),
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-CSRFToken": getCookie("csrftoken"),
+                },
+              })
+                .then((response) => response.json())
+                .then((data) => {
+                  console.log(data);
+               
+                })
+               /* .catch((error) => {
+                  console.error("Error al enviar la imagen:", error);
+                  // Opcional: resetear isFrameSent si quieres permitir reintentos
+                  isFrameSent = false;
+                });  */ 
+
+
+
+              
             } else {
               alert("usuario no encontrado");
               // Opcional: resetear isFrameSent si quieres permitir reintentos
@@ -351,6 +390,7 @@
             isFrameSent = false;
           });
       }
+      
 
       function stopCameraStream() {
         let stream = video.srcObject;

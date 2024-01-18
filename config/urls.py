@@ -14,5 +14,6 @@ urlpatterns = [
     path('', include('apps.ActiveDirectory.urls'),name='index'),
     path('SolicitudUsuario/', include('apps.AsignarUsuario.urls'),name='SolicitudUsuario'),
     path('accounts/', include ('django.contrib.auth.urls')),
+    path('RegistroModulo/',include('apps.RegistroModulo.urls'), name='Modulo'),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

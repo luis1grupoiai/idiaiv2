@@ -1,0 +1,44 @@
+
+{% extends "base.html" %}
+
+
+{% block title%}
+Dashboard - Modulos
+{% endblock title %}
+
+
+{% block extra_css %}
+
+{% endblock %}
+
+
+{% block Encabezado %}
+<h3>Lista de Modulos</h3>
+<p class="text-subtitle text-muted"></p>
+{% endblock %}
+
+
+{% block EncabezadoNav%}
+Modulos
+{% endblock EncabezadoNav %}
+
+
+{% block EncabezadoCard%}
+Nombre de los Modulos 
+{% endblock EncabezadoCard %}
+
+{% block contenido %}
+
+<h2>¿Estás seguro de que quieres eliminar este modulo?</h2>
+<form method="post" class="mt-4">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary" >Confirmar Eliminación</button>
+    <a href="{% url 'modulo_list'  %}" class="btn btn-danger">Cancelar</a>
+</form>
+
+{% endblock %}
+
+    {% block script %} 
+    
+ 
+    {% endblock%}

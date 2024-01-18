@@ -80,44 +80,36 @@
         <ul class="menu">
             <li class="sidebar-title">Menu</li>
            
-            <li
-            class="sidebar-item {% if active_page == 'usuarios' %}active{% endif %} ">
-            <a href="{% url 'usuarios' %}" class='sidebar-link'>
-                <i class="bi bi-people-fill"></i>
-                <span>Usuarios AD</span>
-            </a>
-            
+           
 
-            </li>
-            
+
             <li
-            class="sidebar-item {% if active_page == 'usuariosID' %}active{% endif %} ">
+            class="sidebar-item ">
             <a href="{% url 'usuariosID' %}" class='sidebar-link'>
-                <i class="bi bi-person-circle"></i>
-                <span>Usuarios IDIAI</span>
+                <i class="bi bi-shield-fill"></i>
+                <span>Active Directory</span>
             </a>
             
 
            
             </li>
 
+            <li
+            class="sidebar-item {% if active_page != 'bitacora' %}active{% endif %}">
+            <a href="{% url 'modulo_list' %}" class='sidebar-link'>
+                <i class="bi bi-globe2"></i>
+                <span>Modulos</span>
+            </a>
+            
+
+           
+            </li>
 
             <li
             class="sidebar-item {% if active_page == 'bitacora' %}active{% endif %} ">
             <a href="{% url 'bitacora' %}" class='sidebar-link'>
                 <i class="bi bi-book"></i>
                 <span>Bitácora</span>
-            </a>
-            
-
-           
-            </li>
-
-            <li
-            class="sidebar-item ">
-            <a href="{% url 'modulo_list' %}" class='sidebar-link'>
-                <i class="bi bi-globe2"></i>
-                <span>Modulos</span>
             </a>
             
 

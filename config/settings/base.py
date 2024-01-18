@@ -1,5 +1,4 @@
 import os
-
 from pathlib import Path
 
 
@@ -26,7 +25,8 @@ LOCAL_APPS = [
     'apps.sistemas',
     'apps.componentes',
     'apps.ActiveDirectory',
-    'apps.AsignarUsuario'
+    'apps.AsignarUsuario',
+    'apps.RegistroModulo', 
 ]
 
 THIRD_APPS = [
@@ -50,7 +50,7 @@ BASE_MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_components.middleware.ComponentDependencyMiddleware',
-    'querycount.middleware.QueryCountMiddleware'
+    #'querycount.middleware.QueryCountMiddleware'
     
 ]
 
@@ -154,10 +154,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = 'home' 
 LOGOUT_REDIRECT_URL = 'home'
 
-# variable de Active Directory NO BORRAR!!!!!!!!!
-AD_SERVER = os.environ.get('ActiveDirectory_SERVER')  # Cambia esto segÃºn tu servidor
-AD_PORT = 389#int(os.environ.get('ActiveDirectory_PORT'))   # El puerto por defecto es 389
-AD_USER = os.environ.get('ActiveDirectory_USER')   # Cambia esto segÃºn tus credenciales
-#dsquery user -name desarrollo
-#dsget user "CN=desarrollo,CN=Users,DC=iai,DC=com,DC=mx"
-AD_PASSWORD = os.environ.get('ActiveDirectory_PASSWORD') 
+AD_SERVER = 'ldap://192.192.194.10'  # Cambia esto según tu servidor
+AD_PORT = 389  # El puerto por defecto es 389 # El puerto por defecto es 389 normalmente 389 para conexiones no seguras o 636 para conexiones seguras con SSL
+AD_USER = 'CN=desarrollo,CN=Users,DC=iai,DC=com,DC=mx'  # Cambia esto según tus credenciales -----dsquery user -name desarrollo --------dsget user "CN=desarrollo,CN=Users,DC=iai,DC=com,DC=mx"
+AD_PASSWORD = 'D3sarrollo'

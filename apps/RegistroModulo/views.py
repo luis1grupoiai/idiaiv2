@@ -11,6 +11,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
 from django.utils import timezone
 from django.urls import reverse_lazy
+from django.contrib import messages
 
 class NombreUsuarioMixin:
     def get_context_data(self, **kwargs):
@@ -27,6 +28,10 @@ class ModuloListView(LoginRequiredMixin,NombreUsuarioMixin,ListView):
     model = TRegistroDeModulo
     template_name = 'modulo_list.html'
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['verificar'] = 'hola'
+        return context
 
 class ModuloCreateView(LoginRequiredMixin,NombreUsuarioMixin,CreateView):
     model = TRegistroDeModulo
@@ -35,6 +40,7 @@ class ModuloCreateView(LoginRequiredMixin,NombreUsuarioMixin,CreateView):
     success_url = reverse_lazy('modulo_list')
     
     def form_valid(self, form):
+        
         response = super(ModuloCreateView, self).form_valid(form)
         # Obtén la información del usuario y otros detalles aquí
         nombreUsuario = self.request.user.get_full_name()  # O tu método personalizado
@@ -58,7 +64,33 @@ class ModuloUpdateView(LoginRequiredMixin,NombreUsuarioMixin,UpdateView):
     template_name = 'modulo_form.html'
     success_url = reverse_lazy('modulo_list')
     
+
+   
+    
+    def get_initial(self):
+        initial = super().get_initial()
+        # Obtén la instancia del módulo que se va a actualizar
+        modulo = self.get_object()
+        # Establece los valores iniciales desencriptados para el formulario
+        initial['nombre'] = modulo.nombre
+        #initial['descripcion'] = modulo.descripcion
+        return initial
+    
+    
+    
     def form_valid(self, form):
+        # Validación para el nombre
+        modulo = self.get_object()
+        if form.cleaned_data['nombre'] != modulo.nombre:
+           messages.error(self.request, 'No puedes cambiar el nombre del módulo.')
+           return self.form_invalid(form)
+       
+        # Validación para la descripción
+        descripcion = form.cleaned_data.get('descripcion')
+        if not descripcion:
+            messages.error(self.request, 'La descripción no puede estar vacía.')
+            return self.form_invalid(form)
+         # Procesamiento normal si todas las validaciones pasan
         response = super(ModuloUpdateView, self).form_valid(form)
         # Obtén la información del usuario y otros detalles aquí
         nombreUsuario = self.request.user.get_full_name()  # O tu método personalizado
@@ -75,6 +107,8 @@ class ModuloUpdateView(LoginRequiredMixin,NombreUsuarioMixin,UpdateView):
         )
 
         return response
+    
+    
 
 class ModuloDeleteView(LoginRequiredMixin,NombreUsuarioMixin,DeleteView):
     model = TRegistroDeModulo
@@ -101,6 +135,8 @@ class ModuloDeleteView(LoginRequiredMixin,NombreUsuarioMixin,DeleteView):
 
 @login_required  
 def bitacora(request):
+    
+    
     mensaje=None
     #registros= TRegistroAccionesModulo.objects.all()
     registros = TRegistroAccionesModulo.objects.filter(Modulo='Modulo').order_by('-FechaHora')[:1000] # solo muestra los ultimos  mil registros 

@@ -33,6 +33,19 @@ Registros de Acciones
 
 {% block contenido %}
 
+
+{% if messages %}
+<div>
+    {% for message in messages %}
+        {% if forloop.last %}
+            <div class="alert {% if 'error' in message.tags %}alert-danger{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
+                {{ message }}
+            </div>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endif %} 
+
 <div class="table-responsive ">
 
     <table id="myTable1" class="table table-hover table-striped"> 

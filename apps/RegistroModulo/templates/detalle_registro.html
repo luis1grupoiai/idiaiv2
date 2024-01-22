@@ -33,9 +33,75 @@ Nombre de los Modulos
 <p>Descripcion : {{ modulo_desencriptada }}</p>
 <a href="{% url 'modulo_list'  %}" class="btn btn-danger">Cancelar</a>
 
+<div class="modal fade" id="No_me_hackes_XD_Modal." tabindex="-1" role="dialog" aria-labelledby="passwordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="passwordModalLabel">Contraseña : </h5>
+                
+            </div>
+            <div class="modal-body">
+
+                <div class="mb-3">
+                    <label for="passwordInput." class="form-label"></label>
+                    <input type="password" id="passwordInput." class="form-control" placeholder="Contraseña">
+                    
+                </div>
+                
+                
+                <div class="mb-3">
+                <button  id="miBoton." class="btn btn-primary" data-nombre="{{verificar}}" onclick="verificar(this);">Verificar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
     {% block script %} 
-    
+    <script src="/static/assets/extensions/jquery/jquery.min.js"></script>
+    <script src="/static/assets/extensions/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="/static/assets/extensions/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="/static/assets/static/js/pages/datatables.js"></script>
+    <script>
+
+   
+        var modals = new bootstrap.Modal(document.getElementById('No_me_hackes_XD_Modal.'), {
+            backdrop: 'static', // Evita que se cierre al hacer clic fuera
+            keyboard: false     // Evita que se cierre al presionar ESC
+          });
+        modals.show();
+
+        function verificar(button) {
+           
+            var apodo = document.getElementById('passwordInput.').value;
+            var nombre = button.getAttribute('data-nombre');
+            //var passwordCorrecta = "{{ password_para_verificar }}";
+            console.log(nombre)
+            
+            if (apodo === nombre) {
+                
+                modals.hide();
+                
+                // alert('Contraseña correcta.');
+                
+            } else {
+                
+                location.reload()
+                //alert('Contraseña incorrecta.');
+            }
+        }
+
+
+
+
+        document.getElementById('passwordInput.').addEventListener('keypress', function(event) {
+            if (event.keyCode === 13) { // 13 es el código de tecla para Enter
+                
+                var boton = document.getElementById('miBoton.'); 
+                verificar(boton); // Ejecuta la función
+            }
+        });
+    </script>
  
     {% endblock%}

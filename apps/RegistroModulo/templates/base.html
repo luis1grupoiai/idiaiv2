@@ -18,6 +18,12 @@
   {% block extra_css %}
   <!-- Espacio para CSS adicional de plantillas hijas -->
   {% endblock %}
+  <style>
+    .modal-backdrop.show {
+        opacity: 1.0 !important; /* Aumenta la opacidad para oscurecer */
+    }
+  </style>
+
 </head>
 
 <body>
@@ -286,6 +292,7 @@
 </footer>
         </div>
     </div>
+   
     <script src="/static/assets/static/js/components/dark.js"></script>
     <script src="/static/assets/extensions/perfect-scrollbar/perfect-scrollbar.min.js"></script>
     <script src="/static/assets/compiled/js/app.js"></script>

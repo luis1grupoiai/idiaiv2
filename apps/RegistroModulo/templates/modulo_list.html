@@ -13,7 +13,7 @@ Dashboard - Modulos
 <link rel="stylesheet" href="/static/assets/compiled/css/table-datatable-jquery.css">
 
 
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.7.1/css/buttons.dataTables.min.css">
+
 <!-- Espacio para CSS adicional de plantillas hijas -->
 {% endblock %}
 
@@ -78,11 +78,11 @@ Nombre de los Modulos
        
 
 <!-- Modal para ingresar la contraseña -->
-<div class="modal fade" id="passwordModal" tabindex="-1" role="dialog" aria-labelledby="passwordModalLabel" aria-hidden="true">
+<div class="modal fade" id="No_me_hackes_XD_Modal" tabindex="-1" role="dialog" aria-labelledby="passwordModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="passwordModalLabel">Ingrese la contraseña {{verificar}}</h5>
+                <h5 class="modal-title" id="passwordModalLabel">Ingrese la contraseña </h5>
                 
             </div>
             <div class="modal-body">
@@ -95,7 +95,31 @@ Nombre de los Modulos
                 
                 
                 <div class="mb-3">
-                <button  class="btn btn-primary" data-nombre="{{verificar}}" onclick="verificarPassword(this);">Verificar</button>
+                <button id="miBoton" class="btn btn-primary" data-nombre="{{verificar}}" onclick="verificarPassword(this);">Verificar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal para ingresar la contraseña -->
+<div class="modal fade" id="No_me_hackes_XD_Modal." tabindex="-1" role="dialog" aria-labelledby="passwordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="passwordModalLabel">Contraseña : </h5>
+                
+            </div>
+            <div class="modal-body">
+
+                <div class="mb-3">
+                    <label for="passwordInput." class="form-label"></label>
+                    <input type="password" id="passwordInput." class="form-control" placeholder="Contraseña">
+                    
+                </div>
+                
+                
+                <div class="mb-3">
+                <button  id="miBoton." class="btn btn-primary" data-nombre="{{verificar}}" onclick="verificar(this);">Verificar</button>
                 </div>
             </div>
         </div>
@@ -105,22 +129,19 @@ Nombre de los Modulos
 {% endblock %}
 
 {% block script %} 
-    
-    <script src="/static/assets/extensions/jquery/jquery.min.js"></script>
-    <script src="/static/assets/extensions/datatables.net/js/jquery.dataTables.min.js"></script>
-    <script src="/static/assets/extensions/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
-    <script src="/static/assets/static/js/pages/datatables.js"></script>
+<script src="/static/assets/extensions/jquery/jquery.min.js"></script>
+<script src="/static/assets/extensions/datatables.net/js/jquery.dataTables.min.js"></script>
+<script src="/static/assets/extensions/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="/static/assets/static/js/pages/datatables.js"></script>
 
 
-    <script src="https://cdn.datatables.net/buttons/1.7.1/js/dataTables.buttons.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.7.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.html5.min.js"></script>
+
     
     
-    
-    
-    
-    <script>      
+<script>      
     $(document).ready(function() {
             var config = {
                 "pageLength": 5,
@@ -145,40 +166,29 @@ Nombre de los Modulos
                         "sortDescending": ": activar para ordenar la columna de manera descendente"
                     }
                 },
-                "dom": 'frtip',
-                "buttons": [
-                    {
-                        "extend": "excelHtml5",
-                        "text": "Exportar a Excel",
-                        "titleAttr": "Exportar a Excel",
-                        "className": "btn btn-primary",
-                        "filename": function(){
-                            var d = new Date();
-                            var fecha = d.toISOString().slice(0,10); // Fecha en formato AAAA-MM-DD
-                            var hora = d.getHours();
-                            var min = d.getMinutes();
-                            var seg = d.getSeconds();
-                            // Formatea la hora para siempre tener dos dígitos
-                            hora = (hora < 10 ? "0" : "") + hora;
-                            min = (min < 10 ? "0" : "") + min;
-                            seg = (seg < 10 ? "0" : "") + seg;
-                            return 'Usuarios_AD_' + fecha + '_' + hora + min + seg; // Formato: Bitacora_AAAA-MM-DD_HHMMSS
-                        }
-                    }
-                    // Puedes agregar más botones aquí si es necesario
-                ],
+                
             };
         
             $('#Tmodulo').DataTable(config);
         });
 
-        var id = null;
+        var url = null;
+        var modal = new bootstrap.Modal(document.getElementById('No_me_hackes_XD_Modal'), {
+            backdrop: 'static', // Evita que se cierre al hacer clic fuera
+            keyboard: false     // Evita que se cierre al presionar ESC
+          });
+        var modals = new bootstrap.Modal(document.getElementById('No_me_hackes_XD_Modal.'), {
+            backdrop: 'static', // Evita que se cierre al hacer clic fuera
+            keyboard: false     // Evita que se cierre al presionar ESC
+          });
+
+
         function verificarPassword(button) {
            
             var apodo = document.getElementById('passwordInput').value;
             var nombre = button.getAttribute('data-nombre');
             //var passwordCorrecta = "{{ password_para_verificar }}";
-            
+           
             
             if (apodo === nombre) {
                 window.location.href = url;
@@ -189,12 +199,58 @@ Nombre de los Modulos
                 //alert('Contraseña incorrecta.');
             }
         }
+
+       
         
         function validacion(button) {
-            var modal = new bootstrap.Modal(document.getElementById('passwordModal'));
+            
              modal.show();
              url = button.getAttribute('data-url');
 
         }
-    </script>
+
+        
+        modals.show();
+
+        function verificar(button) {
+           
+            var apodo = document.getElementById('passwordInput.').value;
+            var nombre = button.getAttribute('data-nombre');
+            //var passwordCorrecta = "{{ password_para_verificar }}";
+         
+            
+            if (apodo === nombre) {
+                
+                modals.hide();
+                
+                // alert('Contraseña correcta.');
+                
+            } else {
+                
+                location.reload()
+                //alert('Contraseña incorrecta.');
+            }
+        }
+
+
+    document.getElementById('passwordInput').addEventListener('keypress', function(event) {
+            if (event.keyCode === 13) { // 13 es el código de tecla para Enter
+                console.log("diste enter")
+                var boton = document.getElementById('miBoton'); 
+                verificarPassword(boton); // Ejecuta la función
+            }
+        });
+
+        document.getElementById('passwordInput.').addEventListener('keypress', function(event) {
+            if (event.keyCode === 13) { // 13 es el código de tecla para Enter
+                console.log("diste enter")
+                var boton = document.getElementById('miBoton.'); 
+                verificar(boton); // Ejecuta la función
+            }
+        });
+
+      
+    </script>   
+    
+    
 {% endblock %}

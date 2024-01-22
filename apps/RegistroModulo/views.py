@@ -13,6 +13,9 @@ from django.utils import timezone
 from django.urls import reverse_lazy
 from django.contrib import messages
 
+ModuloEntrada ="hola" # la contraseña del modal ----
+
+
 class NombreUsuarioMixin:
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -30,7 +33,7 @@ class ModuloListView(LoginRequiredMixin,NombreUsuarioMixin,ListView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['verificar'] = 'hola'
+        context['verificar'] = ModuloEntrada
         return context
 
 class ModuloCreateView(LoginRequiredMixin,NombreUsuarioMixin,CreateView):
@@ -38,6 +41,12 @@ class ModuloCreateView(LoginRequiredMixin,NombreUsuarioMixin,CreateView):
     form_class = ModuloForm
     template_name = 'modulo_form.html'
     success_url = reverse_lazy('modulo_list')
+    
+    def get_context_data(self, **kwargs):
+       context = super().get_context_data(**kwargs)
+       context['verificar'] = ModuloEntrada
+       return context   
+    
     
     def form_valid(self, form):
         
@@ -76,6 +85,10 @@ class ModuloUpdateView(LoginRequiredMixin,NombreUsuarioMixin,UpdateView):
         #initial['descripcion'] = modulo.descripcion
         return initial
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['verificar'] = ModuloEntrada
+        return context    
     
     
     def form_valid(self, form):
@@ -196,7 +209,8 @@ def ver_detalle_registro(request, id):
     context = {
         'registro': registro,
         'modulo_desencriptada': modulo_desencriptada,
-        'nombre_usuario': nombreUsuario
+        'nombre_usuario': nombreUsuario,
+        'verificar':ModuloEntrada
     }
     return render(request, 'detalle_registro.html', context)
 

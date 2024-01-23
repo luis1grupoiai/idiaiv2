@@ -11,7 +11,7 @@ SECRET_KEY = 'miproyecto'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['grupo-iai.com.mx', 'www.grupo-iai.com.mx', '127.0.0.1', 'localhost']
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases

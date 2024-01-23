@@ -20,7 +20,7 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
     apt-get install -y nano
 
 # Establece el directorio de trabajo dentro del contenedor
-WORKDIR /app
+WORKDIR /django-project 
 
 # Copia el archivo de requisitos al directorio de trabajo
 COPY ./requirements.txt ./

@@ -18,6 +18,12 @@
   {% block extra_css %}
   <!-- Espacio para CSS adicional de plantillas hijas -->
   {% endblock %}
+  <style>
+    .modal-backdrop.show {
+        opacity: 1.0 !important; /* Aumenta la opacidad para oscurecer */
+    }
+  </style>
+
 </head>
 
 <body>
@@ -95,7 +101,7 @@
             </li>
 
             <li
-            class="sidebar-item {% if active_page != 'bitacora' %}active{% endif %}">
+            class="sidebar-item {% if active_page == 'modulos' %}active{% endif %}">
             <a href="{% url 'modulo_list' %}" class='sidebar-link'>
                 <i class="bi bi-globe2"></i>
                 <span>Modulos</span>
@@ -106,8 +112,8 @@
             </li>
 
             <li
-            class="sidebar-item {% if active_page == 'bitacora' %}active{% endif %} ">
-            <a href="{% url 'bitacora' %}" class='sidebar-link'>
+            class="sidebar-item {% if active_page == 'bitacoraModulo' %}active{% endif %} ">
+            <a href="{% url 'bitacoraModulo' %}" class='sidebar-link'>
                 <i class="bi bi-book"></i>
                 <span>Bitácora</span>
             </a>
@@ -258,9 +264,13 @@
             </div>
             <div class="card-body">
                
-                {% block contenido %} 
-                <!-- Aquí va el contenido específico de cada página -->
-                {% endblock %}
+
+
+                
+                            {% block contenido %} 
+                            <!-- Aquí va el contenido específico de cada página -->
+                            {% endblock %}
+                    
 
             </div>
         </div>
@@ -282,6 +292,7 @@
 </footer>
         </div>
     </div>
+   
     <script src="/static/assets/static/js/components/dark.js"></script>
     <script src="/static/assets/extensions/perfect-scrollbar/perfect-scrollbar.min.js"></script>
     <script src="/static/assets/compiled/js/app.js"></script>

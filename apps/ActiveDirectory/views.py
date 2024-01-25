@@ -76,15 +76,16 @@ def consultarUsuariosIDIAI(request):
         apellido = request.POST['apellido']
         nombre_completo = request.POST['nombre_completo']
         email = request.POST['email']
-        #password = request.POST['password']
+        password = request.POST['password']
         nombre_inicio_sesion = request.POST['nombre_inicio_sesion']
         departamento = request.POST['departamento']
         puesto = request.POST['puesto']
     
         # ... otros campos
-       # print(dominio_Principal)
+        print(password)
         # Preparar la contraseña en formato adecuado para AD
-       # quoted_password = f'"{password}"'.encode('utf-16-le')
+        quoted_password = f'"{password}"'.encode('utf-16-le')
+        print(quoted_password )
         # Establecer conexión con Active Directory
         try:
             #server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
@@ -104,9 +105,9 @@ def consultarUsuariosIDIAI(request):
                     'userPrincipalName':nombre_inicio_sesion+dominio_Principal,
                     'department':departamento,
                     'title':puesto,
-                   # 'userPassword': password,
-                    #'unicodePwd':quoted_password,
-                    #'userAccountControl':'546', # Habilita la cuenta
+                   #'userPassword': quoted_password,
+                    'unicodePwd':quoted_password,
+                    #'userAccountControl':'512', # Habilita la cuenta
                    
                     # ... otros atributos
                 })
@@ -130,12 +131,13 @@ def consultarUsuariosIDIAI(request):
                     
                 else:
                     messages.error(request, f"Error al crear usuario: {conn.result['description']}")
-                    mensaje = {'titulo': 'Error', 'texto': 'Error al crear usuario', 'tipo': 'error'}
+                    mensaje = {'titulo': 'Error', 'texto': f"Error al crear usuario {conn.result['description']}", 'tipo': 'error'}
+                    print(mensaje)
                     #return redirect('usuariosID')
         except Exception as e:
             messages.error(request, f"Error al conectar con AD: {str(e)}")
             mensaje = {'titulo': 'Error', 'texto': f'Excepción: {str(e)}', 'tipo': 'error'}
-            
+            print(mensaje)
             return redirect('usuariosID')
     
     context = {
@@ -522,7 +524,8 @@ def nameUser(request):
 
 
 def connect_to_ad():
-    server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
+    server = Server(settings.AD_SERVER, port=settings.AD_PORT,use_ssl=True, get_info=ALL_ATTRIBUTES)
+    
     return Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True)
 
 def verificar_usuario(request, nombre_usuario):

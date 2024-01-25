@@ -136,7 +136,7 @@ Usuarios de IDIAI
                                     role="document">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h4 class="modal-title" id="myModalLabel33">Crear Usuario de Active Directory</h4>
+                                    <h4 class="modal-title" id="myModalLabel33">+ Crear Usuario de Active Directory</h4>
                                     <button type="button" class="close" data-bs-dismiss="modal"
                                         aria-label="Close">
                                         <i data-feather="x"></i>
@@ -150,36 +150,38 @@ Usuarios de IDIAI
                                         <div class="row align-content-center " >
                                             
                                         <div class="col-6">
-                                            <div class="mb-2">
-                                                <label for="nombre_inicio_sesion" class="form-label">Nombre de inicio de sesion de usuario:</label>
-                                                <input type="text" class="form-control" name="nombre_inicio_sesion" id="nombre_inicio_sesion" required>
-                                            </div>
-                                            <div class="mb-2">
-                                             <!--  <label for="nombre_usuario" class="form-label">Nombre de Usuario:</label>--> 
-                                                <input type="hidden" class="form-control" name="nombre_usuario" id="nombre_usuario" required >
-                                                <input type="hidden" class="form-control" name="distinguished_name" id="distinguished_name" required >
-                                            </div>
+                                                <div class="mb-2">
+                                                    <label for="nombre_inicio_sesion" class="form-label">Nombre de inicio de sesion de usuario:</label>
+                                                    <input type="text" class="form-control" name="nombre_inicio_sesion" id="nombre_inicio_sesion" required>
+                                                </div>
+                                                <div class="mb-2">
+                                                <!--  <label for="nombre_usuario" class="form-label">Nombre de Usuario:</label>--> 
+                                                    <input type="hidden" class="form-control" name="nombre_usuario" id="nombre_usuario" required >
+                                                    <input type="hidden" class="form-control" name="distinguished_name" id="distinguished_name" required >
+                                                </div>
                                         </div>
                                         <div class="col-6">
                                             
                                         </div>    
                         
                                         <div class="col-6">
-                                        <div class="mb-2">
-                                            <label for="nombre_pila" class="form-label">Nombre de pila:</label>
-                                            <input type="text" class="form-control" name="nombre_pila" id="nombre_pila" required >
-                                        </div>
+                                            <div class="mb-2">
+                                                <label for="nombre_pila" class="form-label">Nombre de pila:</label>
+                                                <input type="text" class="form-control" name="nombre_pila" id="nombre_pila" required >
+                                            </div>
                                         </div>
                                         <div class="col-6">
-                                        <div class="mb-2">
-                                            <label for="apellido" class="form-label">Apellidos:</label>
-                                            <input type="text" class="form-control" name="apellido" id="apellido" required>
+                                            <div class="mb-2">
+                                                <label for="apellido" class="form-label">Apellidos:</label>
+                                                <input type="text" class="form-control" name="apellido" id="apellido" required>
+                                            </div>
                                         </div>
-                                        </div>
+
                                         <div class="mb-2">
                                             <label for="nombre_completo" class="form-label">Nombre Completo:</label>
                                             <input type="text" class="form-control" name="nombre_completo" id="nombre_completo" required>
                                         </div>
+
                                         <div class="col-6">
                                             <div class="mb-2">
                                                 <label for="departamento" class="form-label">Dirección:</label>
@@ -194,26 +196,41 @@ Usuarios de IDIAI
                                                 </select>
                                             </div>
                                         </div>
+
                                         <div class="col-6">
-                                        <div class="mb-2">
-                                            <label for="puesto" class="form-label">Puesto :</label>
-                                            <input type="text" class="form-control" name="puesto" id="puesto" required>
-                                        </div>
+                                            <div class="mb-2">
+                                                <label for="puesto" class="form-label">Puesto :</label>
+                                                <input type="text" class="form-control" name="puesto" id="puesto" required>
+                                            </div>
                                         </div>
                         
                         
                                         <div class="mb-2">
                                             <label for="email" class="form-label">Correo electronico :</label>
-                                            <input type="email" class="form-control" name="email" id="email" value="@grupo-iai.com.mx" required>
+                                            <input type="email" class="form-control" name="email" id="email" onblur="addDomainIfEmpty(this)" required>
                                         </div>
                                       
-                        
-                                       
+                                        <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="password" class="form-label">Contraseña:</label>
+                                                    <input type="password" class="form-control" name="password" id="password" required minlength="8">
+                                                </div>
+                                        </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="confirm_password" class="form-label">Confirmar Contraseña:</label>
+                                                    <input type="password" class="form-control" name="confirm_password" id="confirm_password" required minlength="8">
+                                                </div>
+                                            </div>
+                                          
+                                        </div>
                                            
 
                                       
 
                                     </div>
+
+                                
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-light-secondary"
                                             data-bs-dismiss="modal">
@@ -242,6 +259,33 @@ Usuarios de IDIAI
     <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.html5.min.js"></script>
 
     <script>
+        function addDomainIfEmpty(inputElement) {
+            var nombreUsuarioInput = document.getElementById('nombre_usuario');
+
+            if (inputElement.value.trim() === "") {
+                inputElement.value = nombreUsuarioInput.value +"@grupo-iai.com.mx";
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            var form = document.querySelector('form');
+            form.onsubmit = function (e) {
+                var password = document.getElementById('password').value;
+                var confirmPassword = document.getElementById('confirm_password').value;
+                
+                if (password != confirmPassword) {
+                    //alert('Las contraseñas no coinciden.');
+                    Swal.fire({
+                        title: "Las contraseñas no coincide.",
+                        text: "XD",
+                        icon: "info",  // 'success', 'error', 'warning', 'info', 'question'
+                        confirmButtonText: 'Ok'
+                    });
+                    e.preventDefault();
+                    return false;
+                }
+                return true;
+            };
+        });
         $(document).ready(function() {
             var config = {
                 "pageLength": 10,
@@ -382,7 +426,7 @@ Usuarios de IDIAI
             console.log("Browser ID: " + browserId);
 
             
-
+     
             
             //fin de identificar el navegador 
         </script>

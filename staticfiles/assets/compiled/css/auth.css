@@ -35,7 +35,7 @@ body {
 
 #auth #auth-right {
     height: 100%;
-    background: url(/static/img/prole.png), linear-gradient(90deg, #87212e,#878785);
+    background: url(/static/img/prole.png), linear-gradient(90deg, #ffffff,#ffffff);
     background-size: cover;
 }
 

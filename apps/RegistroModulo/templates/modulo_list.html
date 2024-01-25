@@ -46,24 +46,25 @@ Nombre de los Modulos
     {% endfor %}
 </div>
 {% endif %} 
-
-           
+            <div class="m-3">
+            <a href="{% url 'modulo_create' %}" class="btn btn-success"> <i class="bi bi-globe2"></i> CREAR</a>
+            </div>
             <div class="table-responsive ">
-                <a href="{% url 'modulo_create' %}" class="btn btn-success"> <i class="bi bi-globe2"></i> CREAR</a>
+                
                 <table id ="Tmodulo" class="table table-hover table-striped" >
 
 
                     <thead>
                         <tr>
-                            <th>Nombre de Modulo</th>
-                            <th>Acciones</th>
+                            <th class="text-center" >Nombre de Modulo</th>
+                            <th class="text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for modulo_entry in object_list %}
                         <tr>
-                            <td>{{ modulo_entry.nombre }}</td>
-                            <td>
+                            <td class="text-center" >{{ modulo_entry.nombre }}</td>
+                            <td class="text-center" >
                                 <button type="button"  class="btn btn-primary" data-toggle="modal" data-target="#passwordModal" data-url="{% url 'detalle_registro' modulo_entry.id %}" onclick="validacion(this);"> Ver</button>
                                 <button type="button"  class="btn btn-secondary" data-toggle="modal" data-target="#passwordModal" data-url="{% url 'modulo_update' modulo_entry.id %}" onclick="validacion(this);"> Editar</button>
                                 <button type="button"  class="btn btn-danger" data-toggle="modal" data-target="#passwordModal" data-url="{% url 'modulo_delete' modulo_entry.id %}" onclick="validacion(this);"> Eliminar</button>

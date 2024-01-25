@@ -252,6 +252,7 @@ def consultar_usuarios(request):
                 
     except Exception  as e:
         # Manejar la excepción, por ejemplo, registrando el error
+        messages.error(request,f"Error al conectar o buscar en Active Directory: {str(e)}")
         print(f"Error al conectar o buscar en Active Directory: {str(e)}")
     
     # Crear el diccionario de contexto con todas las variables necesarias

@@ -105,8 +105,8 @@ def consultarUsuariosIDIAI(request):
                     'userPrincipalName':nombre_inicio_sesion+dominio_Principal,
                     'department':departamento,
                     'title':puesto,
-                   #'userPassword': quoted_password,
-                    'unicodePwd':quoted_password,
+                   'userPassword': quoted_password,
+                   # 'unicodePwd':quoted_password,
                     #'userAccountControl':'512', # Habilita la cuenta
                    
                     # ... otros atributos

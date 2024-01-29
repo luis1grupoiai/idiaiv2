@@ -16,6 +16,6 @@ services:
       - ./static:/django-project/static  # Ajusta según tu configuración de archivos estáticos
       - ./media:/django-project/media    # Ajusta según tu configuración de archivos multimedia
     ports:
-      - "89:89"
+      - "80:85"
     depends_on:
       - django

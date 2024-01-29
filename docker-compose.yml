@@ -1,7 +1,7 @@
 version: '3.9'
 
 services:
-  web:
+  django:
     build: .
     volumes:
       - .:/django-project
@@ -9,10 +9,13 @@ services:
       - "333:333"
 
   nginx:
-    build:
-      context: .
-      dockerfile: nginx.Dockerfile
+    image: nginx:1.25.3-bookworm
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./static:/django-project/static  # Ajusta según tu configuración de archivos estáticos
+      - ./media:/django-project/media    # Ajusta según tu configuración de archivos multimedia
     ports:
-      - "85:85"
+      - "89:89"
     depends_on:
-      - web
+      - django

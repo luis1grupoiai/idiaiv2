@@ -15,7 +15,9 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d:rw
       - ./static:/django-project/static  # Ajusta según tu configuración de archivos estáticos
       - ./media:/django-project/media    # Ajusta según tu configuración de archivos multimedia
+      - ./ssl:/etc/nginx/certs
     ports:
       - "80:85"
+      - "443:443"
     depends_on:
       - django

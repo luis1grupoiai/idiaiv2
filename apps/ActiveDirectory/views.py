@@ -106,7 +106,7 @@ def consultarUsuariosIDIAI(request):
                     'department':departamento,
                     'title':puesto,
                    'userPassword': quoted_password,
-                   # 'unicodePwd':quoted_password,
+                   # 'unicodePwd':quoted_password, este linea guarda la contraseña en AD PERO DEBE CUMPLIR CON LAS CODICIONES DE SSL EN EL SERVIDOR WEB Y EL SEVIDOR AD CON EL PUERTO 636
                     #'userAccountControl':'512', # Habilita la cuenta
                    
                     # ... otros atributos

@@ -26,7 +26,8 @@ def solicitud(request):
     context = {
         'empleados' : empleados,
         'active_page': 'solicitud',
-        'nombre_usuario': nameUser(request)
+        'nombre_usuario': nameUser(request),
+        'categoria':'Aqui va la Categoria del empleado'
     }
     return render(request, 'personal.html',context)
 
@@ -40,7 +41,8 @@ def solicitudNuevos(request):
     context = {
         'empleados' : empleados,
         'active_page': 'Nsolicitud',
-        'nombre_usuario': nameUser(request)
+        'nombre_usuario': nameUser(request),
+        'categoria':'Aqui va la Categoria del empleado'
     }
     return render(request, 'nuevoPersonal.html',context)
 

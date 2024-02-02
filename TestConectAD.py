@@ -1,20 +1,118 @@
-from ldap3 import Server, Connection, ALL, NTLM
+#from ldap3 import Server, Connection, ALL, NTLM
 
 # Para LDAP (puerto 389)
-server = Server('ldap://192.192.194.10', port=389, get_info=ALL)
-conn = Connection(server, user='iai\\desarrollo', password='D3sarrollo', authentication=NTLM)
-conn.bind()
-print(conn.bound)
+#server = Server('ldap://192.192.194.10', port=389, get_info=ALL)
+#conn = Connection(server, user='iai\\desarrollo', password='D3sarrollo', authentication=NTLM)
+#conn.bind()
+#print(conn.bound)
 
 # Para LDAPS (puerto 636 con SSL)
-server = Server('ldaps://192.192.194.10:636', get_info=ALL, use_ssl=True)
-conn = Connection(server, user='iai\\desarrollo', password='D3sarrollo', authentication=NTLM)
-conn.bind()
-print(conn.bound)
+#server = Server('ldaps://192.192.194.10:636', get_info=ALL, use_ssl=True)
+#conn = Connection(server, user='iai\\desarrollo', password='D3sarrollo', authentication=NTLM)
+#conn.bind()
+#print(conn.bound)
 
+import tkinter as tk
+from tkinter import messagebox, simpledialog
+from ldap3 import Server, Connection, ALL, NTLM
 
+def connect_ldap(port, server_address):
+    if port == 389:
+        protocol = "ldap://"
+    elif port == 636:
+        protocol = "ldaps://"
+    else:
+        messagebox.showerror("Error", "Puerto no válido")
+        return
+    
+    server = Server(f'{protocol}{server_address}:{port}', get_info=ALL, use_ssl=(port == 636))
+    conn = Connection(server, user='iai\\desarrollo', password='D3sarrollo', authentication=NTLM)
+    
+    try:
+        conn.bind()
+        if conn.bound:
+            messagebox.showinfo("Éxito", f"Conectado exitosamente a {server_address} a través del puerto {port}.")
+        else:
+            messagebox.showerror("Error", "No se pudo conectar al servidor.")
+    except Exception as e:
+        messagebox.showerror("Error", f"Ocurrió un error al intentar conectar: {str(e)}")
+    finally:
+        conn.unbind()
 
+# Función para obtener la dirección del servidor y realizar la conexión
+def initiate_connection(port):
+    server_address = server_address_input.get()  # Obtener la dirección del servidor del input
+    if server_address:
+        connect_ldap(port, server_address)
+    else:
+        messagebox.showerror("Error", "Por favor, introduce la dirección del servidor.")
 
+# Crear la ventana de la aplicación
+app = tk.Tk()
+app.title("Conector LDAP/LDAPS")
+app.geometry("350x200")
+
+# Campo de entrada para la dirección del servidor
+server_address_label = tk.Label(app, text="Dirección del servidor:192.192.194.10")
+server_address_label.pack(pady=(10,0))
+server_address_input = tk.Entry(app)
+server_address_input.pack(pady=(0,20))
+
+# Crear botones
+ldap_button = tk.Button(app, text="Conectar a LDAP (389)", command=lambda: initiate_connection(389))
+ldap_button.pack(pady=5)
+
+ldaps_button = tk.Button(app, text="Conectar a LDAPS (636)", command=lambda: initiate_connection(636))
+ldaps_button.pack(pady=5)
+
+# Iniciar la aplicación
+app.mainloop()
+
+"""
+import tkinter as tk
+from tkinter import messagebox
+from ldap3 import Server, Connection, ALL, NTLM
+
+def connect_ldap(port):
+    if port == 389:
+        protocol = "ldap://"
+    elif port == 636:
+        protocol = "ldaps://"
+    else:
+        messagebox.showerror("Error", "Puerto no válido")
+        return
+    
+    server_address = '192.192.194.10'
+    server = Server(f'{protocol}{server_address}:{port}', get_info=ALL, use_ssl=(port == 636))
+    conn = Connection(server, user='iai\\desarrollo', password='D3sarrollo', authentication=NTLM)
+    
+    try:
+        conn.bind()
+        if conn.bound:
+            messagebox.showinfo("Éxito", f"Conectado exitosamente a través del puerto {port}.")
+        else:
+            messagebox.showerror("Error", "No se pudo conectar al servidor.")
+    except Exception as e:
+        messagebox.showerror("Error", f"Ocurrió un error al intentar conectar: {str(e)}")
+    finally:
+        conn.unbind()
+
+# Crear la ventana de la aplicación
+app = tk.Tk()
+app.title("Conector LDAP/LDAPS")
+app.geometry("300x150")
+
+# Crear botones
+ldap_button = tk.Button(app, text="Conectar a LDAP (389)", command=lambda: connect_ldap(389))
+ldap_button.pack(pady=10)
+
+ldaps_button = tk.Button(app, text="Conectar a LDAPS (636)", command=lambda: connect_ldap(636))
+ldaps_button.pack(pady=10)
+
+# Iniciar la aplicación
+app.mainloop()
+
+"""
 
 
 

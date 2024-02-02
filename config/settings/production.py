@@ -47,4 +47,9 @@ AD_PORT = 389  # El puerto por defecto es 389 # El puerto por defecto es 389 nor
 AD_USER = 'CN=desarrollo,CN=Users,DC=iai,DC=com,DC=mx'  # Cambia esto según tus credenciales -----dsquery user -name desarrollo --------dsget user "CN=desarrollo,CN=Users,DC=iai,DC=com,DC=mx"
 AD_PASSWORD = 'D3sarrollo'
 
-
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.office365.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'sistemas.iai@grupo-iai.com.mx'
+EMAIL_HOST_PASSWORD = 'hLW*t37l_'

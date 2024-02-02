@@ -11,7 +11,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import get_template
 from django.utils.html import strip_tags
 from django.template.loader import render_to_string
-
+from datetime import datetime
 
 @login_required
 def solicitud(request):
@@ -58,11 +58,25 @@ def nameUser(request):
 
 def enviar_correo(request):
     if request.method == 'POST':
+        current_year = datetime.now().year
         dato1 = request.POST.get('nombre')
         dato2 = request.POST.get('puesto')
+        observaciones = request.POST.get('observaciones')
 
+        # Checkbox: Almacena los valores seleccionados en una lista
+        sistemas_seleccionados = [
+            sistema for sistema in ['CONDOR', 'CostoV2', 'EIMyPs', 'Proveedores (Módulo LPG)', 'Reporting Service', 'Sap B1 Web', 'SAPAI', 'SCORE', 'opcion9', 'SIROC', 'SISS', 'Equipo de Cómputo']
+            if request.POST.get(sistema) == 'on'
+        ] 
+        print(sistemas_seleccionados)
         # Preparar el contexto para la plantilla
-        context = {'nombre': dato1, 'puesto': dato2}
+        context = {
+            'nombre': dato1, 
+            'puesto': dato2,
+            'observaciones':observaciones,
+            'year': current_year,
+            'sistemas':sistemas_seleccionados,
+            }
 
         # Renderizar el contenido HTML
         html_content = render_to_string('CorreoSolicitudAlta.html', context)

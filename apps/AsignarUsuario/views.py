@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import get_template
 from django.utils.html import strip_tags
-
+from django.template.loader import render_to_string
 
 
 @login_required
@@ -56,65 +56,35 @@ def nameUser(request):
 
 
 
-
-
-
 def enviar_correo(request):
-    
-    print("se entro a la vista de envio de correo XD")
-
     if request.method == 'POST':
         dato1 = request.POST.get('nombre')
         dato2 = request.POST.get('puesto')
-        
-        mensaje = f'''
-        Asunto: Alta de Usuario
 
-        Hola,
+        # Preparar el contexto para la plantilla
+        context = {'nombre': dato1, 'puesto': dato2}
 
-        Aquí está el mensaje del correo con los datos:
+        # Renderizar el contenido HTML
+        html_content = render_to_string('CorreoSolicitudAlta.html', context)
+        text_content = strip_tags(html_content)  # Esto crea una versión en texto plano del HTML
 
-        Nombre: {dato1}
-        Puesto: {dato2}
-
-        Atentamente,
-        IDIAI
-        CONFIDENCIALIDAD. Este e-mail y cualquiera de sus archivos anexos son confidenciales y pueden constituir información privilegiada. Si usted no es el destinatario adecuado, por favor, notifíquelo inmediatamente al emisor y elimínelo de su computadora, no revele estos contenidos a ninguna otra persona, no los utilice para otra finalidad, ni almacene o copie esta información en medio alguno. 
-        CONFIDENTIALITY. This e-mail and any attachments thereof are confidential and may be privileged. If you are not a named recipient, please notify the sender immediately and delete it from your computer, do not disclose its contents to another person, use it for any purpose or store or copy the information in any medium
-
-        '''
-        
-        #codigo parar visualizar el correo que se va enviar 
-        datos = {
-        'nombre': dato1,
-        'puesto': dato2,
-         }
-        
-            
-        # Crear un mensaje HTML utilizando una plantilla (puedes personalizar la plantilla)
-        html_message = get_template('CorreoSolicitudAlta.html').render({'nombre': dato1, 'puesto': dato2})
-
-        # Crear el mensaje de texto plano
-        plain_message = strip_tags(html_message)
-        
+        # Crear el correo y añadir tanto el contenido en texto plano como el HTML
+        email = EmailMultiAlternatives(
+            'Asunto del Mensaje prueba',  # Asunto
+            text_content,  # Contenido en texto plano
+            'sistemas.iai@grupo-iai.com.mx',  # Email del remitente
+            ['manuel.zarate@grupo-iai.com.mx']  # Lista de destinatarios
+        )
+        email.attach_alternative(html_content, "text/html")
         try:
-            send_mail(
-                'Asunto del Mensaje prueba',
-                plain_message ,
-                'sistemas.iai@grupo-iai.com.mx',
-                ['manuel.zarate@grupo-iai.com.mx'],
-                fail_silently=False,
-            )
+            email.send()
             print("Correo enviado correctamente.")
         except Exception as e:
             print(f"Error al enviar correo: {e}")
-             
-    #return redirect(reverse('solicitud'))
-        
-    return render(request, 'CorreoSolicitudAlta.html', datos)
-        
-        
-        # Aquí puedes utilizar dato1 y dato2 como necesites
+
+    return render(request, 'CorreoSolicitudAlta.html', context)
+
+
 
 
     

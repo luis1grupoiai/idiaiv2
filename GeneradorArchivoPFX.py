@@ -58,3 +58,4 @@ generate_button = tk.Button(app, text="Generar Archivo PFX", command=generate_pf
 generate_button.pack(pady=50)
 
 app.mainloop()
+#openssl pkcs12 -export -out certificate.pfx -inkey private.key -in certificate.crt 

@@ -106,7 +106,7 @@ def consultarUsuariosIDIAI(request):
                     'department':departamento,
                     'title':puesto,
                    'userPassword': quoted_password,
-                   # 'unicodePwd':quoted_password, este linea guarda la contraseña en AD PERO DEBE CUMPLIR CON LAS CODICIONES DE SSL EN EL SERVIDOR WEB Y EL SEVIDOR AD CON EL PUERTO 636
+                   'unicodePwd':quoted_password, #este linea guarda la contraseña en AD PERO DEBE CUMPLIR CON LAS CODICIONES DE SSL EN EL SERVIDOR WEB Y EL SEVIDOR AD CON EL PUERTO 636
                     #'userAccountControl':'512', # Habilita la cuenta
                    
                     # ... otros atributos
@@ -379,13 +379,13 @@ def editar_usuario(request):
 
                 # Verificar resultado de la modificación
                 if conn.result['result'] == 0:  # éxito
-                   # messages.success(request, 'Usuario editado correctamente.')
+                    messages.success(request, 'Usuario editado correctamente.')
                     print('Usuario editado correctamente.')
                 else:
-                   # messages.error(request, f"Error al editar usuario: {conn.result['description']}")
+                    messages.error(request, f"Error al editar usuario: {conn.result['description']}")
                     print( f"Error al editar usuario: {conn.result['description']}")
         except Exception as e:
-           # messages.error(request, f"Error al conectar con AD: {str(e)}")
+            messages.error(request, f"Error al conectar con AD: {str(e)}")
             print(f"Error al conectar con AD: {str(e)}")
     # Redireccionar de vuelta a la lista de usuarios
     
@@ -440,7 +440,7 @@ def activar_usuario(request, nombre_usuario):
             # Establecer userAccountControl a 512 para activar la cuenta
             conn.modify(user_dn, {'userAccountControl': [(MODIFY_REPLACE, [544])]}) # debe activarse con el 512 pero eso lo vamos a dejar a ultimos ajajajajaj
             if conn.result['result'] == 0:
-                #messages.success(request, 'Usuario activado correctamente.')
+                messages.success(request, 'Usuario activado correctamente.')
                 print('Usuario activado correctamente.')
                 mover = buscar_usuario_por_dn(nombre_usuario)
                 print(mover_usuario_ou(mover['cn'], unidadOrganizativa[asignar_Departamento(mover['department'])],request))
@@ -455,10 +455,10 @@ def activar_usuario(request, nombre_usuario):
                 )
                 return redirect('usuarios')
             else:
-                #messages.error(request, f"Error al activar usuario: {conn.result['description']}")
+                messages.error(request, f"Error al activar usuario: {conn.result['description']}")
                 print(f"Error al activar usuario: {conn.result['description']}")
     except Exception as e:
-        #messages.error(request, f"Error al conectar con AD: {str(e)}")
+        messages.error(request, f"Error al conectar con AD: {str(e)}")
         print(f"Error al conectar con AD: {str(e)}")
 
     
@@ -477,7 +477,7 @@ def desactivar_usuario(request, nombre_usuario):
             # Establecer userAccountControl a 66050 para desactivar la cuenta
             conn.modify(user_dn, {'userAccountControl': [(MODIFY_REPLACE, [66050])]})
             if conn.result['result'] == 0:
-                #messages.success(request, 'Usuario desactivado correctamente.')
+                messages.success(request, 'Usuario desactivado correctamente.')
                 print('Usuario desactivado correctamente.')
                 mover = buscar_usuario_por_dn(nombre_usuario)
                 #cn=mover['cn']
@@ -497,10 +497,10 @@ def desactivar_usuario(request, nombre_usuario):
                 
                 return redirect('usuarios')
             else:
-                #messages.error(request, f"Error al desactivar usuario: {conn.result['description']}")
+                messages.error(request, f"Error al desactivar usuario: {conn.result['description']}")
                 print(f"Error al desactivar usuario: {conn.result['description']}")
     except Exception as e:
-        #messages.error(request, f"Error al conectar con AD: {str(e)}")
+        messages.error(request, f"Error al conectar con AD: {str(e)}")
         print(f"Error al conectar con AD: {str(e)}")
 
 
@@ -531,7 +531,7 @@ def connect_to_ad():
 
 def verificar_usuario(request, nombre_usuario):
     existe = existeUsuario(nombre_usuario)
-    return JsonResponse({'existe': existe})
+    return JsonResponse({'existe': existe}) 
 
 
 def mover_usuario_ou(nombre_usuario, nueva_ou,request):

@@ -1,25 +1,108 @@
-from django.shortcuts import render , redirect
+from django.shortcuts import render , redirect, get_object_or_404
 from django.conf import settings
-from ldap3 import Server, Connection, ALL_ATTRIBUTES , MODIFY_REPLACE
+from ldap3 import Server, Connection, ALL_ATTRIBUTES , MODIFY_REPLACE , ALL , NTLM
 from django.contrib import messages
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 from django.contrib.auth import authenticate, login
-from apps.AsignarUsuario.models import VallEmpleado, TRegistroAccionesModulo
+from apps.AsignarUsuario.models import VallEmpleado, TRegistroAccionesModulo 
 from django.http import JsonResponse
 from django.utils import timezone
+from .models import TActiveDirectoryIp
+import re
 
+ip_sin_base_dato=''#'192.192.194.10' #esta ip debe ser cambiado en caso que no funcione la base de datos
+
+def asignar_ip():
+    
+    if settings.DEBUG:
+        ip=TActiveDirectoryIp.objects.filter(server='ADVirtual').first() #servidor de AD para el desarrollo 
+    else:
+        ip=TActiveDirectoryIp.objects.filter(server='ADProduccion').first() # servidor de AD  para produccion 
+
+    return ip if ip else ip_sin_base_dato  
+
+def asignar_dominio():
+    if settings.DEBUG:
+        dominio='OU=UsersIAI,DC=iai,DC=com,DC=mx' #dominio de AD para el desarrollo 
+        dominioRaiz='DC=iai,DC=com,DC=mx'
+    else:
+        dominio='OU=UsersIAI,DC=iai,DC=com,DC=mx'# dominio de AD  para produccion 
+        dominioRaiz='DC=iai,DC=com,DC=mx'
+
+    dominios={
+        'dominio':dominio,
+        'dominioRaiz':dominioRaiz
+    }
+    return dominios
+
+def obtener_servidor_ad():
+    ip_dinamica = asignar_ip().ip
+    servidorAD = f'{settings.AD_SERVER}{ip_dinamica}'
+    return servidorAD
 
 #https://www.youtube.com/watch?v=dFJvNYdKGrA&list=PLgrNDDl9MxYmUmf19zPiljdg8FKIRmP78
 
 # Create your views here.
-domino='OU=UsersIAI,DC=iai,DC=com,DC=mx'
-dominoRaiz='DC=iai,DC=com,DC=mx'
-unidadOrganizativa = ('OU=Bajas','OU=Administracion','OU=Ingeniería','OU=DCASS','OU=Proyectos Especiales') #esta variable esta relacionada con las funcionses de   mover_usuario_ou y asignar_Departamento
+domino=asignar_dominio()['dominio']
+dominoRaiz=asignar_dominio()['dominioRaiz']
+unidadOrganizativa = ('OU=Bajas','OU=Administracion','OU=Ingeniería','OU=DCASS','OU=Proyectos Especiales') #esta variable esta relacionada con las funciones de   mover_usuario_ou y asignar_Departamento
 
 
 
+@login_required
+def ipconfig(request):
+    ip=None
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        nueva_ip = request.POST['ip']
+        registro_id = request.POST.get('id')
+        print(action)
+        if action == 'probar':
+            # Aquí va la lógica para probar la conexión LDAP
+            # la  función llamada `probar_conexion_ldap` que devuelve True si la conexión es exitosa
+            exitosa = probar_conexion_LDAP(request,nueva_ip)
+            if exitosa:
+                messages.success(request, "La conexión LDAP con la IP {} ha sido exitosa.".format(nueva_ip))
+            else:
+                print(exitosa)
+                #messages.error(request, "Error al conectar con LDAP usando la IP {}.".format(nueva_ip))
+                
+        elif action == 'guardar':
+            # Aquí va la lógica para guardar la IP actualizada en la base de datos
+            # Expresión regular para validar la dirección IP
+            ip_regex = r'^(\d{1,3}\.){3}\d{1,3}$'  #0.0.0.0
+        
+            if not registro_id:
+                messages.error(request, "ID del registro no proporcionado.")
+                return redirect('ipconfig')
+
+            # Intenta obtener el registro específico por ID
+            registro = get_object_or_404(TActiveDirectoryIp, id=registro_id)
+
+            # Verifica si 'nueva_ip' no está vacía
+            if nueva_ip and re.match(ip_regex, nueva_ip):
+                registro.ip = nueva_ip  # Actualiza el campo 'ip' del registro
+                registro.save()  # Guarda los cambios en la base de datos
+                messages.success(request, "Registro actualizado exitosamente.")
+                return redirect('ipconfig')
+            else:
+                # Maneja el caso en que 'nueva_ip' esté vacía
+                messages.error(request, "La nueva IP no puede estar vacía y debe tener un formato válido (0.0.0.0).")
+                return redirect('ipconfig')
+        
+  
+    
+    ip=asignar_ip()
+    
+    context = {
+        'active_page': 'ipconfig',
+        'nombre_usuario':nameUser(request),
+        'ip' : ip
+    }
+    return render(request,'ipconfig.html',context)
 
 @login_required  
 def bitacora(request):
@@ -172,6 +255,8 @@ def consultarUsuariosIDIAI(request):
 @login_required  
 def consultar_usuarios(request):
     # Establece la conexión con el servidor de Active Directory
+    print(dominoRaiz)
+    print(domino)
     usuarios = []
     usuariosAdmin =[]
     usuariosIng = []
@@ -427,6 +512,26 @@ def existeUsuario(nombreUsuario):
         print(f"Error al buscar en Active Directory: {str(e)}")
         return False
 
+def probar_conexion_LDAP(request,nueva_ip):
+    
+    try:
+        
+        server = Server(f'ldap://{nueva_ip}', port=settings.AD_PORT,use_ssl=True, get_info=ALL_ATTRIBUTES)
+        conn = Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True)
+            
+        # Intenta establecer la conexión
+        conexion_exitosa = conn.bind()
+            
+        # Asegura que la conexión se cierre después del intento
+        conn.unbind()
+
+        return conexion_exitosa
+    except Exception as e:
+        # Manejo de cualquier error durante la conexión o la desvinculación
+        messages.error(request, f"Error al conectar con el servidor LDAP usando la IP {nueva_ip}: {e}")
+        return False
+        
+   
 
  
 def activar_usuario(request, nombre_usuario):
@@ -525,7 +630,9 @@ def nameUser(request):
 
 
 def connect_to_ad():
-    server = Server(settings.AD_SERVER, port=settings.AD_PORT,use_ssl=True, get_info=ALL_ATTRIBUTES)
+    servidorAD = obtener_servidor_ad()
+    print(servidorAD)
+    server = Server(servidorAD, port=settings.AD_PORT,use_ssl=True, get_info=ALL_ATTRIBUTES)
     
     return Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True)
 
@@ -588,6 +695,10 @@ def asignar_Departamento(departamento):
     else:
         opc = 0
     return opc
+
+
+
+
 
 
 def buscar_usuario_por_dn(dn_usuario):
@@ -758,7 +869,7 @@ def get_client_ip(request):
 
 
 """
-librerias que hacen funcionar el proyecto ;) esto es un regalo de mi para el futuro XD
+librerias que hacen funcionar el proyecto ;) esto es un regalo de mi para el futuro XD 02/02/2024
 absl-py                       2.0.0
 annotated-types               0.6.0
 asgiref                       3.7.2

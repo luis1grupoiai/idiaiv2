@@ -11,8 +11,19 @@ from django.http import JsonResponse
 from django.utils import timezone
 from .models import TActiveDirectoryIp
 import re
+import time
 
-ip_sin_base_dato=''#'192.192.194.10' #esta ip debe ser cambiado en caso que no funcione la base de datos
+def imprimir(mensaje):
+    if settings.DEBUG:
+        print(mensaje)
+        
+        
+ip_sin_base_dato={
+                    'id':'0', 
+                    'server':'sin_servidor_XD' , 
+                    'ip':'0.0.0.0' #esta ip debe ser cambiado en caso que no funcione la base de datos
+                    
+                 }#'192.192.194.10' 
 
 def asignar_ip():
     
@@ -54,28 +65,41 @@ unidadOrganizativa = ('OU=Bajas','OU=Administracion','OU=Ingeniería','OU=DCASS'
 @login_required
 def ipconfig(request):
     ip=None
-    
+   
     if request.method == 'POST':
         action = request.POST.get('action')
         nueva_ip = request.POST['ip']
         registro_id = request.POST.get('id')
-        print(action)
+        #imprimir(action)
         if action == 'probar':
             # Aquí va la lógica para probar la conexión LDAP
             # la  función llamada `probar_conexion_ldap` que devuelve True si la conexión es exitosa
             exitosa = probar_conexion_LDAP(request,nueva_ip)
             if exitosa:
+                time.sleep(5)
                 messages.success(request, "La conexión LDAP con la IP {} ha sido exitosa.".format(nueva_ip))
             else:
-                print(exitosa)
+                imprimir(exitosa)
                 #messages.error(request, "Error al conectar con LDAP usando la IP {}.".format(nueva_ip))
                 
         elif action == 'guardar':
             # Aquí va la lógica para guardar la IP actualizada en la base de datos
             # Expresión regular para validar la dirección IP
+            #imprimir('entro aqui XD')
+            insertar_registro_accion(
+                nameUser(request),
+                'Modulo AD',
+                'IP',
+                f"Se a modificado la IP de '{asignar_ip().server}', IP anterior {asignar_ip().ip}: IP Nueva : {nueva_ip}",
+                get_client_ip(request),
+                request.META.get('HTTP_USER_AGENT'),
+                'N/A'
+            
+            )
             ip_regex = r'^(\d{1,3}\.){3}\d{1,3}$'  #0.0.0.0
         
             if not registro_id:
+                time.sleep(5)
                 messages.error(request, "ID del registro no proporcionado.")
                 return redirect('ipconfig')
 
@@ -85,11 +109,14 @@ def ipconfig(request):
             # Verifica si 'nueva_ip' no está vacía
             if nueva_ip and re.match(ip_regex, nueva_ip):
                 registro.ip = nueva_ip  # Actualiza el campo 'ip' del registro
+                time.sleep(5)
                 registro.save()  # Guarda los cambios en la base de datos
+                time.sleep(10)
                 messages.success(request, "Registro actualizado exitosamente.")
                 return redirect('ipconfig')
             else:
                 # Maneja el caso en que 'nueva_ip' esté vacía
+                time.sleep(5)
                 messages.error(request, "La nueva IP no puede estar vacía y debe tener un formato válido (0.0.0.0).")
                 return redirect('ipconfig')
         
@@ -165,10 +192,10 @@ def consultarUsuariosIDIAI(request):
         puesto = request.POST['puesto']
     
         # ... otros campos
-        print(password)
+        imprimir(password)
         # Preparar la contraseña en formato adecuado para AD
         quoted_password = f'"{password}"'.encode('utf-16-le')
-        print(quoted_password )
+        imprimir(quoted_password )
         # Establecer conexión con Active Directory
         try:
             #server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
@@ -215,12 +242,12 @@ def consultarUsuariosIDIAI(request):
                 else:
                     messages.error(request, f"Error al crear usuario: {conn.result['description']}")
                     mensaje = {'titulo': 'Error', 'texto': f"Error al crear usuario {conn.result['description']}", 'tipo': 'error'}
-                    print(mensaje)
+                    imprimir(mensaje)
                     #return redirect('usuariosID')
         except Exception as e:
             messages.error(request, f"Error al conectar con AD: {str(e)}")
             mensaje = {'titulo': 'Error', 'texto': f'Excepción: {str(e)}', 'tipo': 'error'}
-            print(mensaje)
+            imprimir(mensaje)
             return redirect('usuariosID')
     
     context = {
@@ -255,8 +282,8 @@ def consultarUsuariosIDIAI(request):
 @login_required  
 def consultar_usuarios(request):
     # Establece la conexión con el servidor de Active Directory
-    print(dominoRaiz)
-    print(domino)
+    #imprimir(dominoRaiz)
+    #imprimir(domino)
     usuarios = []
     usuariosAdmin =[]
     usuariosIng = []
@@ -266,7 +293,7 @@ def consultar_usuarios(request):
     try:
         #server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
         with connect_to_ad() as connection:
-            search_base = dominoRaiz
+            search_base = domino #dominoRaiz
             #search_filter = '(objectClass=user)'
             search_filter = '(&(objectClass=user)(!(OU=Administracion)))'
             attributes = ['cn', 
@@ -307,11 +334,11 @@ def consultar_usuarios(request):
                     'DistinguishedName' : entry.distinguishedName.value if 'DistinguishedName' in entry else None,
         
                 }
-                #print(entry.cn.value)
-               # print(entry.distinguishedName.value if 'distinguishedName' in entry else None)
-                #print(entry.userPrincipalName.value)
-                #print(entry.distinguishedName.value)
-                #print(extraer_unidad_organizativa(entry.distinguishedName.value))
+                #imprimir(entry.cn.value)
+                #imprimir(entry.distinguishedName.value if 'distinguishedName' in entry else None)
+                #imprimir(entry.userPrincipalName.value)
+                #imprimir(entry.distinguishedName.value)
+                #imprimir(extraer_unidad_organizativa(entry.distinguishedName.value))
               
                 #if 'cn' in entry and entry.cn.value.lower() != 'administrador':
                 if not is_account_disabled(useraccountcontrol_str):
@@ -338,7 +365,7 @@ def consultar_usuarios(request):
     except Exception  as e:
         # Manejar la excepción, por ejemplo, registrando el error
         messages.error(request,f"Error al conectar o buscar en Active Directory: {str(e)}")
-        print(f"Error al conectar o buscar en Active Directory: {str(e)}")
+        imprimir(f"Error al conectar o buscar en Active Directory: {str(e)}")
     
     # Crear el diccionario de contexto con todas las variables necesarias
     context = {
@@ -420,7 +447,7 @@ def agregar_usuario(request): # esta funcion o vista la deje por que tal vez se 
 
 @login_required  
 def editar_usuario(request):
-    #print("Vista de editar Usuario ")
+    #imprimir("Vista de editar Usuario ")
     if request.method == 'POST':
          # Captura los datos enviados desde el formulario
         nombre_usuario = request.POST.get('nombre_usuario')
@@ -433,8 +460,8 @@ def editar_usuario(request):
         nombre_inicio_sesion = request.POST.get('nombre_inicio_sesion')
         user_dn = request.POST.get('distinguished_name')
         # ... otros campos ....
-        #print(nombre_usuario)
-        #print(user_dn)
+        #imprimir(nombre_usuario)
+        #imprimir(user_dn)
         # Conectar a Active Directory
         insertar_registro_accion(
         nameUser(request),
@@ -465,16 +492,16 @@ def editar_usuario(request):
                 # Verificar resultado de la modificación
                 if conn.result['result'] == 0:  # éxito
                     messages.success(request, 'Usuario editado correctamente.')
-                    print('Usuario editado correctamente.')
+                    imprimir('Usuario editado correctamente.')
                 else:
                     messages.error(request, f"Error al editar usuario: {conn.result['description']}")
-                    print( f"Error al editar usuario: {conn.result['description']}")
+                    imprimir( f"Error al editar usuario: {conn.result['description']}")
         except Exception as e:
             messages.error(request, f"Error al conectar con AD: {str(e)}")
-            print(f"Error al conectar con AD: {str(e)}")
+            imprimir(f"Error al conectar con AD: {str(e)}")
     # Redireccionar de vuelta a la lista de usuarios
     
-    print(mover_usuario_ou(nombre_inicio_sesion, unidadOrganizativa[asignar_Departamento(departamento)],request))
+    imprimir(mover_usuario_ou(nombre_inicio_sesion, unidadOrganizativa[asignar_Departamento(departamento)],request))
     return redirect('usuarios')
 
  
@@ -509,14 +536,18 @@ def existeUsuario(nombreUsuario):
             conn.search(search_base, search_filter, attributes=['cn'])
             return len(conn.entries) > 0
     except Exception as e:
-        print(f"Error al buscar en Active Directory: {str(e)}")
+        imprimir(f"Error al buscar en Active Directory: {str(e)}")
         return False
 
 def probar_conexion_LDAP(request,nueva_ip):
-    
-    try:
+    if settings.DEBUG:
+        protocolo='ldaps' #dominio de AD para el desarrollo  puedes cambiarlo a ldap pero debe tener el puerto 389
+   
+    else:
+        protocolo='ldaps'# dominio de AD  para produccion 
         
-        server = Server(f'ldap://{nueva_ip}', port=settings.AD_PORT,use_ssl=True, get_info=ALL_ATTRIBUTES)
+    try:     
+        server = Server(f'{protocolo}://{nueva_ip}', port=settings.AD_PORT,use_ssl=True, get_info=ALL_ATTRIBUTES)
         conn = Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True)
             
         # Intenta establecer la conexión
@@ -535,20 +566,20 @@ def probar_conexion_LDAP(request,nueva_ip):
 
  
 def activar_usuario(request, nombre_usuario):
-    print("entro a activar el usuario : "+str(nombre_usuario))
+    imprimir("entro a activar el usuario : "+str(nombre_usuario))
     try:
         #server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
         with connect_to_ad() as conn:
             #user_dn = f"CN={nombre_usuario},OU=iaiUsuario,OU=RedGrupoIAI,{domino}"
             user_dn = nombre_usuario;
-            #print(user_dn)
+            #imprimir(user_dn)
             # Establecer userAccountControl a 512 para activar la cuenta
-            conn.modify(user_dn, {'userAccountControl': [(MODIFY_REPLACE, [544])]}) # debe activarse con el 512 pero eso lo vamos a dejar a ultimos ajajajajaj
+            conn.modify(user_dn, {'userAccountControl': [(MODIFY_REPLACE, [512])]}) # debe activarse con el 512 pero eso lo vamos a dejar al ultimo ajajajajaj
             if conn.result['result'] == 0:
                 messages.success(request, 'Usuario activado correctamente.')
-                print('Usuario activado correctamente.')
+                imprimir('Usuario activado correctamente.')
                 mover = buscar_usuario_por_dn(nombre_usuario)
-                print(mover_usuario_ou(mover['cn'], unidadOrganizativa[asignar_Departamento(mover['department'])],request))
+                imprimir(mover_usuario_ou(mover['cn'], unidadOrganizativa[asignar_Departamento(mover['department'])],request))
                 insertar_registro_accion(
                 nameUser(request),
                 'Modulo AD',
@@ -561,35 +592,35 @@ def activar_usuario(request, nombre_usuario):
                 return redirect('usuarios')
             else:
                 messages.error(request, f"Error al activar usuario: {conn.result['description']}")
-                print(f"Error al activar usuario: {conn.result['description']}")
+                imprimir(f"Error al activar usuario: {conn.result['description']}")
     except Exception as e:
         messages.error(request, f"Error al conectar con AD: {str(e)}")
-        print(f"Error al conectar con AD: {str(e)}")
+        imprimir(f"Error al conectar con AD: {str(e)}")
 
     
     
     
  
 def desactivar_usuario(request, nombre_usuario):
-    print("entro a desactivar al usuario :"+str(nombre_usuario))
+    imprimir("entro a desactivar al usuario :"+str(nombre_usuario))
     try:
        # server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
         with connect_to_ad() as conn:
             #user_dn = f"CN={nombre_usuario},OU=iaiUsuario,OU=RedGrupoIAI,{domino}"
             user_dn = nombre_usuario;
             
-           # print(user_dn)
+           # imprimir(user_dn)
             # Establecer userAccountControl a 66050 para desactivar la cuenta
             conn.modify(user_dn, {'userAccountControl': [(MODIFY_REPLACE, [66050])]})
             if conn.result['result'] == 0:
                 messages.success(request, 'Usuario desactivado correctamente.')
-                print('Usuario desactivado correctamente.')
+                imprimir('Usuario desactivado correctamente.')
                 mover = buscar_usuario_por_dn(nombre_usuario)
                 #cn=mover['cn']
                 #department=mover['department']
-                #print(cn)
-                #print(department)
-                print(mover_usuario_ou(mover['cn'], unidadOrganizativa[0],request))
+                #imprimir(cn)
+                #imprimir(department)
+                imprimir(mover_usuario_ou(mover['cn'], unidadOrganizativa[0],request))
                 insertar_registro_accion(
                 nameUser(request),
                 'Modulo AD',
@@ -603,10 +634,10 @@ def desactivar_usuario(request, nombre_usuario):
                 return redirect('usuarios')
             else:
                 messages.error(request, f"Error al desactivar usuario: {conn.result['description']}")
-                print(f"Error al desactivar usuario: {conn.result['description']}")
+                imprimir(f"Error al desactivar usuario: {conn.result['description']}")
     except Exception as e:
         messages.error(request, f"Error al conectar con AD: {str(e)}")
-        print(f"Error al conectar con AD: {str(e)}")
+        imprimir(f"Error al conectar con AD: {str(e)}")
 
 
 
@@ -631,7 +662,7 @@ def nameUser(request):
 
 def connect_to_ad():
     servidorAD = obtener_servidor_ad()
-    print(servidorAD)
+    imprimir(servidorAD)
     server = Server(servidorAD, port=settings.AD_PORT,use_ssl=True, get_info=ALL_ATTRIBUTES)
     
     return Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True)
@@ -651,12 +682,12 @@ def mover_usuario_ou(nombre_usuario, nueva_ou,request):
 
             if conn.entries:
                 dn_actual = conn.entries[0].distinguishedName.value
-                #print(f"DN actual: {dn_actual}")
+                #imprimir(f"DN actual: {dn_actual}")
 
                 # Construir el nuevo DN
                 nuevo_rdn = f"CN={nombre_usuario}"
                 nueva_ou_completa = f"{nueva_ou},{domino}"
-                #print(f"Nuevo DN: {nuevo_rdn}, en OU: {nueva_ou_completa}")
+                #imprimir(f"Nuevo DN: {nuevo_rdn}, en OU: {nueva_ou_completa}")
 
                 # Mover el usuario a la nueva OU
                 conn.modify_dn(dn_actual, nuevo_rdn, new_superior=nueva_ou_completa)
@@ -734,7 +765,7 @@ def insertar_registro_accion(nombre_usuario, modulo, nombre_accion, descripcion,
     )
     
     nuevo_registro.save()
-    print(nuevo_registro)
+    imprimir(nuevo_registro)
     
 def get_client_ip(request):
     """

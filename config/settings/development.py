@@ -57,8 +57,8 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'sistemas.iai@grupo-iai.com.mx'
 EMAIL_HOST_PASSWORD = 'hLW*t37l_'
-
-AD_SERVER = 'ldap://'  # Cambia esto según tu servidor
-AD_PORT = 389  # El puerto por defecto es 389 # El puerto por defecto es 389 normalmente 389 para conexiones no seguras o 636 para conexiones seguras con SSL
+#python manage.py runsslserver  333 --settings=config.settings.development
+AD_SERVER = 'ldaps://'  # Cambia esto según el protocolo tu servidor (ldap o ldaps)
+AD_PORT = 636  # El puerto por defecto es 389 # El puerto por defecto es 389 normalmente 389 para conexiones no seguras o 636 para conexiones seguras con SSL
 AD_USER ='CN=desarrollo,CN=Users,DC=iai,DC=com,DC=mx'# # Cambia esto según tus credenciales -----dsquery user -name desarrollo --------dsget user "CN=desarrollo,CN=Users,DC=iai,DC=com,DC=mx"
 AD_PASSWORD = 'D3sarrollo'

@@ -14,7 +14,7 @@ BASE_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'sslserver',
+    'sslserver', #python manage.py runsslserver  8080 --settings=config.settings.development
     # 'django.contrib.staticfiles',
 ]
 

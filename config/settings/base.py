@@ -27,6 +27,7 @@ LOCAL_APPS = [
     'apps.ActiveDirectory',
     'apps.AsignarUsuario',
     'apps.RegistroModulo', 
+    'apps.Archivos'
 ]
 
 THIRD_APPS = [
@@ -73,8 +74,8 @@ TEMPLATES = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [os.path.join(BASE_DIR,),
                  os.path.join(BASE_DIR, 'apps/ActiveDirectory/templates'),
+                 os.path.join(BASE_DIR, 'apps/Archivos/templates'),
                  os.path.join(BASE_DIR, 'components', 'templates'),
-                 
                  os.path.join(BASE_DIR, 'apps/AsignarUsuario/templates'),
                  ],
         # 'APP_DIRS': True,

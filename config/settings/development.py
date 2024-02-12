@@ -29,6 +29,18 @@ DATABASES = {
             'unicode_results': True,
         },
     },
+       'archivos': {
+        'ENGINE': 'mssql',
+        'NAME': 'ArchivosBD',
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
+        'HOST': os.environ.get('DB_HOST'),
+        'PORT': os.environ.get('DB_PORT'),
+        'OPTIONS': {
+            'driver': 'ODBC Driver 17 for SQL Server',
+            'unicode_results': True,
+        },
+    },
 }
 
 

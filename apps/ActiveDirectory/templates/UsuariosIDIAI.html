@@ -15,7 +15,7 @@ Usuario IDIAI - Activate Directory
 
 {% block Encabezado %}
 <h3>Bienvenido a IDIAI:</h3>
-<p class="text-subtitle text-muted">Su plataforma para visualizar usuarios.</p>
+<p >Su plataforma para visualizar usuarios.</p>
 {% endblock %}
 
 
@@ -32,7 +32,17 @@ Usuarios de IDIAI
 
 
 {% block contenido %}
-
+    {% if messages %}
+    <div>
+        {% for message in messages %}
+            {% if forloop.last %}
+                <div class="alert {% if 'error' in message.tags %}alert-danger{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %} 
     <ul class="nav nav-tabs" id="myTab" role="tablist">
         <li class="nav-item" role="presentation">
             <a class="nav-link active" id="all-tab" data-bs-toggle="tab" href="#all" role="tab"

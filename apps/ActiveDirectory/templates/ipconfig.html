@@ -1,0 +1,202 @@
+
+{% extends "mazer/base.html" %}
+{% block title%}
+Dashboard - IP configuración 
+{% endblock title %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+
+{% block Encabezado %}
+<h3>Configuración de la IP de Active Directory</h3>
+{% endblock %}
+
+{% block EncabezadoNav%}
+IP Configuracion 
+{% endblock EncabezadoNav %}
+
+
+{% block EncabezadoCard%}
+Introduce la nueva IP
+{% endblock EncabezadoCard %}
+
+{% block contenido %}
+{% if messages %}
+<div>
+    {% for message in messages %}
+        {% if forloop.last %}
+            <div class="alert {% if 'error' in message.tags %}alert-danger{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
+                {{ message }}
+            </div>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endif %} <!--
+<div id="spinner" class="text-center" style="display: none;">
+    
+    <img src="data:image/svg+xml,%3csvg%20width='135'%20height='135'%20viewBox='0%200%20135%20135'%20xmlns='http://www.w3.org/2000/svg'%20fill='%235d79d3'%3e%3cpath%20d='M67.447%2058c5.523%200%2010-4.477%2010-10s-4.477-10-10-10-10%204.477-10%2010%204.477%2010%2010%2010zm9.448%209.447c0%205.523%204.477%2010%2010%2010%205.522%200%2010-4.477%2010-10s-4.478-10-10-10c-5.523%200-10%204.477-10%2010zm-9.448%209.448c-5.523%200-10%204.477-10%2010%200%205.522%204.477%2010%2010%2010s10-4.478%2010-10c0-5.523-4.477-10-10-10zM58%2067.447c0-5.523-4.477-10-10-10s-10%204.477-10%2010%204.477%2010%2010%2010%2010-4.477%2010-10z'%3e%3canimateTransform%20attributeName='transform'%20type='rotate'%20from='0%2067%2067'%20to='-360%2067%2067'%20dur='2.5s'%20repeatCount='indefinite'/%3e%3c/path%3e%3cpath%20d='M28.19%2040.31c6.627%200%2012-5.374%2012-12%200-6.628-5.373-12-12-12-6.628%200-12%205.372-12%2012%200%206.626%205.372%2012%2012%2012zm30.72-19.825c4.686%204.687%2012.284%204.687%2016.97%200%204.686-4.686%204.686-12.284%200-16.97-4.686-4.687-12.284-4.687-16.97%200-4.687%204.686-4.687%2012.284%200%2016.97zm35.74%207.705c0%206.627%205.37%2012%2012%2012%206.626%200%2012-5.373%2012-12%200-6.628-5.374-12-12-12-6.63%200-12%205.372-12%2012zm19.822%2030.72c-4.686%204.686-4.686%2012.284%200%2016.97%204.687%204.686%2012.285%204.686%2016.97%200%204.687-4.686%204.687-12.284%200-16.97-4.685-4.687-12.283-4.687-16.97%200zm-7.704%2035.74c-6.627%200-12%205.37-12%2012%200%206.626%205.373%2012%2012%2012s12-5.374%2012-12c0-6.63-5.373-12-12-12zm-30.72%2019.822c-4.686-4.686-12.284-4.686-16.97%200-4.686%204.687-4.686%2012.285%200%2016.97%204.686%204.687%2012.284%204.687%2016.97%200%204.687-4.685%204.687-12.283%200-16.97zm-35.74-7.704c0-6.627-5.372-12-12-12-6.626%200-12%205.373-12%2012s5.374%2012%2012%2012c6.628%200%2012-5.373%2012-12zm-19.823-30.72c4.687-4.686%204.687-12.284%200-16.97-4.686-4.686-12.284-4.686-16.97%200-4.687%204.686-4.687%2012.284%200%2016.97%204.686%204.687%2012.284%204.687%2016.97%200z'%3e%3canimateTransform%20attributeName='transform'%20type='rotate'%20from='0%2067%2067'%20to='360%2067%2067'%20dur='8s'%20repeatCount='indefinite'/%3e%3c/path%3e%3c/svg%3e" class="me-4" style="width: 3rem" alt="audio">
+   
+</div>-->
+
+
+<form action="" method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label for="" class="form-label">IP : <Strong>{{ip.server}}</Strong></label>
+        <input
+            type="text"
+            class="form-control"
+            name="ip"
+            id="ip"
+            aria-describedby="helpId"
+            value="{{ip.ip}}"
+            placeholder="0.0.0.0"
+        />
+        <div class="mb-3">
+            <input
+                type="hidden"
+                class="form-control"
+                name="id"
+                id="id"
+                placeholder=""
+                value="{{ip.id}}"
+            />
+        </div>
+        
+        
+    </div>
+    <input 
+        type="hidden" 
+        name="action" 
+        id="form-action" 
+        value=""
+    >
+
+    <div id="spinner" class="text-center mb-3" style="display: none;">
+            
+    
+        <div class="progress" style="width: 100;">
+    
+            <div 
+                id="progress-bar" 
+                class="progress-bar progress-bar-striped progress-bar-animated" 
+                role="progressbar" 
+                aria-valuenow="0" 
+                aria-valuemin="0" 
+                aria-valuemax="100" 
+                style="width: 100%;">
+
+                    Cargando...
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-center align-items-center g-2">
+
+        <button 
+            type="submit"  
+            class="btn btn-primary me-2" 
+            onclick="submitForm('probar')"
+        >
+                <i class="bi bi-plug-fill"></i> Probar Conexion LDAP
+        </button>
+
+        <button type="submit"  class="btn btn-success" onclick="submitForm('guardar')">
+            <i class="bi bi-floppy2"></i> Guardar IP
+        </button>
+    </div>
+
+
+</form>
+
+
+
+{% endblock %}
+
+
+{% block script %} 
+
+
+<script>
+    function submitForm(action) {
+        // Establece el valor de la acción
+        document.getElementById('form-action').value = action;
+        
+        // Muestra el spinner
+        document.getElementById('spinner').style.display = 'block';
+    
+        // Deshabilita todos los botones en el formulario para evitar envíos múltiples
+        document.querySelectorAll('form button').forEach(function(button) {
+            button.disabled = true;
+        });
+      // Avanzar la barra de progreso gradualmente durante 5 segundos
+      avanzarBarraProgresoGradualmente(20000)
+    document.querySelector('form').submit();
+    }
+
+
+    function avanzarBarraProgreso(porcentaje) {
+        // Obtén la barra de progreso por su id
+        var progressBar = document.getElementById('progress-bar');
+    
+        // Actualiza el ancho de la barra de progreso según el porcentaje proporcionado
+        progressBar.style.width = porcentaje + '%';
+    
+        // Actualiza el valor del atributo aria-valuenow para que coincida con el porcentaje
+        progressBar.setAttribute('aria-valuenow', porcentaje);
+    }
+
+    function avanzarBarraProgresoGradualmente(duration, callback) {
+        var progressBar = document.getElementById('progress-bar');
+        var porcentaje = 0;
+        var incremento = 1;
+        var intervalo = duration / 100; // Divide la duración en pequeños incrementos para avanzar gradualmente
+    
+        // Función para avanzar la barra de progreso
+        function avanzar() {
+            if (porcentaje < 100) {
+                porcentaje += incremento;
+                progressBar.style.width = porcentaje + '%';
+                progressBar.setAttribute('aria-valuenow', porcentaje);
+            } else {
+                clearInterval(intervalId); // Detener el intervalo cuando la barra de progreso alcanza el 100%
+                callback(); // Llamar al callback cuando la barra de progreso llegue al 100%
+            }
+        }
+    
+        // Iniciar el intervalo para avanzar gradualmente la barra de progreso
+        var intervalId = setInterval(avanzar, intervalo);
+    }
+
+
+    function avanzarBarraProgresoGradualmente(duration) {
+        var progressBar = document.getElementById('progress-bar');
+        var porcentaje = 0;
+        var incremento = 5;
+        var intervalo = duration / 100; // Divide la duración en pequeños incrementos para avanzar gradualmente
+    
+        // Función para avanzar la barra de progreso
+        function avanzar() {
+            if (porcentaje < 100) {
+                porcentaje += incremento;
+                progressBar.style.width = porcentaje + '%';
+                progressBar.setAttribute('aria-valuenow', porcentaje);
+            } else {
+                clearInterval(intervalId); // Detener el intervalo cuando la barra de progreso alcanza el 100%
+            }
+        }
+    
+        // Iniciar el intervalo para avanzar gradualmente la barra de progreso
+        var intervalId = setInterval(avanzar, intervalo);
+    }
+</script>
+
+
+
+
+
+
+
+{% endblock%}

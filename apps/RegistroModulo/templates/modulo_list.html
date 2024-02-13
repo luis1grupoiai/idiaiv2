@@ -65,10 +65,16 @@ Nombre de los Modulos
                         <tr>
                             <td class="text-center" >{{ modulo_entry.nombre }}</td>
                             <td class="text-center" >
+                                <a href="{% url 'detalle_registro' modulo_entry.id %}" class="btn btn-primary"> <i class="bi bi-eye"></i> Ver</a>
+                                <a href="{% url 'modulo_update' modulo_entry.id %}" class="btn btn-secondary"> <i class="bi bi-pencil"></i> Editar</a>
+                                <a href="{% url 'modulo_delete' modulo_entry.id %}" class="btn btn-danger"> <i class="bi bi-trash"></i> Eliminar</a>
+
+
+                                <!--
                                 <button type="button"  class="btn btn-primary" data-toggle="modal" data-target="#passwordModal" data-url="{% url 'detalle_registro' modulo_entry.id %}" onclick="validacion(this);"> Ver</button>
                                 <button type="button"  class="btn btn-secondary" data-toggle="modal" data-target="#passwordModal" data-url="{% url 'modulo_update' modulo_entry.id %}" onclick="validacion(this);"> Editar</button>
                                 <button type="button"  class="btn btn-danger" data-toggle="modal" data-target="#passwordModal" data-url="{% url 'modulo_delete' modulo_entry.id %}" onclick="validacion(this);"> Eliminar</button>
-                            
+                                 -->
                             </td>
                         </tr>
                         {% endfor %}
@@ -96,7 +102,7 @@ Nombre de los Modulos
                 
                 
                 <div class="mb-3">
-                <button id="miBoton" class="btn btn-primary" data-nombre="{{verificar}}" onclick="verificarPassword(this);">Verificar</button>
+                <button id="miBoton" class="btn btn-primary" data-nombre="{{verificar}}" onclick="verificarPassword(this);"><i class="bi bi-check-lg"></i> Verificar</button>
                 </div>
             </div>
         </div>
@@ -120,7 +126,7 @@ Nombre de los Modulos
                 
                 
                 <div class="mb-3">
-                <button  id="miBoton." class="btn btn-primary" data-nombre="{{verificar}}" onclick="verificar(this);">Verificar</button>
+                <button  id="miBoton." class="btn btn-primary" data-nombre="{{verificar}}" onclick="verificar(this);"><i class="bi bi-check-lg"></i> Verificar</button>
                 </div>
             </div>
         </div>

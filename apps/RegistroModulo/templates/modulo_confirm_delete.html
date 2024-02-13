@@ -33,7 +33,7 @@ Nombre de los Modulos
 <form method="post" class="mt-4">
     {% csrf_token %}
     <button type="submit" class="btn btn-primary" >Confirmar Eliminación</button>
-    <a href="{% url 'modulo_list'  %}" class="btn btn-danger">Cancelar</a>
+    <a href="{% url 'modulo_list'  %}" class="btn btn-danger"><i class="bi bi-x-circle"></i>Cancelar</a>
 </form>
 
 {% endblock %}

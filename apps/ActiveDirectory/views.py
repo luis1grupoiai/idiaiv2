@@ -13,7 +13,10 @@ from .models import TActiveDirectoryIp
 import re
 import time
 
+
+
 def imprimir(mensaje):
+    
     if settings.DEBUG:
         print(mensaje)
         

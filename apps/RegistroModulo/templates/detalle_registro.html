@@ -31,7 +31,7 @@ Nombre de los Modulos
 
 <p>Nombre: {{ registro.nombre }}</p>
 <p>Descripcion : {{ modulo_desencriptada }}</p>
-<a href="{% url 'modulo_list'  %}" class="btn btn-danger">Cancelar</a>
+<a href="{% url 'modulo_list'  %}" class="btn btn-danger"><i class="bi bi-x-circle"></i> Cancelar</a>
 
 <div class="modal fade" id="No_me_hackes_XD_Modal." tabindex="-1" role="dialog" aria-labelledby="passwordModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
@@ -50,7 +50,7 @@ Nombre de los Modulos
                 
                 
                 <div class="mb-3">
-                <button  id="miBoton." class="btn btn-primary" data-nombre="{{verificar}}" onclick="verificar(this);">Verificar</button>
+                <button  id="miBoton." class="btn btn-primary" data-nombre="{{verificar}}" onclick="verificar(this);"><i class="bi bi-check-lg"></i> Verificar</button>
                 </div>
             </div>
         </div>

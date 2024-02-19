@@ -16,5 +16,6 @@ urlpatterns = [
     path('SolicitudUsuario/', include('apps.AsignarUsuario.urls'),name='SolicitudUsuario'),
     path('accounts/', include ('django.contrib.auth.urls')),
     path('RegistroModulo/',include('apps.RegistroModulo.urls'), name='Modulo'),
+    path('importarUsuario/',include('apps.ImportarUsuario.urls'),name ='ImpartUsuario')
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

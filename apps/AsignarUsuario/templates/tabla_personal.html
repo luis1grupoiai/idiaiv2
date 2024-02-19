@@ -28,13 +28,16 @@
 
                    
                     {% else %}
-                    <a
-                    name=""
-                    id=""
-                    class="btn btn-danger btn-sm "
-                    href="#"
-                    role="button"
-                    >Solicitar Baja</a >
+                    <button type="button"
+                    class="btn btn-success btn-sm "
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalAlta"
+                    data-nombre="{{ user.Nombre_ps }} {{ user.Apaterno_ps }} {{ user.Amaterno_ps }}"
+                    data-categoria="{{ user.Nombre_ct}}"
+                    data-email=""
+                    onclick="SolicitarAlta(this);"
+                    >
+                    Solicitar Permisos</button>
                     {% endif %}</td>
                
                    

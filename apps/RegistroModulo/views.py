@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404, render
 from django.shortcuts import render, redirect
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from .models import TRegistroDeModulo 
-from apps.AsignarUsuario.models import  TRegistroAccionesModulo
+from apps.AsignarUsuario.models import  TRegistroAccionesModulo ,VallEmpleado
 from .forms import ModuloForm
 from cryptography.fernet import Fernet
 from django.contrib.auth.decorators import login_required
@@ -13,7 +13,7 @@ from django.utils import timezone
 from django.urls import reverse_lazy
 from django.contrib import messages
 
-ModuloEntrada ="hola" # la contraseña del modal ----
+ModuloEntrada ="12345" # la contraseña del modal ----
 
 
 class NombreUsuarioMixin:
@@ -24,6 +24,11 @@ class NombreUsuarioMixin:
             context['nombre_usuario'] = user.first_name + " " + user.last_name
         else:
             context['nombre_usuario'] = user.username
+        
+        context['foto'] = photoUser(self.request)
+        context['Categoria'] = Categoria(self.request)
+        context['active_page']='modulos'
+        
         return context
 
 
@@ -34,6 +39,7 @@ class ModuloListView(LoginRequiredMixin,NombreUsuarioMixin,ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['verificar'] = ModuloEntrada
+        
         return context
 
 class ModuloCreateView(LoginRequiredMixin,NombreUsuarioMixin,CreateView):
@@ -171,7 +177,9 @@ def bitacora(request):
                     'active_page': 'bitacoraModulo',
                     'nombre_usuario': nombreUsuario,
                     'mensaje': mensaje,
-                    'registros':registros
+                    'registros':registros,
+                    'foto':photoUser(request),
+                    'Categoria': Categoria(request)
                     }
         
   
@@ -210,7 +218,10 @@ def ver_detalle_registro(request, id):
         'registro': registro,
         'modulo_desencriptada': modulo_desencriptada,
         'nombre_usuario': nombreUsuario,
-        'verificar':ModuloEntrada
+        'verificar':ModuloEntrada,
+        'foto':photoUser(request),
+        'Categoria': Categoria(request),
+        'active_page':'modulos'
     }
     return render(request, 'detalle_registro.html', context)
 
@@ -257,9 +268,43 @@ def get_client_ip(request):
     # Si no se encuentra en las cabeceras, tomar la dirección del remitente de la solicitud
     return request.META.get('REMOTE_ADDR')    
     
-    """
-
     
+def photoUser(request):
+    # Ruta de foto predeterminada
+    photo = '/static/img/logo1.png'
+
+    # Comprobar si el usuario está autenticado
+    if request.user.is_authenticated:
+        # Obtener el nombre de usuario del usuario autenticado
+        nombreUsuario = request.user.username
+
+        # Filtrar el objeto VallEmpleado usando el nombre de usuario
+        usuarioBD = VallEmpleado.objects.filter(username=nombreUsuario).first()
+
+        # Si se encuentra un usuario en la BD y tiene una ruta de foto, actualizar la ruta de la foto
+        if usuarioBD and usuarioBD.RutaFoto_ps:
+        
+            photo = f'http://intranet.grupo-iai.com.mx:85/SERCAPNUBE/Imagenes/FOTOS/{usuarioBD.RutaFoto_ps}'
+
+    # Devolver la ruta de la foto
+    return photo
+
+def Categoria(request):
+    usuario=None
+    if request.user.is_authenticated:
+        # Obtener el nombre de usuario del usuario autenticado
+       nombreUsuario = request.user.username
+
+        # Filtrar el objeto VallEmpleado usando el nombre de usuario
+       usuarioBD = VallEmpleado.objects.filter(username=nombreUsuario).first()
+
+        # Si se encuentra un usuario en la BD
+       if usuarioBD:
+            usuario = usuarioBD.Nombre_ct
+
+
+    return usuario
+"""    
     la línea de código from django.views.generic import ListView, CreateView, 
     UpdateView, DeleteView es una importación de clases de vistas genéricas de Django, 
     un framework de desarrollo web en Python. Vamos a desglosar cada clase:

@@ -5,5 +5,6 @@ from . import views
 
 urlpatterns = [
     path('', views.importar_usuarios, name='importarusuarios'),
+    path('importar_modulos/', views.importarmodulo, name='importarmodulos')
         
     ]

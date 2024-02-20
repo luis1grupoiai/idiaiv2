@@ -4,7 +4,7 @@ from cryptography.fernet import Fernet
 
 
 ENCRYPTION_KEY_DESCRIPCION = b'VVsQPaM9IhXYrWNwLyKkAnmJdzdFR8R0MwdvZpHGsA8='
-ENCRYPTION_KEY_NOMBRE = b'VVsQPaM9IhXYrWNwLyKkAnmJdzdFR8R0MwdvZpHGsA8='
+ENCRYPTION_KEY_NOMBRE = b'o2GwoZ4O2UyRvsWTK7owoZKHOBQU2TbmYHUkHI1OWMs='
 
 class TRegistroDeModulo(models.Model):
     _nombre = models.TextField()
@@ -12,20 +12,23 @@ class TRegistroDeModulo(models.Model):
 
     @property
     def nombre(self):
-        f = Fernet(ENCRYPTION_KEY_NOMBRE)
+        n = Fernet(ENCRYPTION_KEY_NOMBRE)
+       
         try:
-            return f.decrypt(self._nombre.encode()).decode()
+            return n.decrypt(self._nombre.encode()).decode()
         except:
             return ""
 
     @nombre.setter
     def nombre(self, value):
-        f = Fernet(ENCRYPTION_KEY_NOMBRE)
-        self._nombre = f.encrypt(value.encode()).decode()
+        n = Fernet(ENCRYPTION_KEY_NOMBRE)
+        
+        self._nombre = n.encrypt(value.encode()).decode()
 
     @property
     def descripcion(self):
         f = Fernet(ENCRYPTION_KEY_DESCRIPCION)
+        
         try:
             return f.decrypt(self._descripcion.encode()).decode()
         except:
@@ -34,6 +37,7 @@ class TRegistroDeModulo(models.Model):
     @descripcion.setter
     def descripcion(self, value):
         f = Fernet(ENCRYPTION_KEY_DESCRIPCION)
+        
         self._descripcion = f.encrypt(value.encode()).decode()
 
     def __str__(self):

@@ -194,6 +194,7 @@ def ver_detalle_registro(request, id):
     registro = get_object_or_404(TRegistroDeModulo, pk=id)
     modulo_desencriptada = registro.descripcion
     
+    
     if request.user.is_authenticated:
         nombreUsuario = request.user.first_name+" "+request.user.last_name
         
@@ -213,7 +214,7 @@ def ver_detalle_registro(request, id):
    # print(ENCRYPTION_KEY)
     
         
-        
+         
     context = {
         'registro': registro,
         'modulo_desencriptada': modulo_desencriptada,

@@ -19,7 +19,7 @@
     <nav class="navbar navbar-light">
         <div class="container d-block">
             <!--<a href="#"><i class="bi bi-chevron-left"></i></a>-->
-            <a class="navbar-brand ms-4" href="#">
+            <a class="navbar-brand ms-4" href="https://intranet.grupo-iai.com.mx/INTRANET/">
                 <img src="/static/img/logo2.png">
             </a>
         </div>
@@ -72,7 +72,7 @@
             </a>
                 <div class="card-body">
                   <h5 class="card-title">Importar Usuarios </h5>
-                  <h6 class="card-subtitle">IDIAI V1 a IDIAI V2 </h6>
+                  
                   <a href=" {% url 'importarusuarios' %}" class="btn btn-primary">Entrar</a>
                 </div>
               </div>
@@ -89,6 +89,18 @@
               </div>
             </div>
       </div>
+
+      <div class="col-4">
+        <div class="card" >
+            <a href=" {% url 'modulo_list' %}">
+            <img src="/static/img/modulo.png" class="card-img-top" alt="Descripción de la imagen"  >
+        </a>
+            <div class="card-body">
+              <h5 class="card-title"> Modulos  </h5>
+              <a href=" {% url 'modulo_list' %}" class="btn btn-primary">Entrar</a>
+            </div>
+          </div>
+    </div>
 
     
     </div>

@@ -20,6 +20,7 @@ class Sistemas(models.Model):
     visibleIntranet = models.CharField(max_length=10, choices=STATUS_CHOICES, default='Activo')
     urlsistema = models.CharField(max_length=255, default='Sin definir')
     urlDoc = models.CharField(max_length=255, default='Sin definir')
+    urlImg = models.CharField(max_length=255, default='Sin definir')
 
     # Método para obtener una representación de cadena del objeto Sistemas (se devuelve el nombre del sistema)
     def __str__(self):

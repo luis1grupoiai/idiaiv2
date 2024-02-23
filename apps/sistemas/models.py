@@ -16,6 +16,7 @@ class Sistemas(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    descripcion = models.CharField(max_length=100, default="Sin Definir")
     visibleIntranet = models.CharField(max_length=10, choices=STATUS_CHOICES, default='Activo')
     urlsistema = models.CharField(max_length=255, default='Sin definir')
     urlDoc = models.CharField(max_length=255, default='Sin definir')

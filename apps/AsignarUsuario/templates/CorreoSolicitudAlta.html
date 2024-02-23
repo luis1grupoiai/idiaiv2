@@ -38,9 +38,10 @@
                     {% endif %}
                 {% endfor %}
             
-
-            <p>Observaciones: </p>
-            <p>{{observaciones}}</p>
+                {% if observaciones %}
+                <p>Observaciones: </p>
+                <p>{{ observaciones }}</p>
+                {% endif %}
         </td>
     </tr>
     <tr>

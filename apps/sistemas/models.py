@@ -16,6 +16,12 @@ class Sistemas(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    descripcion = models.TextField(max_length=100, default="Sin Definir")
+    visibleIntranet = models.CharField(max_length=10, choices=STATUS_CHOICES, default='Activo')
+    urlsistema = models.CharField(max_length=255, default='Sin definir')
+    urlDoc = models.CharField(max_length=255, default='Sin definir')
+    urlImg = models.CharField(max_length=255, default='Sin definir')
+
     # Método para obtener una representación de cadena del objeto Sistemas (se devuelve el nombre del sistema)
     def __str__(self):
         return self.nombre

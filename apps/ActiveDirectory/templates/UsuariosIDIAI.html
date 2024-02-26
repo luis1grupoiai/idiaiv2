@@ -195,7 +195,7 @@ Usuarios de IDIAI
                                         <div class="col-6">
                                             <div class="mb-2">
                                                 <label for="departamento" class="form-label">Dirección:</label>
-                                                <select class="form-control select2" name="departamento" id="departamento" required>
+                                                <select class="form-control " name="departamento" id="departamento" required>
     
                                                 
                                                     <option value="Administración">Administración</option>
@@ -367,9 +367,15 @@ Usuarios de IDIAI
                     document.getElementById('nombre_inicio_sesion').value = nombreSesion;
                     document.getElementById('nombre_completo').value = nombreCompleto ;
                     document.getElementById('email').value = email ;
-                    document.getElementById('departamento').value = departamento ;
+                    //document.getElementById('departamento').value = departamento ;
+                    var selectElement = document.getElementById('departamento');
+                    selectElement.value = departamento; // Cambia el valor como antes
+                    // Crear y disparar el evento 'change' manualmente
+                    
+                    var event = new Event('change', { bubbles: true });
+                    selectElement.dispatchEvent(event);
                     document.getElementById('distinguished_name').value =distinguishedName;
-                    // Abre el modal
+                    //console.log(departamento)// Abre el modal
                     var modal = new bootstrap.Modal(document.getElementById('crearUserModal'));
                     modal.show();
             }

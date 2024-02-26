@@ -47,7 +47,7 @@ Nombre de los Modulos
 </div>
 {% endif %} 
             <div class="m-3">
-            <a href="{% url 'modulo_create' %}" class="btn btn-success"> <i class="bi bi-globe2"></i> CREAR</a>
+            <a href="{% url 'modulo_create' %}" class="btn btn-success"> <i class="bi bi-key"></i>  CREAR</a>
             </div>
             <div class="table-responsive ">
                 
@@ -67,7 +67,7 @@ Nombre de los Modulos
                             <td class="text-center" >
                                 <a href="{% url 'detalle_registro' modulo_entry.id %}" class="btn btn-primary"> <i class="bi bi-eye"></i> Ver</a>
                                 <a href="{% url 'modulo_update' modulo_entry.id %}" class="btn btn-secondary"> <i class="bi bi-pencil"></i> Editar</a>
-                                <a href="{% url 'modulo_delete' modulo_entry.id %}" class="btn btn-danger"> <i class="bi bi-trash"></i> Eliminar</a>
+                                <button type="button"  class="btn btn-danger" data-toggle="modal" data-target="#passwordModal" data-url="{% url 'modulo_delete' modulo_entry.id %}" onclick="validacion(this);"> Eliminar</button>
 
 
                                 <!--
@@ -217,7 +217,7 @@ Nombre de los Modulos
         }
 
         
-        modals.show();
+      modals.show();
 
         function verificar(button) {
            
@@ -242,7 +242,7 @@ Nombre de los Modulos
 
     document.getElementById('passwordInput').addEventListener('keypress', function(event) {
             if (event.keyCode === 13) { // 13 es el código de tecla para Enter
-                console.log("diste enter")
+                
                 var boton = document.getElementById('miBoton'); 
                 verificarPassword(boton); // Ejecuta la función
             }
@@ -250,7 +250,7 @@ Nombre de los Modulos
 
         document.getElementById('passwordInput.').addEventListener('keypress', function(event) {
             if (event.keyCode === 13) { // 13 es el código de tecla para Enter
-                console.log("diste enter")
+                
                 var boton = document.getElementById('miBoton.'); 
                 verificar(boton); // Ejecuta la función
             }

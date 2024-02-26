@@ -2,7 +2,6 @@ from django.shortcuts import render , redirect, get_object_or_404
 from django.conf import settings
 from ldap3 import Server, Connection, ALL_ATTRIBUTES , MODIFY_REPLACE , ALL , NTLM
 from django.contrib import messages
-from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 from django.contrib.auth import authenticate, login
@@ -13,15 +12,15 @@ from .models import TActiveDirectoryIp
 import re
 import time
 
-
-
+#https://www.digicert.com/kb/ssl-certificate-installation-microsoft-active-directory-ldap-2012.htm  importate parar implementar un ssl en AD
+#$cert = New-SelfSignedCertificate -DnsName "active.iai.com.mx", "active" -CertStoreLocation "cert:\LocalMachine\My" codigo para crear un ssl autofirmado en el servidor AD
 def imprimir(mensaje):
     
     if settings.DEBUG:
         print(mensaje)
         
         
-ip_sin_base_dato={
+ip_sin_base_dato={ #esto debe convertirse en una clase para que funcione
                     'id':'0', 
                     'server':'sin_servidor_XD' , 
                     'ip':'0.0.0.0' #esta ip debe ser cambiado en caso que no funcione la base de datos
@@ -30,12 +29,13 @@ ip_sin_base_dato={
 
 def asignar_ip():
     
-    if settings.DEBUG:
-        ip=TActiveDirectoryIp.objects.filter(server='ADVirtual').first() #servidor de AD para el desarrollo 
-    else:
-        ip=TActiveDirectoryIp.objects.filter(server='ADProduccion').first() # servidor de AD  para produccion 
+     # Determina el servidor basado en el entorno
+    servidor = 'ADVirtual' if settings.DEBUG else 'ADProduccion'
+    
+    # Realiza la consulta una sola vez usando la variable `servidor`
+    ip = TActiveDirectoryIp.objects.filter(server=servidor).first()
 
-    return ip if ip else ip_sin_base_dato  
+    return ip #if ip else ip_sin_base_dato  
 
 def asignar_dominio():
     if settings.DEBUG:
@@ -64,9 +64,8 @@ dominoRaiz=asignar_dominio()['dominioRaiz']
 unidadOrganizativa = ('OU=Bajas','OU=Administracion','OU=Ingeniería','OU=DCASS','OU=Proyectos Especiales') #esta variable esta relacionada con las funciones de   mover_usuario_ou y asignar_Departamento
 
 
-
 @login_required
-def ipconfig(request):
+def ipconfig(request): #vista para la gestion de la ip de AD
     ip=None
    
     if request.method == 'POST':
@@ -130,12 +129,14 @@ def ipconfig(request):
     context = {
         'active_page': 'ipconfig',
         'nombre_usuario':nameUser(request),
-        'ip' : ip
+        'ip' : ip,
+        'foto':photoUser(request),
+        'Categoria': Categoria(request)
     }
     return render(request,'ipconfig.html',context)
 
 @login_required  
-def bitacora(request):
+def bitacora(request): #LA BITACORA QUE LLEVA EL SISTEMAS DE AD PARA LLEVAR EL HISTORICO DE LOS PROCESOS QUE SE REALIZA EN LA INTERFAZ
     mensaje=None
     #registros= TRegistroAccionesModulo.objects.all()
     registros = TRegistroAccionesModulo.objects.filter(Modulo='Modulo AD').order_by('-FechaHora')[:1000] # solo muestra los ultimos  mil registros 
@@ -143,7 +144,9 @@ def bitacora(request):
                     'active_page': 'bitacora',
                     'nombre_usuario': nameUser(request),
                     'mensaje': mensaje,
-                    'registros':registros
+                    'registros':registros,
+                    'foto':photoUser(request),
+                    'Categoria': Categoria(request)
                     }
         
     
@@ -172,7 +175,7 @@ def consultarUsuariosIDIAI(request):
             usuario.existe_en_ad = True
     
     
-    usuariosAdmin =usuarios.filter(nombre_direccion="Administración")
+    usuariosAdmin =usuarios.filter(nombre_direccion="Administración")  
     usuariosIng = usuarios.filter(nombre_direccion="Ingeniería")
     usuariosDCASS =usuarios.filter(nombre_direccion="Calidad, Ambiental, Seguridad y Salud")
     UsuariosPS =usuarios.filter(nombre_direccion="Proyectos Especiales")
@@ -263,6 +266,8 @@ def consultarUsuariosIDIAI(request):
                     'usersDCASS':usuariosDCASS,
                     'usersPS':UsuariosPS,
                     'mensaje': mensaje,
+                    'foto':photoUser(request),
+                    'Categoria': Categoria(request)
                     }
         
     
@@ -379,9 +384,13 @@ def consultar_usuarios(request):
         'usersPS':UsuariosPS,
         'usersDown':UsuaruisDown,
         'active_page': 'usuarios',
-        'nombre_usuario': nameUser(request)# Variable adicional
+        'nombre_usuario': nameUser(request),# Variable adicional
+        'foto':photoUser(request),
+        'Categoria': Categoria(request)
         # Puedes agregar más variables aquí si lo necesitas
     }
+    
+    imprimir(photoUser(request))
     # Renderiza la lista de usuarios en una plantilla HTML
     return render(request, 'Usuarios.html', context)
 
@@ -658,17 +667,72 @@ def extraer_unidad_organizativa(dn):
 
 def nameUser(request):
     if request.user.is_authenticated:
-        nombreUsuario = request.user.first_name+" "+request.user.last_name 
+       nombreUsuario= request.user.first_name+" "+request.user.last_name 
+  
     
-    return  nombreUsuario
+    return nombreUsuario
 
+def Categoria(request):
+    usuario=None
+    if request.user.is_authenticated:
+        # Obtener el nombre de usuario del usuario autenticado
+       nombreUsuario = request.user.username
+
+        # Filtrar el objeto VallEmpleado usando el nombre de usuario
+       usuarioBD = VallEmpleado.objects.filter(username=nombreUsuario).first()
+
+        # Si se encuentra un usuario en la BD
+       if usuarioBD:
+            usuario = usuarioBD.Nombre_ct
+
+
+    return usuario
+
+def photoUser(request):
+    # Ruta de foto predeterminada
+    photo = '/static/img/logo1.png'
+
+    # Comprobar si el usuario está autenticado
+    if request.user.is_authenticated:
+        # Obtener el nombre de usuario del usuario autenticado
+        nombreUsuario = request.user.username
+
+        # Filtrar el objeto VallEmpleado usando el nombre de usuario
+        usuarioBD = VallEmpleado.objects.filter(username=nombreUsuario).first()
+
+        # Si se encuentra un usuario en la BD y tiene una ruta de foto, actualizar la ruta de la foto
+        if usuarioBD and usuarioBD.RutaFoto_ps:
+        
+            photo = f'http://intranet.grupo-iai.com.mx:85/SERCAPNUBE/Imagenes/FOTOS/{usuarioBD.RutaFoto_ps}'
+
+    # Devolver la ruta de la foto
+    return photo
 
 def connect_to_ad():
-    servidorAD = obtener_servidor_ad()
-    imprimir(servidorAD)
-    server = Server(servidorAD, port=settings.AD_PORT,use_ssl=True, get_info=ALL_ATTRIBUTES)
     
-    return Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True)
+        # Inicializa la variable de conexión a None para poder verificar luego si fue establecida
+    conn = None
+    try:
+        servidorAD = obtener_servidor_ad()
+        server = Server(servidorAD, use_ssl=True, get_info=ALL)  # Asumiendo que quieres usar SSL
+        conn = Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True)
+        
+        # Si la conexión es exitosa, devuelve la conexión
+        return conn
+    except Exception as e:
+        # Si ocurre un error, imprime o logea el error
+        imprimir(f"Error al conectar con AD: {str(e)}")  # Considera usar logging en lugar de print
+        # Asegúrate de cerrar la conexión si fue parcialmente establecida antes del error
+        if conn:
+            conn.unbind()
+        # Podrías decidir lanzar la excepción nuevamente o manejarla de alguna manera específica
+        raise
+    
+    #servidorAD = obtener_servidor_ad()
+    #imprimir(servidorAD)
+    #server = Server(servidorAD, port=settings.AD_PORT,use_ssl=True, get_info=ALL_ATTRIBUTES)
+    
+    #return Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True)
 
 def verificar_usuario(request, nombre_usuario):
     existe = existeUsuario(nombre_usuario)

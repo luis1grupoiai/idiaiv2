@@ -27,7 +27,8 @@ LOCAL_APPS = [
     'apps.ActiveDirectory',
     'apps.AsignarUsuario',
     'apps.RegistroModulo', 
-    'apps.Archivos'
+    'apps.Archivos',
+    'apps.ImportarUsuario'
 ]
 
 THIRD_APPS = [

@@ -23,7 +23,7 @@ from rest_framework.permissions import IsAuthenticated
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
-from mycore.views.CEjecutarSP import CEjecutarSP
+from apps.mycore.views.ejecutarsp import CEjecutarSP
 
 
 import json

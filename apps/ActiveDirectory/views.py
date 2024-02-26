@@ -4,29 +4,22 @@ from ldap3 import Server, Connection, ALL_ATTRIBUTES , MODIFY_REPLACE , ALL , NT
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
-from django.contrib.auth import authenticate, login
-from apps.AsignarUsuario.models import VallEmpleado, TRegistroAccionesModulo 
 from django.http import JsonResponse
 from django.utils import timezone
-from .models import TActiveDirectoryIp
 import re
 import time
+from apps.AsignarUsuario.models import VallEmpleado, TRegistroAccionesModulo 
+from .models import TActiveDirectoryIp
+from .utils import AtributosDeEmpleado , IPSinBaseDatos
 
-#https://www.digicert.com/kb/ssl-certificate-installation-microsoft-active-directory-ldap-2012.htm  importate parar implementar un ssl en AD
-#$cert = New-SelfSignedCertificate -DnsName "active.iai.com.mx", "active" -CertStoreLocation "cert:\LocalMachine\My" codigo para crear un ssl autofirmado en el servidor AD
-def imprimir(mensaje):
-    
-    if settings.DEBUG:
-        print(mensaje)
-        
-        
-ip_sin_base_dato={ #esto debe convertirse en una clase para que funcione
-                    'id':'0', 
-                    'server':'sin_servidor_XD' , 
-                    'ip':'0.0.0.0' #esta ip debe ser cambiado en caso que no funcione la base de datos
-                    
-                 }#'192.192.194.10' 
 
+empleado = AtributosDeEmpleado()
+ip_sin_base_dato = IPSinBaseDatos().cambiar_ip('192.168.1.1') #en caso que no funcione la base datos
+
+
+
+
+#CONFIGURACION PARA EL IP DEL SERVIDOR AD -------------------------------------------------------
 def asignar_ip():
     
      # Determina el servidor basado en el entorno
@@ -35,7 +28,7 @@ def asignar_ip():
     # Realiza la consulta una sola vez usando la variable `servidor`
     ip = TActiveDirectoryIp.objects.filter(server=servidor).first()
 
-    return ip #if ip else ip_sin_base_dato  
+    return ip if ip else ip_sin_base_dato  
 
 def asignar_dominio():
     if settings.DEBUG:
@@ -56,7 +49,7 @@ def obtener_servidor_ad():
     servidorAD = f'{settings.AD_SERVER}{ip_dinamica}'
     return servidorAD
 
-#https://www.youtube.com/watch?v=dFJvNYdKGrA&list=PLgrNDDl9MxYmUmf19zPiljdg8FKIRmP78
+#FIN DE CONFIGURACION PARA EL IP DEL SERVIDOR AD -------------------------------------------------------
 
 # Create your views here.
 domino=asignar_dominio()['dominio']
@@ -89,7 +82,7 @@ def ipconfig(request): #vista para la gestion de la ip de AD
             # Expresión regular para validar la dirección IP
             #imprimir('entro aqui XD')
             insertar_registro_accion(
-                nameUser(request),
+                empleado.nameUser(request),
                 'Modulo AD',
                 'IP',
                 f"Se a modificado la IP de '{asignar_ip().server}', IP anterior {asignar_ip().ip}: IP Nueva : {nueva_ip}",
@@ -128,10 +121,10 @@ def ipconfig(request): #vista para la gestion de la ip de AD
     
     context = {
         'active_page': 'ipconfig',
-        'nombre_usuario':nameUser(request),
+        'nombre_usuario':empleado.nameUser(request),
         'ip' : ip,
-        'foto':photoUser(request),
-        'Categoria': Categoria(request)
+        'foto':empleado.photoUser(request),
+        'Categoria': empleado.Categoria(request)
     }
     return render(request,'ipconfig.html',context)
 
@@ -142,11 +135,11 @@ def bitacora(request): #LA BITACORA QUE LLEVA EL SISTEMAS DE AD PARA LLEVAR EL H
     registros = TRegistroAccionesModulo.objects.filter(Modulo='Modulo AD').order_by('-FechaHora')[:1000] # solo muestra los ultimos  mil registros 
     context = {
                     'active_page': 'bitacora',
-                    'nombre_usuario': nameUser(request),
+                    'nombre_usuario': empleado.nameUser(request),
                     'mensaje': mensaje,
                     'registros':registros,
-                    'foto':photoUser(request),
-                    'Categoria': Categoria(request)
+                    'foto':empleado.photoUser(request),
+                    'Categoria': empleado.Categoria(request)
                     }
         
     
@@ -233,7 +226,7 @@ def consultarUsuariosIDIAI(request):
                     mensaje = {'titulo': 'Éxito', 'texto': 'Usuario creado correctamente', 'tipo': 'success'}
                     #codigo para guardar en la bitacora -------
                     insertar_registro_accion(
-                    nameUser(request),
+                    empleado.nameUser(request),
                     'Modulo AD',
                     'Crear',
                     f"El usuario '{nombre_usuario}' fue creado en AD",
@@ -258,7 +251,7 @@ def consultarUsuariosIDIAI(request):
     
     context = {
                     'active_page': 'usuariosID',
-                    'nombre_usuario': nameUser(request),
+                    'nombre_usuario': empleado.nameUser(request),
                     'users': usuarios,
                     'usersDown' : UsuaruisDown,
                     'usersAdmin': usuariosAdmin,
@@ -266,8 +259,8 @@ def consultarUsuariosIDIAI(request):
                     'usersDCASS':usuariosDCASS,
                     'usersPS':UsuariosPS,
                     'mensaje': mensaje,
-                    'foto':photoUser(request),
-                    'Categoria': Categoria(request)
+                    'foto':empleado.photoUser(request),
+                    'Categoria': empleado.Categoria(request)
                     }
         
     
@@ -276,22 +269,9 @@ def consultarUsuariosIDIAI(request):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 @login_required  
 def consultar_usuarios(request):
-    # Establece la conexión con el servidor de Active Directory
-    #imprimir(dominoRaiz)
-    #imprimir(domino)
+    
     usuarios = []
     usuariosAdmin =[]
     usuariosIng = []
@@ -299,11 +279,11 @@ def consultar_usuarios(request):
     UsuariosPS =[]
     UsuaruisDown=[]
     try:
-        #server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
-        with connect_to_ad() as connection:
+        
+        with connect_to_ad() as connection:# Establece la conexión con el servidor de Active Directory
             search_base = domino #dominoRaiz
-            #search_filter = '(objectClass=user)'
-            search_filter = '(&(objectClass=user)(!(OU=Administracion)))'
+            search_filter = '(objectClass=user)'
+            
             attributes = ['cn', 
                           'sn', 
                           'givenName', 
@@ -342,11 +322,7 @@ def consultar_usuarios(request):
                     'DistinguishedName' : entry.distinguishedName.value if 'DistinguishedName' in entry else None,
         
                 }
-                #imprimir(entry.cn.value)
-                #imprimir(entry.distinguishedName.value if 'distinguishedName' in entry else None)
-                #imprimir(entry.userPrincipalName.value)
-                #imprimir(entry.distinguishedName.value)
-                #imprimir(extraer_unidad_organizativa(entry.distinguishedName.value))
+
               
                 #if 'cn' in entry and entry.cn.value.lower() != 'administrador':
                 if not is_account_disabled(useraccountcontrol_str):
@@ -384,17 +360,88 @@ def consultar_usuarios(request):
         'usersPS':UsuariosPS,
         'usersDown':UsuaruisDown,
         'active_page': 'usuarios',
-        'nombre_usuario': nameUser(request),# Variable adicional
-        'foto':photoUser(request),
-        'Categoria': Categoria(request)
+        'nombre_usuario': empleado.nameUser(request),# Variable adicional
+        'foto':empleado.photoUser(request),
+        'Categoria': empleado.Categoria(request)
         # Puedes agregar más variables aquí si lo necesitas
     }
     
-    imprimir(photoUser(request))
+    imprimir(empleado.photoUser(request))
     # Renderiza la lista de usuarios en una plantilla HTML
     return render(request, 'Usuarios.html', context)
 
 
+
+@login_required  
+def editar_usuario(request):
+    #imprimir("Vista de editar Usuario ")
+    if request.method == 'POST':
+         # Captura los datos enviados desde el formulario
+        nombre_usuario = request.POST.get('nombre_usuario')
+        nombre_pila = request.POST.get('nombre_pila')
+        apellido = request.POST.get('apellido')
+        nombre_completo = request.POST.get('nombre_completo')
+        email = request.POST.get('email')
+        departamento = request.POST.get('departamento')
+        puesto = request.POST.get('puesto')
+        nombre_inicio_sesion = request.POST.get('nombre_inicio_sesion')
+        user_dn = request.POST.get('distinguished_name')
+        # ... otros campos ....
+        #imprimir(nombre_usuario)
+        #imprimir(user_dn)
+        # Conectar a Active Directory
+        insertar_registro_accion(
+        empleado.nameUser(request),
+        'Modulo AD',
+        'Editar',
+        f"Se han modificado los datos del usuario '{nombre_usuario}'  en AD ",
+        get_client_ip(request),
+        request.META.get('HTTP_USER_AGENT'),
+        'N/A'
+        )
+        try:
+            #server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
+            with connect_to_ad() as conn:
+             #   user_dn = f"CN={nombre_usuario},OU=iaiUsuario,OU=RedGrupoIAI,{domino}"
+                
+                # Actualizar los atributos
+                conn.modify(user_dn, {
+                    'givenName': [(MODIFY_REPLACE, [nombre_pila])],
+                    'sn': [(MODIFY_REPLACE, [apellido])],
+                    'displayName': [(MODIFY_REPLACE, [nombre_completo])],
+                    'mail': [(MODIFY_REPLACE, [email])],
+                    'department': [(MODIFY_REPLACE, [departamento])],
+                    'title': [(MODIFY_REPLACE, [puesto])],
+                    'sAMAccountName': [(MODIFY_REPLACE, [nombre_inicio_sesion])],
+                    # ... otros atributos ...
+                })
+
+                # Verificar resultado de la modificación
+                if conn.result['result'] == 0:  # éxito
+                    messages.success(request, 'Usuario editado correctamente.')
+                    imprimir('Usuario editado correctamente.')
+                else:
+                    messages.error(request, f"Error al editar usuario: {conn.result['description']}")
+                    imprimir( f"Error al editar usuario: {conn.result['description']}")
+        except Exception as e:
+            messages.error(request, f"Error al conectar con AD: {str(e)}")
+            imprimir(f"Error al conectar con AD: {str(e)}")
+    # Redireccionar de vuelta a la lista de usuarios
+    
+    imprimir(mover_usuario_ou(nombre_inicio_sesion, unidadOrganizativa[asignar_Departamento(departamento)],request))
+    return redirect('usuarios')
+
+ 
+@login_required
+def home(request):
+    # Aquí la lógica para mostrar la página de inicio
+    return render(request, 'home.html')
+@login_required  
+def salir (request):
+    logout(request)
+    return redirect ('home')
+
+"""
 
 @login_required  
 def agregar_usuario(request): # esta funcion o vista la deje por que tal vez se utilice en el futuro , solo revisien bien las variables porque se han modificado el domino.....
@@ -455,78 +502,7 @@ def agregar_usuario(request): # esta funcion o vista la deje por que tal vez se 
         # Puedes agregar más variables aquí si lo necesitas
     }          
     
-    return render(request, 'AgregarUsuario.html',context)
-
-@login_required  
-def editar_usuario(request):
-    #imprimir("Vista de editar Usuario ")
-    if request.method == 'POST':
-         # Captura los datos enviados desde el formulario
-        nombre_usuario = request.POST.get('nombre_usuario')
-        nombre_pila = request.POST.get('nombre_pila')
-        apellido = request.POST.get('apellido')
-        nombre_completo = request.POST.get('nombre_completo')
-        email = request.POST.get('email')
-        departamento = request.POST.get('departamento')
-        puesto = request.POST.get('puesto')
-        nombre_inicio_sesion = request.POST.get('nombre_inicio_sesion')
-        user_dn = request.POST.get('distinguished_name')
-        # ... otros campos ....
-        #imprimir(nombre_usuario)
-        #imprimir(user_dn)
-        # Conectar a Active Directory
-        insertar_registro_accion(
-        nameUser(request),
-        'Modulo AD',
-        'Editar',
-        f"Se han modificado los datos del usuario '{nombre_usuario}'  en AD ",
-        get_client_ip(request),
-        request.META.get('HTTP_USER_AGENT'),
-        'N/A'
-        )
-        try:
-            #server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
-            with connect_to_ad() as conn:
-             #   user_dn = f"CN={nombre_usuario},OU=iaiUsuario,OU=RedGrupoIAI,{domino}"
-                
-                # Actualizar los atributos
-                conn.modify(user_dn, {
-                    'givenName': [(MODIFY_REPLACE, [nombre_pila])],
-                    'sn': [(MODIFY_REPLACE, [apellido])],
-                    'displayName': [(MODIFY_REPLACE, [nombre_completo])],
-                    'mail': [(MODIFY_REPLACE, [email])],
-                    'department': [(MODIFY_REPLACE, [departamento])],
-                    'title': [(MODIFY_REPLACE, [puesto])],
-                    'sAMAccountName': [(MODIFY_REPLACE, [nombre_inicio_sesion])],
-                    # ... otros atributos ...
-                })
-
-                # Verificar resultado de la modificación
-                if conn.result['result'] == 0:  # éxito
-                    messages.success(request, 'Usuario editado correctamente.')
-                    imprimir('Usuario editado correctamente.')
-                else:
-                    messages.error(request, f"Error al editar usuario: {conn.result['description']}")
-                    imprimir( f"Error al editar usuario: {conn.result['description']}")
-        except Exception as e:
-            messages.error(request, f"Error al conectar con AD: {str(e)}")
-            imprimir(f"Error al conectar con AD: {str(e)}")
-    # Redireccionar de vuelta a la lista de usuarios
-    
-    imprimir(mover_usuario_ou(nombre_inicio_sesion, unidadOrganizativa[asignar_Departamento(departamento)],request))
-    return redirect('usuarios')
-
- 
-@login_required
-def home(request):
-    # Aquí la lógica para mostrar la página de inicio
-    return render(request, 'home.html')
-@login_required  
-def salir (request):
-    logout(request)
-    return redirect ('home')
-
-
+    return render(request, 'AgregarUsuario.html',context)   """
 # -----------------------------------------------------------funciones que no son vistas -----------------------------------
 def is_account_disabled(useraccountcontrol_str):
     DISABLED_ACCOUNT_BIT = 0x2
@@ -586,14 +562,14 @@ def activar_usuario(request, nombre_usuario):
             user_dn = nombre_usuario;
             #imprimir(user_dn)
             # Establecer userAccountControl a 512 para activar la cuenta
-            conn.modify(user_dn, {'userAccountControl': [(MODIFY_REPLACE, [512])]}) # debe activarse con el 512 pero eso lo vamos a dejar al ultimo ajajajajaj
+            conn.modify(user_dn, {'userAccountControl': [(MODIFY_REPLACE, [512])]}) # debe activarse con el 512 pero eso lo vamos a dejar al ultimo ajajajajaj #26/02/2024 se logro hacer 
             if conn.result['result'] == 0:
                 messages.success(request, 'Usuario activado correctamente.')
                 imprimir('Usuario activado correctamente.')
                 mover = buscar_usuario_por_dn(nombre_usuario)
                 imprimir(mover_usuario_ou(mover['cn'], unidadOrganizativa[asignar_Departamento(mover['department'])],request))
                 insertar_registro_accion(
-                nameUser(request),
+                empleado.nameUser(request),
                 'Modulo AD',
                 'Alta',
                 f"El usuario '{mover['cn']}' fue dado de alta en AD ",
@@ -634,7 +610,7 @@ def desactivar_usuario(request, nombre_usuario):
                 #imprimir(department)
                 imprimir(mover_usuario_ou(mover['cn'], unidadOrganizativa[0],request))
                 insertar_registro_accion(
-                nameUser(request),
+                empleado.nameUser(request),
                 'Modulo AD',
                 'Baja',
                 f"El usuario '{mover['cn']}' fue dado de baja en AD ",
@@ -665,48 +641,7 @@ def extraer_unidad_organizativa(dn):
     return unidades_organizativas
 
 
-def nameUser(request):
-    if request.user.is_authenticated:
-       nombreUsuario= request.user.first_name+" "+request.user.last_name 
-  
-    
-    return nombreUsuario
 
-def Categoria(request):
-    usuario=None
-    if request.user.is_authenticated:
-        # Obtener el nombre de usuario del usuario autenticado
-       nombreUsuario = request.user.username
-
-        # Filtrar el objeto VallEmpleado usando el nombre de usuario
-       usuarioBD = VallEmpleado.objects.filter(username=nombreUsuario).first()
-
-        # Si se encuentra un usuario en la BD
-       if usuarioBD:
-            usuario = usuarioBD.Nombre_ct
-
-
-    return usuario
-
-def photoUser(request):
-    # Ruta de foto predeterminada
-    photo = '/static/img/logo1.png'
-
-    # Comprobar si el usuario está autenticado
-    if request.user.is_authenticated:
-        # Obtener el nombre de usuario del usuario autenticado
-        nombreUsuario = request.user.username
-
-        # Filtrar el objeto VallEmpleado usando el nombre de usuario
-        usuarioBD = VallEmpleado.objects.filter(username=nombreUsuario).first()
-
-        # Si se encuentra un usuario en la BD y tiene una ruta de foto, actualizar la ruta de la foto
-        if usuarioBD and usuarioBD.RutaFoto_ps:
-        
-            photo = f'http://intranet.grupo-iai.com.mx:85/SERCAPNUBE/Imagenes/FOTOS/{usuarioBD.RutaFoto_ps}'
-
-    # Devolver la ruta de la foto
-    return photo
 
 def connect_to_ad():
     
@@ -762,7 +697,7 @@ def mover_usuario_ou(nombre_usuario, nueva_ou,request):
                 if conn.result['result'] == 0:
                     mensaje = 'Usuario movido correctamente.'
                     insertar_registro_accion(
-                    nameUser(request),
+                    empleado.nameUser(request),
                     'Modulo AD',
                     'Mover',
                     f"El usuario  '{nombre_usuario}' ha sido trasladado  a la nueva ubicación : {extraer_unidad_organizativa(nueva_ou_completa)[0]}",
@@ -863,6 +798,9 @@ def get_client_ip(request):
     # Si no se encuentra en las cabeceras, tomar la dirección del remitente de la solicitud
     return request.META.get('REMOTE_ADDR')
 
+def imprimir(mensaje): #funcion para imprimir en la consola 
+    if settings.DEBUG:
+        print(mensaje)
 
 
 
@@ -965,92 +903,3 @@ def get_client_ip(request):
 
 
 
-
-"""
-librerias que hacen funcionar el proyecto ;) esto es un regalo de mi para el futuro XD 02/02/2024
-absl-py                       2.0.0
-annotated-types               0.6.0
-asgiref                       3.7.2
-attrs                         23.1.0
-bcrypt                        4.1.1
-certifi                       2023.11.17
-cffi                          1.16.0
-charset-normalizer            3.3.2
-click                         8.1.7
-cmake                         3.27.7
-colorama                      0.4.6
-contourpy                     1.2.0
-cryptography                  41.0.7
-cycler                        0.12.1
-Django                        4.2.7
-django-components             0.29
-django-jazzmin                2.6.0
-django-mssql-backend          2.8.1
-django-querycount             0.8.3
-django-sslserver              0.22
-django-unfold                 0.18.0
-djangorestframework           3.14.0
-djangorestframework-simplejwt 5.3.1
-dlib                          19.24.2
-dotty-dict                    1.3.1
-drf-yasg                      1.21.7
-face-recognition              1.3.0
-face_recognition_models       0.3.0
-flatbuffers                   23.5.26
-fonttools                     4.46.0
-gitdb                         4.0.11
-GitPython                     3.1.40
-gunicorn                      21.2.0
-idna                          3.6
-importlib-resources           6.1.1
-inflection                    0.5.1
-Jinja2                        3.1.2
-kiwisolver                    1.4.5
-ldap3                         2.9.1
-markdown-it-py                3.0.0
-MarkupSafe                    2.1.3
-matplotlib                    3.8.2
-mdurl                         0.1.2
-mediapipe                     0.10.8
-mssql-django                  1.3
-numpy                         1.26.2
-opencv-contrib-python         4.8.1.78
-opencv-python                 4.8.1.78
-packaging                     23.2
-passlib                       1.7.4
-Pillow                        10.1.0
-pip                           23.3.2
-protobuf                      3.20.3
-psycopg2                      2.9.9
-pyasn1                        0.5.1
-pycparser                     2.21
-pycryptodome                  3.20.0
-pydantic                      2.5.3
-pydantic_core                 2.14.6
-Pygments                      2.17.2
-PyJWT                         2.8.0
-pyodbc                        5.0.1
-pyparsing                     3.1.1
-python-dateutil               2.8.2
-python-dotenv                 1.0.0
-python-gitlab                 4.3.0
-python-semantic-release       8.7.0
-pytz                          2023.3.post1
-PyYAML                        6.0.1
-requests                      2.31.0
-requests-toolbelt             1.0.0
-rich                          13.7.0
-setuptools                    65.5.0
-shellingham                   1.5.4
-six                           1.16.0
-smmap                         5.0.1
-sounddevice                   0.4.6
-sqlparse                      0.4.4
-tomlkit                       0.12.3
-typing_extensions             4.9.0
-tzdata                        2023.3
-uritemplate                   4.1.1
-urllib3                       2.1.0
-wfastcgi                      3.0.0
-whitenoise                    6.6.0
-"""

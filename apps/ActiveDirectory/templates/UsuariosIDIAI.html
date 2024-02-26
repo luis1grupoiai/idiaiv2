@@ -152,7 +152,7 @@ Usuarios de IDIAI
                                         <i data-feather="x"></i>
                                     </button>
                                 </div>
-                                <form  method="post">
+                                <form  method="post" id="miFormulario">
                                     {% csrf_token %}
                                     <div class="modal-body">
                                        
@@ -439,9 +439,18 @@ Usuarios de IDIAI
                 setCookie('browserId', browserId, 365);
             }
             
-            console.log("Browser ID: " + browserId);
-
-            
+          //  console.log("Browser ID: " + browserId);
+          //JavaScript para Manejar el Envío del Formulario:
+          document.addEventListener('DOMContentLoaded', function() {
+            var formulario = document.getElementById('miFormulario');
+            formulario.addEventListener('submit', function() {
+                var botonGuardar = document.getElementById('botonGuardar');
+                botonGuardar.disabled = true; // Deshabilita el botón para prevenir múltiples envíos
+                botonGuardar.textContent = 'Guardando...'; // Opcional: Cambia el texto para indicar que se está procesando
+        
+                // Aquí tu lógica para enviar el formulario, si haces algo más allá del envío normal
+            });
+        });
      
             
             //fin de identificar el navegador 

@@ -51,7 +51,7 @@ def detect_faces_dnn(request):
 
         if face_locations:
             # Comparación con imagen de referencia
-            known_image = face_recognition.load_image_file("staticfiles/admin/img/10972.jpg")
+            known_image = face_recognition.load_image_file("static/admin/img/10972.jpg")
             known_encoding = face_recognition.face_encodings(known_image)[0]
             unknown_encoding = face_recognition.face_encodings(image, known_face_locations=face_locations)[0]
 

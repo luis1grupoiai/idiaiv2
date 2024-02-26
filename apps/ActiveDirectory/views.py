@@ -2,7 +2,7 @@ from django.shortcuts import render , redirect, get_object_or_404
 from django.conf import settings
 from ldap3 import Server, Connection, ALL_ATTRIBUTES , MODIFY_REPLACE , ALL , NTLM
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import logout
 from django.http import JsonResponse
 from django.utils import timezone
@@ -12,6 +12,8 @@ from apps.AsignarUsuario.models import VallEmpleado, TRegistroAccionesModulo
 from .models import TActiveDirectoryIp
 from .utils import AtributosDeEmpleado , IPSinBaseDatos
 
+def es_superusuario(user):
+    return user.is_authenticated and user.is_superuser
 
 empleado = AtributosDeEmpleado()
 ip_sin_base_dato = IPSinBaseDatos().cambiar_ip('192.168.1.1') #en caso que no funcione la base datos
@@ -58,6 +60,7 @@ unidadOrganizativa = ('OU=Bajas','OU=Administracion','OU=Ingeniería','OU=DCASS'
 
 
 @login_required
+@user_passes_test(es_superusuario) # Solo permitir a superusuarios
 def ipconfig(request): #vista para la gestion de la ip de AD
     ip=None
    
@@ -128,7 +131,8 @@ def ipconfig(request): #vista para la gestion de la ip de AD
     }
     return render(request,'ipconfig.html',context)
 
-@login_required  
+@login_required
+@user_passes_test(es_superusuario) # Solo permitir a superusuarios  
 def bitacora(request): #LA BITACORA QUE LLEVA EL SISTEMAS DE AD PARA LLEVAR EL HISTORICO DE LOS PROCESOS QUE SE REALIZA EN LA INTERFAZ
     mensaje=None
     #registros= TRegistroAccionesModulo.objects.all()
@@ -147,7 +151,8 @@ def bitacora(request): #LA BITACORA QUE LLEVA EL SISTEMAS DE AD PARA LLEVAR EL H
     return render(request, 'bitacora.html',context)
 
 
-@login_required  
+@login_required
+@user_passes_test(es_superusuario) # Solo permitir a superusuarios 
 def consultarUsuariosIDIAI(request):
     mensaje = None
     opc = 0
@@ -269,7 +274,8 @@ def consultarUsuariosIDIAI(request):
 
 
 
-@login_required  
+@login_required
+@user_passes_test(es_superusuario) # Solo permitir a superusuarios
 def consultar_usuarios(request):
     
     usuarios = []
@@ -372,7 +378,8 @@ def consultar_usuarios(request):
 
 
 
-@login_required  
+@login_required
+@user_passes_test(es_superusuario) # Solo permitir a superusuarios
 def editar_usuario(request):
     #imprimir("Vista de editar Usuario ")
     if request.method == 'POST':
@@ -433,10 +440,18 @@ def editar_usuario(request):
 
  
 @login_required
+#@user_passes_test(es_superusuario) # Solo permitir a superusuarios
 def home(request):
-    # Aquí la lógica para mostrar la página de inicio
-    return render(request, 'home.html')
-@login_required  
+   # Inicializa la variable que determina si el usuario es superusuario
+    es_super = es_superusuario(request.user)
+    
+    # Pasar el contexto como un diccionario a la plantilla
+    context = {'es_super': es_super}
+    
+    return render(request, 'home.html', context)
+
+@login_required
+@user_passes_test(es_superusuario) # Solo permitir a superusuarios 
 def salir (request):
     logout(request)
     return redirect ('home')

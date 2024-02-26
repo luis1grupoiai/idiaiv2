@@ -28,6 +28,7 @@
 
 <div class="container">
     <div class="row text-center">
+
         <div class="col-4">
             <div class="card" >
                 <a href=" {% url 'solicitud' %}">
@@ -40,6 +41,7 @@
                 </div>
               </div>
     </div>
+    {% if es_super %}
         <div class="col-4">
             <div class="card" >
                 <a href="admin/">
@@ -52,6 +54,7 @@
                 </div>
               </div>
         </div>
+
         <div class="col-4">
             <div class="card" >
                 <a href=" {% url 'usuarios' %}">
@@ -101,7 +104,7 @@
             </div>
           </div>
     </div>
-
+{% endif %}
     
     </div>
 

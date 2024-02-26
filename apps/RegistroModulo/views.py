@@ -5,16 +5,18 @@ from .models import TRegistroDeModulo
 from apps.AsignarUsuario.models import  TRegistroAccionesModulo ,VallEmpleado
 from .forms import ModuloForm
 from cryptography.fernet import Fernet
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required , user_passes_test
 from django.contrib.auth import logout
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin 
 from django.http import JsonResponse
 from django.utils import timezone
 from django.urls import reverse_lazy
 from django.contrib import messages
+from .mixins import SuperuserRequiredMixin , SuperuserRedirectMixin
 
 ModuloEntrada ="12345" # la contraseña del modal ----
-
+def es_superusuario(user):
+    return user.is_authenticated and user.is_superuser
 
 class NombreUsuarioMixin:
     def get_context_data(self, **kwargs):
@@ -32,7 +34,7 @@ class NombreUsuarioMixin:
         return context
 
 
-class ModuloListView(LoginRequiredMixin,NombreUsuarioMixin,ListView):
+class ModuloListView(LoginRequiredMixin,NombreUsuarioMixin,SuperuserRedirectMixin,ListView):
     model = TRegistroDeModulo
     template_name = 'modulo_list.html'
     
@@ -42,7 +44,7 @@ class ModuloListView(LoginRequiredMixin,NombreUsuarioMixin,ListView):
         
         return context
 
-class ModuloCreateView(LoginRequiredMixin,NombreUsuarioMixin,CreateView):
+class ModuloCreateView(LoginRequiredMixin,NombreUsuarioMixin,SuperuserRedirectMixin,CreateView):
     model = TRegistroDeModulo
     form_class = ModuloForm
     template_name = 'modulo_form.html'
@@ -73,7 +75,7 @@ class ModuloCreateView(LoginRequiredMixin,NombreUsuarioMixin,CreateView):
 
         return response
 
-class ModuloUpdateView(LoginRequiredMixin,NombreUsuarioMixin,UpdateView):
+class ModuloUpdateView(LoginRequiredMixin,NombreUsuarioMixin,SuperuserRequiredMixin,UpdateView):
     model = TRegistroDeModulo
     form_class = ModuloForm
     template_name = 'modulo_form.html'
@@ -129,7 +131,7 @@ class ModuloUpdateView(LoginRequiredMixin,NombreUsuarioMixin,UpdateView):
     
     
 
-class ModuloDeleteView(LoginRequiredMixin,NombreUsuarioMixin,DeleteView):
+class ModuloDeleteView(LoginRequiredMixin,NombreUsuarioMixin,SuperuserRequiredMixin,DeleteView):
     model = TRegistroDeModulo
     template_name = 'modulo_confirm_delete.html'
     success_url = reverse_lazy('modulo_list')
@@ -153,6 +155,7 @@ class ModuloDeleteView(LoginRequiredMixin,NombreUsuarioMixin,DeleteView):
         return response
 
 @login_required  
+@user_passes_test(es_superusuario) # Solo permitir a superusuarios
 def bitacora(request):
     
     
@@ -190,6 +193,7 @@ def bitacora(request):
 
 
 @login_required 
+@user_passes_test(es_superusuario) # Solo permitir a superusuarios
 def ver_detalle_registro(request, id):
     registro = get_object_or_404(TRegistroDeModulo, pk=id)
     modulo_desencriptada = registro.descripcion

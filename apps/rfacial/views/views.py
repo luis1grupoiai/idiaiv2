@@ -205,8 +205,54 @@ class CAutenticacion(APIView):
     @staticmethod
     def prueba():
         print("Accede a metodo prueba...")
-        
 
+    def decodificarB64(self, p_decodificado):
+        sTexto = ""
+        try:
+            sTextFinal = base64.b64decode(p_decodificado)
+            sTextFinal = sTextFinal.decode('utf-8')
+
+        except ValueError as error:
+            sTexto = "%s" % error
+            datos = {'message': 'Error al convertir de base64. ', "error": sTexto}
+
+            print(datos)
+
+    
+        return sTextFinal
+    
+    def consultarSistema(self, idSistema):
+        sTexto = ""
+        try:
+            dSistema = list(Sistemas.objects.filter(id=idSistema).values())
+            if len(dSistema)>0:
+                # sistema = dSistema[0]['id']
+                self.sNombreSistema = dSistema[0]['nombre']
+
+        except ValueError as error:
+            sTexto = "%s" % error
+            datos = {'message': 'Error al ejecutar query. ', "error": sTexto}
+
+            print(datos)
+
+    
+        return dSistema
+
+
+    def consultarUsuarioActivo(self, nameUser):
+         
+        sTexto = ""
+        try:
+           dUsuario = list(User.objects.filter(username=nameUser, is_active=1).values())
+
+        except ValueError as error:
+            sTexto = "%s" % error
+            datos = {'message': 'Error al ejecutar query. ', "error": sTexto}
+
+            print(datos)
+
+    
+        return dUsuario
        
         # instancia.registrarParametros("idUsuario",2)
         # sSP = "obtenerPermisosUsuario"
@@ -316,11 +362,15 @@ class CAutenticacion(APIView):
             #si las claves estan correctas, continuara realizando el resto del proceso
             # de autenticación
             if bValido:
+                # IMPORTANTE!
+                # Intranet tiene el id de sistema 3, Reconocimiento facial tiene el id de sistema 4.
 
                 #2. Compara el token obtenido del json contra el secretKey de la aplicación.
                 # 2.1. Para el sistema de RF (Reconocimiento Facial) el  token =4  - KEY_RF
-                keySis = base64.b64decode(jd['token'])
-                keySis = keySis.decode('utf-8')
+                # keySis = base64.b64decode(jd['token'])
+                # keySis = keySis.decode('utf-8')
+
+                keySis = self.decodificarB64(jd['token'])
 
                 # print(keySis)
                 # print(os.environ.get('KEY_RF'))
@@ -329,19 +379,24 @@ class CAutenticacion(APIView):
                 if((keySis == os.environ.get('SECRET_KEY')) or (keySis == os.environ.get('KEY_RF')) or (keySis == os.environ.get('KEY_INTRANET'))):
                    
                     #Valida si el sistema existe en el catalogo de sistemas.
-                    dSistema = list(Sistemas.objects.filter(id=jd['idSistema']).values())
+                    # consultarSistema
+                    # dSistema = list(Sistemas.objects.filter(id=jd['idSistema']).values())
+                    dSistema = self.consultarSistema(jd['idSistema'])
                     if len(dSistema)>0:
                         sistema = dSistema[0]['id']
-                        self.sNombreSistema = dSistema[0]['nombre']
+                        # self.sNombreSistema = dSistema[0]['nombre']
                     
                     #Si el sistema obtenido se encuentra en el catalogo de sistemas y el sistema no es el sistema 4 (RF)
                     if sistema>0 and keySis!=os.environ.get('KEY_RF'):
                       
                         #3. Decodifica el password en base64
-                        pwdD64 = base64.b64decode(jd['password'])
+                        # pwdD64 = base64.b64decode(jd['password'])
+                        #decodificarB64
+                        pwdD64 = self.decodificarB64(jd['password'])
                     
                         #Obtiene el registro del usuario mediante el userName.
-                        dUsuario = list(User.objects.filter(username=jd['user'], is_active=1).values())
+                        # dUsuario = list(User.objects.filter(username=jd['user'], is_active=1).values())
+                        dUsuario = self.consultarUsuarioActivo(jd['user']);
                        
                         if len(dUsuario):
                             password = dUsuario[0]['password']
@@ -387,6 +442,12 @@ class CAutenticacion(APIView):
 
                                 print(tokenApi)
 
+                                if keySis == os.environ.get('KEY_INTRANET'):
+                                    pass
+                                    #Obtener listado de sistemas a los que tiene acceso el usuario
+                                    #Generar el tokenGlobal :) 
+
+
                                 # is_token_valid = default_token_generator.check_token(jd['user'], tokenApi)
                                 
                                 datos = {'message': 'Success','idPersonal':idPersonal,'usuario': jd['user'], 'password': jd['password'],'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'permisos': dPermisos}
@@ -428,11 +489,38 @@ class CAutenticacion(APIView):
 
                                 datos = {'message': 'Success','idPersonal':idPersonal,'usuario': sUserName, 'password': password,'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'permisos': dPermisos}
                         
-                        elif  sistema==3 and keySis==os.environ.get('KEY_INTRANET'):
-                           #Token Global...
-                            pass
                         else:
                                 datos = {'message': 'Sin datos', 'error':'¡Ups! Al parecer no existen registros de este usuario, por favor de verificar los datos proporcionados. '}
+
+                    # elif  sistema==3 and keySis==os.environ.get('KEY_INTRANET'):
+                    #     #Token Global...
+
+                    #     #3. Decodifica el password en base64
+                    #     pwdD64 = base64.b64decode(jd['password'])
+
+                    #     #Obtiene el registro del usuario mediante el userName.
+                    #     dUsuario = list(User.objects.filter(username=jd['user'], is_active=1).values())
+
+                    #     if len(dUsuario):
+                    #         password = dUsuario[0]['password']
+                    #         idUsuario = dUsuario[0]['id']
+
+                    #     if  handler.verify(pwdD64,password):
+                            
+                    #         #obtener informacion personal
+                    #         dDatosPersonales = self.obtenerDatosPersonales(idUsuario,0)
+                    #         if len(dDatosPersonales)>0:
+                    #             print(dDatosPersonales[0][1])
+                    #             idPersonal = dDatosPersonales[0][1]
+                    #             sNombreCompleto = dDatosPersonales[0][8]
+
+                    #         #Obtener listado de sistemas a los que puede acceder el usuario
+                    #         #generar Token global : nameUser:tiempoSesion:identificador de TKG: ¿metadatos? (nombre del usuario, permisos, listado de sistemas a los que puede acceder...)
+                    #     else:
+                    #         pass
+
+
+                        
                     else:
                         datos = {'message': 'Dato Invalidos', 'error':'Id de sistema invalido'}                   
                 else:

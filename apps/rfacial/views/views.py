@@ -325,8 +325,8 @@ class CAutenticacion(APIView):
                 # print(keySis)
                 # print(os.environ.get('KEY_RF'))
                
-                 
-                if((keySis == os.environ.get('SECRET_KEY')) or (keySis == os.environ.get('KEY_RF'))):
+                 #20/02/2024 valida llave para token global
+                if((keySis == os.environ.get('SECRET_KEY')) or (keySis == os.environ.get('KEY_RF')) or (keySis == os.environ.get('KEY_INTRANET'))):
                    
                     #Valida si el sistema existe en el catalogo de sistemas.
                     dSistema = list(Sistemas.objects.filter(id=jd['idSistema']).values())
@@ -396,7 +396,7 @@ class CAutenticacion(APIView):
                         else:
                             datos = {'message': 'Dato Invalidos', 'error':'¡Ups! la contraseña es incorrecta.'}
 
-                    elif  sistema>0 and keySis==os.environ.get('KEY_RF'):
+                    elif  sistema==4 and keySis==os.environ.get('KEY_RF'):
 
                         print("Petición recibida por parte del API de reconocimiento facial.")
 
@@ -427,6 +427,10 @@ class CAutenticacion(APIView):
                                     tokenApi = self.get_custom_auth_token(sUserName,jd['timeExp'])
 
                                 datos = {'message': 'Success','idPersonal':idPersonal,'usuario': sUserName, 'password': password,'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'permisos': dPermisos}
+                        
+                        elif  sistema==3 and keySis==os.environ.get('KEY_INTRANET'):
+                           #Token Global...
+                            pass
                         else:
                                 datos = {'message': 'Sin datos', 'error':'¡Ups! Al parecer no existen registros de este usuario, por favor de verificar los datos proporcionados. '}
                     else:

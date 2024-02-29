@@ -1,6 +1,7 @@
 from django import forms
 from .models import TRegistroDeModulo
 from cryptography.fernet import Fernet
+from django.core.exceptions import ValidationError
 
 
 ENCRYPTION_KEY_DESCRIPCION = b'VVsQPaM9IhXYrWNwLyKkAnmJdzdFR8R0MwdvZpHGsA8='
@@ -17,7 +18,14 @@ class ModuloForm(forms.ModelForm):
         model = TRegistroDeModulo
         fields = ['nombre', 'descripcion', 'nombre_completo']   # Usa los campos reales del modelo, pero serán manejados en save()
    
-    
+    def clean_nombre_completo(self):
+        nombre_completo = self.cleaned_data.get('nombre_completo')
+        
+        # Verifica si el nombre_completo ya existe en la base de datos
+        if TRegistroDeModulo.objects.filter(nombre_completo=nombre_completo).exists():
+            raise ValidationError('El nombre completo ya existe. Por favor, elige uno diferente.')
+
+        return nombre_completo
     
     def save(self, commit=True):
         instance = super().save(commit=False)

@@ -28,20 +28,21 @@ def importarmodulo(request):
             # Cifrar el nombre y la descripción
             nombre_cifrado = n.encrypt(usuario._nombre.encode()).decode()
             descripcion_cifrado = f.encrypt(usuario._descripcion.encode()).decode()
-            
+            nombreCompleto = usuario.nombre_completo
             # Intentar obtener o crear un nuevo registro en TRegistroDeModulo
             nuevo_usuario, created = TRegistroDeModulo.objects.get_or_create(
-                _nombre=nombre_cifrado,
+                nombre_completo=nombreCompleto,
                 defaults={
-                    '_descripcion': descripcion_cifrado,
+                    '_descripcion': descripcion_cifrado, '_nombre':nombre_cifrado,
+                    
                 }
             )
             
             if created:
                 nuevo_usuario.save()
-                print(count,"Usuario creado:", usuario._nombre)  # Opcional: imprimir/loguear los nombres de los usuarios creados
+                print(count,"Usuario creado:", usuario.nombre_completo)  # Opcional: imprimir/loguear los nombres de los usuarios creados
             else:
-                print(count,"Usuario existente:", usuario._nombre)  # Opcional: imprimir/loguear los nombres de los usuarios ya existentes
+                print(count,"Usuario existente:", usuario.nombre_completo)  # Opcional: imprimir/loguear los nombres de los usuarios ya existentes
 
         messages.success(request, "Usuarios importados correctamente.")
         return redirect('importarmodulos')  # Asegúrate de que este nombre de URL exista en tus urls.py

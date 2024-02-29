@@ -10,11 +10,12 @@ ENCRYPTION_KEY_NOMBRE = b'o2GwoZ4O2UyRvsWTK7owoZKHOBQU2TbmYHUkHI1OWMs='
 
 class ModuloForm(forms.ModelForm):
     nombre = forms.CharField(max_length=128, required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
-    descripcion = forms.CharField(widget=forms.Textarea(attrs={'class': 'form-control'}), required=False)
+    descripcion = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}), required=False)
+    nombre_completo = forms.CharField(max_length=255, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))  # Nuevo campo agregado
 
     class Meta:
         model = TRegistroDeModulo
-        fields = ['nombre', 'descripcion']  # Usa los campos reales del modelo, pero serán manejados en save()
+        fields = ['nombre', 'descripcion', 'nombre_completo']   # Usa los campos reales del modelo, pero serán manejados en save()
    
     
     
@@ -24,6 +25,10 @@ class ModuloForm(forms.ModelForm):
         f_descripcion = Fernet(ENCRYPTION_KEY_DESCRIPCION)
         instance._nombre = f_nombre.encrypt(self.cleaned_data['nombre'].encode()).decode()
         instance._descripcion = f_descripcion.encrypt(self.cleaned_data['descripcion'].encode()).decode()
+        
+        # Como 'nombre_completo' no necesita encriptación, simplemente lo asignamos
+        instance.nombre_completo = self.cleaned_data.get('nombre_completo', '')
+        
         if commit:
             instance.save()
         return instance

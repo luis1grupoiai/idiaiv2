@@ -9,7 +9,8 @@ ENCRYPTION_KEY_NOMBRE = b'o2GwoZ4O2UyRvsWTK7owoZKHOBQU2TbmYHUkHI1OWMs='
 class TRegistroDeModulo(models.Model):
     _nombre = models.TextField()
     _descripcion = models.TextField()  # Usamos TextField para soportar datos encriptados más grandes
-
+    nombre_completo = models.TextField()  # Nuevo campo agregado
+    
     @property
     def nombre(self):
         n = Fernet(ENCRYPTION_KEY_NOMBRE)

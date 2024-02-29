@@ -46,16 +46,24 @@ Nombre de los Modulos
 <form method="post" class="mt-4">
     {% csrf_token %}
     <div class="form-group">
-        <label for="id__nombre">Nombre:</label>
+        <label for="nombre_completo">Nombre:</label>
+        {{ form.nombre_completo }}
+    </div>
+    <div class="form-group">
+        <label for="id__nombre">Nombre de Usuario :</label>
         {{ form.nombre }}
     </div>
     <div class="form-group">
-        <label for="id__descripcion">Descripción:</label>
+        <label for="id__descripcion">Contraseña:</label>
         {{ form.descripcion }}
     </div>
     <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Guardar</button> 
     <a href="{% url 'modulo_list'  %}" class="btn btn-danger"><i class="bi bi-x-circle"></i> Cancelar</a>
 </form>
+
+
+
+
 
 <div class="modal fade" id="No_me_hackes_XD_Modal." tabindex="-1" role="dialog" aria-labelledby="passwordModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
@@ -94,7 +102,7 @@ Nombre de los Modulos
             backdrop: 'static', // Evita que se cierre al hacer clic fuera
             keyboard: false     // Evita que se cierre al presionar ESC
           });
-        modals.show();
+        //modals.show();
 
         function verificar(button) {
            

@@ -87,7 +87,7 @@ class CReconFacial(APIView):
         face_locations = face_recognition.face_locations(image_np)
 
         if face_locations:
-            known_image = face_recognition.load_image_file("staticfiles/admin/img/10972.jpg")
+            known_image = face_recognition.load_image_file("static/admin/img/10972.jpg")
             known_encoding = face_recognition.face_encodings(known_image)[0]
             unknown_encoding = face_recognition.face_encodings(image_np, known_face_locations=face_locations)[0]
 
@@ -204,7 +204,7 @@ class CCompareFaces(APIView):
 
             # Generar un nombre de archivo único para la imagen
             temp_file_name = f"{uuid4()}.jpg"
-            temp_file_path = os.path.join('staticfiles', 'admin', 'img', temp_file_name)
+            temp_file_path = os.path.join('static', 'admin', 'img', temp_file_name)
 
             # Guardar la imagen en un archivo temporal
             image.save(temp_file_path)

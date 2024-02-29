@@ -182,7 +182,11 @@
                                         </div>
                                         <div class="user-img d-flex align-items-center">
                                             <div class="avatar avatar-md">
+                                                {% if foto is not none %} 
                                                 <img src="{{foto}}">
+                                                {% else%}
+                                                <img src="/static/img/logo1.png">
+                                               {% endif %}
                                             </div>
                                         </div>
                                     </div>

@@ -192,7 +192,7 @@ Usuarios de Activate Directory
                                             <i data-feather="x"></i>
                                         </button>
                                     </div>
-                                    <form action="{% url 'editar_usuario' %}" method="post">
+                                    <form action="{% url 'editar_usuario' %}" method="post" id="miFormulario">
                                         {% csrf_token %}
                                         <div class="modal-body">
                                            
@@ -269,7 +269,7 @@ Usuarios de Activate Directory
                                                 <i class="bx bx-x d-block d-sm-none"></i>
                                                 <span class="d-none d-sm-block">Cerrar</span>
                                             </button>
-                                            <button type="submit" class="btn btn-primary">Guardar</button>
+                                            <button type="submit" class="btn btn-primary" id="botonGuardar">Guardar</button>
                                         </div>
                                     </form>
                                 </div>
@@ -518,5 +518,17 @@ Usuarios de Activate Directory
             function getCSRFToken() {
                 return document.querySelector('[name=csrfmiddlewaretoken]').value;
             }
+
+
+            document.addEventListener('DOMContentLoaded', function() {
+                var formulario = document.getElementById('miFormulario');
+                formulario.addEventListener('submit', function() {
+                    var botonGuardar = document.getElementById('botonGuardar');
+                    botonGuardar.disabled = true; // Deshabilita el botón para prevenir múltiples envíos
+                    botonGuardar.textContent = 'Guardando...'; // Opcional: Cambia el texto para indicar que se está procesando
+            
+                    // Aquí tu lógica para enviar el formulario, si haces algo más allá del envío normal
+                });
+            });
         </script>
     {% endblock%}

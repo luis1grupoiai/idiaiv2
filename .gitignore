@@ -11,4 +11,5 @@ db.sqlite3
 .env
 **/migrations/
 .vs/
-/staticfiles
+/static/
+/staticfiles/

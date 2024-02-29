@@ -20,19 +20,24 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
     apt-get install -y nano
 
 # Establece el directorio de trabajo dentro del contenedor
-WORKDIR /app
+WORKDIR /django-project 
 
 # Copia el archivo de requisitos al directorio de trabajo
-COPY ./requirements.txt ./
+COPY ./requirements.txt .
 
 # Instala las dependencias de Python desde el archivo de requisitos
 RUN python -m pip install -r requirements.txt
 
 # Copia todos los archivos del directorio local al directorio de trabajo en el contenedor
-COPY ./ ./
+COPY . .
 
-COPY  ./venv/Lib/site-packages/django/contrib/auth/migrations/0013_permission_created_at_permission_descripcion_and_more.py /usr/local/lib/python3.11/site-packages/django/contrib/auth/migrations/0013_permission_created_at_permission_descripcion_and_more.py
+# Copia las migraciones personalizadas
+COPY ./venv/Lib/site-packages/django/contrib/auth/migrations/0013_permission_created_at_permission_descripcion_and_more.py /usr/local/lib/python3.11/site-packages/django/contrib/auth/migrations/0013_permission_created_at_permission_descripcion_and_more.py
 COPY ./venv/Lib/site-packages/django/contrib/auth/models.py /usr/local/lib/python3.11/site-packages/django/contrib/auth/models.py
+
+# Copia la configuración de Gunicorn
+COPY gunicorn_config.py /django-project/gunicorn_config.py
 
 # Define el comando predeterminado al iniciar el contenedor
 CMD ["sh", "entrypoint.sh"]
+

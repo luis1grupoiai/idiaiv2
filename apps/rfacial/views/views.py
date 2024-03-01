@@ -2,6 +2,7 @@
 from django.views import View
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.hashers import check_password
 
 # from django.http import HttpResponse
 from django.db import models
@@ -57,6 +58,7 @@ class CAutenticacion(APIView):
         
     oExecSP = CEjecutarSP()
     sNombreSistema = ""
+    oUser = ""
 
     # @staticmethod
     def obtenerPermisos(self, p_nIdSistema, p_nIdUsuario):
@@ -202,12 +204,69 @@ class CAutenticacion(APIView):
         # print(type(sToken_encoded))
         return sToken_encoded
 
+    def obtenerSistemasUsuario(self, p_nIdUsuario):
+        # dSistemasGrupos = {}
+        # dSistemasPermisos = {}
+        dAccesoSistemaUsuario = []
+        dSistPermUser = []
+        dSistGrupoUser = []
+
+        print("Accede a metodo obtenerSistemasUsuario.")
+        try:
+            # dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema, permiso_id__isnull=False).values())
+            self.oExecSP.registrarParametros("idUser",p_nIdUsuario)
+            self.oExecSP.registrarParametros("pNoption",1)
+            dSistemasPermisos = self.oExecSP.ejecutarSP("obtenerListadoSistemas")
+            
+            if len(dSistemasPermisos)>0:
+            
+                for dPermiso in dSistemasPermisos:
+                    # sNombreGrupo = dGrupo[9]
+                    dSistPermUser.append(dPermiso[0])
+
+            print(dSistPermUser)
+
+            self.oExecSP.registrarParametros("idUser",p_nIdUsuario)
+            self.oExecSP.registrarParametros("pNoption",2)
+            dSistemasGrupos = self.oExecSP.ejecutarSP("obtenerListadoSistemas")
+
+            if len(dSistemasGrupos)>0:
+            
+                for dGrupo in dSistemasGrupos:
+                    # sNombreGrupo = dGrupo[9]
+                    dSistGrupoUser.append(dGrupo[0])
+
+            print(dSistGrupoUser)
+           
+            print("El usuario puede acceder a los sistemas: ")
+
+            lista_sin_repetidos = list(set(dSistPermUser + dSistGrupoUser))
+            print(lista_sin_repetidos)
+
+            # print("el tipo de dato es: ")
+            # print(type(dPermisos))
+            # dSistemasGrupos.update(dSistGrupoUser)
+
+            # dAccesoSistemaUsuario = list(set(dAccesoSistemaUsuario))
+
+
+            # print(dSistemasGrupos)
+
+            
+        except ValueError as error:
+            sTexto = "Error en el metodo obtenerSistemasUsuario: %s" % error
+            print(sTexto)
+
+        return lista_sin_repetidos
+    
+    
     @staticmethod
     def prueba():
         print("Accede a metodo prueba...")
 
     def decodificarB64(self, p_decodificado):
         sTexto = ""
+        print("Accede a metodo decodificarB64.")
         try:
             sTextFinal = base64.b64decode(p_decodificado)
             sTextFinal = sTextFinal.decode('utf-8')
@@ -240,19 +299,50 @@ class CAutenticacion(APIView):
 
 
     def consultarUsuarioActivo(self, nameUser):
-         
+        print("Accede a metodo  consultarUsuarioActivo:")
+        print(nameUser)
         sTexto = ""
+        datos = {}
         try:
-           dUsuario = list(User.objects.filter(username=nameUser, is_active=1).values())
+           self.oUser = User.objects.filter(username=nameUser, is_active=1)
+        #    dUsuario = list(User.objects.filter(username=nameUser, is_active=1).values())
+           dUsuario = list(self.oUser.values())
+
+          
 
         except ValueError as error:
             sTexto = "%s" % error
-            datos = {'message': 'Error al ejecutar query. ', "error": sTexto}
+            datos = {'message': 'Error al ejecutar query de consultarUsuarioActivo. ', "error": sTexto}
+
+            print(dUsuario)
+
+    
+        return dUsuario
+    
+    def verificarPswd(self, sPsw):
+        print("Accede a metodo  verificarPswd:")
+        # print(nameUser)
+        sTexto = ""
+        datos = {}
+        bCorrecto = False
+        try:
+
+            if self.oUser.exists():
+                user_obj = self.oUser.first()
+
+                if user_obj.check_password(sPsw):
+                    print("password correcta.")
+                    bCorrecto = True
+          
+
+        except ValueError as error:
+            sTexto = "%s" % error
+            datos = {'message': 'Error al ejecutar query de consultarUsuarioActivo. ', "error": sTexto}
 
             print(datos)
 
     
-        return dUsuario
+        return bCorrecto
        
         # instancia.registrarParametros("idUsuario",2)
         # sSP = "obtenerPermisosUsuario"
@@ -336,7 +426,7 @@ class CAutenticacion(APIView):
             nLenDef = len(dCamposJson) 
             #Variable que almacenara el numero de items del json recibido por la API.
             numero_de_items = 0 
-            
+            bPasswordCorrecta = False
 
             #Valida que el numero de claves del JSON enviado a la API
             #coincida con el numero de claves declaras en el diccioario dCamposJson
@@ -377,7 +467,7 @@ class CAutenticacion(APIView):
                
                  #20/02/2024 valida llave para token global
                 if((keySis == os.environ.get('SECRET_KEY')) or (keySis == os.environ.get('KEY_RF')) or (keySis == os.environ.get('KEY_INTRANET'))):
-                   
+                    print("secrey key valida")
                     #Valida si el sistema existe en el catalogo de sistemas.
                     # consultarSistema
                     # dSistema = list(Sistemas.objects.filter(id=jd['idSistema']).values())
@@ -388,7 +478,7 @@ class CAutenticacion(APIView):
                     
                     #Si el sistema obtenido se encuentra en el catalogo de sistemas y el sistema no es el sistema 4 (RF)
                     if sistema>0 and keySis!=os.environ.get('KEY_RF'):
-                      
+                        print("paso 1")
                         #3. Decodifica el password en base64
                         # pwdD64 = base64.b64decode(jd['password'])
                         #decodificarB64
@@ -397,14 +487,24 @@ class CAutenticacion(APIView):
                         #Obtiene el registro del usuario mediante el userName.
                         # dUsuario = list(User.objects.filter(username=jd['user'], is_active=1).values())
                         dUsuario = self.consultarUsuarioActivo(jd['user']);
-                       
+                        
                         if len(dUsuario):
                             password = dUsuario[0]['password']
                             idUsuario = dUsuario[0]['id']
-                       
+                            print("paso 2")
+
+                            bPasswordCorrecta = self.verificarPswd(pwdD64)
+                            # if self.oUser.exists():
+                            #    user_obj = self.oUser.first()
+
+                            #    if user_obj.check_password(pwdD64):
+                            #         print("password correcta.")
+                            #         bPasswordCorrecta = True
+                            
                         #4. Verifica que la contraseña en base64 coincida con la password encriptada de BD.
                         #En caso de coincidir es como devuelve los permisos y grupos del usuario.
-                        if  handler.verify(pwdD64,password):
+                        # if  handler.verify(pwdD64,password):
+                        if  bPasswordCorrecta:
                             # print("Las contraseñas son iguales")
                             
                             #Listado de permisos
@@ -445,6 +545,7 @@ class CAutenticacion(APIView):
                                 if keySis == os.environ.get('KEY_INTRANET'):
                                     pass
                                     #Obtener listado de sistemas a los que tiene acceso el usuario
+                                    print(self.obtenerSistemasUsuario(idUsuario));
                                     #Generar el tokenGlobal :) 
 
 

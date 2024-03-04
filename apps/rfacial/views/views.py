@@ -39,10 +39,16 @@ from drf_yasg import openapi
 
 from apps.mycore.views.ejecutarsp import CEjecutarSP
 
+from cryptography.fernet import Fernet
+
 
 import json
 import os
 import base64
+
+stky = Fernet.generate_key()
+
+crfr = Fernet(stky)
 # from camera import VideoCamera, IPWebCam
 # import numpy as np
 # import cv2
@@ -195,7 +201,9 @@ class CAutenticacion(APIView):
             
             token = default_token_generator.make_token(user)+ ',' + str(expiration_time)
    
-            sToken_encoded = urlsafe_base64_encode(force_bytes(token))
+            # sToken_encoded = urlsafe_base64_encode(force_bytes(token))
+            # .encode()).decode()
+            sToken_encoded = crfr.encrypt(token.encode()).decode()
 
         except ValueError as error:
             sTexto = "%s" % error
@@ -205,7 +213,7 @@ class CAutenticacion(APIView):
         return sToken_encoded
 
     def generarTKGlobal(self, p_sUsuario, p_sTiempoExp = 3, p_nIdSistema = 0):
-        # Generamos token para autenticación del usuario :) 
+        # Generamos token Global para autenticación del usuario :) 
         sTexto = ""
         sToken_encoded = ""
         expiration_time= 0
@@ -227,7 +235,8 @@ class CAutenticacion(APIView):
 
             print(token)
    
-            sToken_encoded = urlsafe_base64_encode(force_bytes(token))
+            # sToken_encoded = urlsafe_base64_encode(force_bytes(token))
+            sToken_encoded = crfr.encrypt(token.encode()).decode()
 
         except ValueError as error:
             sTexto = "%s" % error
@@ -575,7 +584,7 @@ class CAutenticacion(APIView):
                                         print("El tiempo de expiración no es igual 0, por lo tanto por default el token durara "+str(jd['timeExp'])+" horas.")
                                         tokenApi = self.get_custom_auth_token(jd['user'],jd['timeExp'])
 
-                                    print(tokenApi)
+                                    # print(tokenApi)
 
                                     # Cuando el sistema sea el sistema intranet de la empresa entonces...
                                     # Obtener listado de sistemas a los que tiene acceso el usuario, dado que
@@ -806,14 +815,17 @@ class CVerificaToken(APIView):
                     break
 
             if bValido:
-
+                print("Verificar token ...")
                 sToken_encoded = jd['token']
                 sUserName = jd['user']
                 
                 user = User.objects.get(username=sUserName) 
                 
-                tk = urlsafe_base64_decode(sToken_encoded)                
-                tk = tk.decode('utf-8')
+                # tk = urlsafe_base64_decode(sToken_encoded)                
+                # tk = tk.decode('utf-8')
+                # print("Entra a decrypt ...")
+                tk = crfr.decrypt(sToken_encoded.encode()).decode()
+
                 # print(tk)
                  # Separar el token y la marca de tiempo
                 parts = tk.split(',')

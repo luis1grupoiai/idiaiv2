@@ -8,7 +8,7 @@ ENCRYPTION_KEY_NOMBRE = b'o2GwoZ4O2UyRvsWTK7owoZKHOBQU2TbmYHUkHI1OWMs='
 class TRegistroDeModulo(models.Model):
     _nombre = models.TextField()
     _descripcion = models.TextField()
-
+    nombre_completo = models.TextField()  # Nuevo campo agregado
     @property
     def nombre(self):
         n = Fernet(ENCRYPTION_KEY_NOMBRE)
@@ -46,7 +46,7 @@ class VUsuariosModulo(models.Model):
     id = models.BigAutoField(primary_key=True)  # Asegura que corresponda al tipo de dato y llave primaria usada en la vista
     _nombre = models.CharField(max_length=255)  # Ajusta el max_length según tus necesidades
     _descripcion = models.TextField()  # Usamos TextField para descripciones que pueden ser largas
-
+    nombre_completo = models.TextField()  # Nuevo campo agregado
     class Meta:
         managed = False  # Django no creará, modificará, ni eliminará la tabla subyacente
         db_table = 'VUsuariosModulo'  # El nombre exacto de tu vista en SQL Server

@@ -196,10 +196,10 @@ def consultarUsuariosIDIAI(request):
         puesto = request.POST['puesto']
     
         # ... otros campos
-        imprimir(password)
+        #imprimir(password)
         # Preparar la contraseña en formato adecuado para AD
         quoted_password = f'"{password}"'.encode('utf-16-le')
-        imprimir(quoted_password )
+        #imprimir(quoted_password )
         # Establecer conexión con Active Directory
         try:
             #server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
@@ -456,10 +456,11 @@ def salir (request):
     logout(request)
     return redirect ('home')
 
-"""
+
 
 @login_required  
 def agregar_usuario(request): # esta funcion o vista la deje por que tal vez se utilice en el futuro , solo revisien bien las variables porque se han modificado el domino.....
+    mensaje=None
     if request.method == 'POST':
         dominio_Principal = '@'+'.'.join(part.replace('DC=', '') for part in domino.split(',') if part.startswith('DC='))
         nombre_usuario = request.POST['nombre_usuario']
@@ -495,7 +496,7 @@ def agregar_usuario(request): # esta funcion o vista la deje por que tal vez se 
                     'department':departamento,
                     'title':puesto,
                     'userPassword': password,
-                    #'unicodePwd':quoted_password,
+                    'unicodePwd':quoted_password,
                     #'userAccountControl':'546', # Habilita la cuenta
                    
                     # ... otros atributos
@@ -503,21 +504,39 @@ def agregar_usuario(request): # esta funcion o vista la deje por que tal vez se 
                 # Verificar el resultado de la creación del usuario
                 if conn.result['result'] == 0:  # éxito
                     messages.success(request, 'Usuario creado correctamente.')
-                    
+                    mensaje = {'titulo': 'Éxito', 'texto': 'Usuario creado correctamente', 'tipo': 'success'}
+                    #codigo para guardar en la bitacora -------
+                    insertar_registro_accion(
+                    empleado.nameUser(request),
+                    'Modulo AD',
+                    'Crear',
+                    f"El usuario '{nombre_usuario}' fue creado en AD",
+                    get_client_ip(request),
+                    request.META.get('HTTP_USER_AGENT'),
+                    'N/A'
+                    )
+                    return redirect('agregar_usuario')
                 else:
                     messages.error(request, f"Error al crear usuario: {conn.result['description']}")
+                    mensaje = {'titulo': 'Error', 'texto': f"Error al crear usuario {conn.result['description']}", 'tipo': 'error'}
+                    imprimir(mensaje)
+                    return redirect('agregar_usuario')
         except Exception as e:
             messages.error(request, f"Error al conectar con AD: {str(e)}")
-            
-            return redirect('usuarios')
+            mensaje = {'titulo': 'Error', 'texto': f'Excepción: {str(e)}', 'tipo': 'error'}
+            imprimir(mensaje)
+            return redirect('agregar_usuario')
   # Crear el diccionario de contexto con todas las variables necesarias
     context = {
-        'active_page': 'agregar_usuario',
-        'nombre_usuario': nameUser(request)# Variable adicional para el boton del menu 
+        'active_page': 'agregar_usuario', # Variable adicional para el boton del menu 
+        'nombre_usuario': empleado.nameUser(request),
+        'foto':empleado.photoUser(request),
+        'Categoria': empleado.Categoria(request),
+        'mensaje': mensaje
         # Puedes agregar más variables aquí si lo necesitas
     }          
     
-    return render(request, 'AgregarUsuario.html',context)   """
+    return render(request, 'AgregarUsuario.html',context)   
 # -----------------------------------------------------------funciones que no son vistas -----------------------------------
 def is_account_disabled(useraccountcontrol_str):
     DISABLED_ACCOUNT_BIT = 0x2

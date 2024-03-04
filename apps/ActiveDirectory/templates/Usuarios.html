@@ -36,6 +36,7 @@ Usuarios de Activate Directory
         {% if forloop.last %}
             <div class="alert {% if 'error' in message.tags %}alert-danger{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
                 {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         {% endif %}
     {% endfor %}
@@ -291,7 +292,7 @@ Usuarios de Activate Directory
     <script>
         $(document).ready(function() {
             var config = {
-                "pageLength": 10,
+                "pageLength": 25,
                 "language": {
                     "lengthMenu": "Mostrar _MENU_ usuarios por página",
                     "zeroRecords": "No se encontraron resultados",

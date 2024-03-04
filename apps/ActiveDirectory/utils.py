@@ -1,24 +1,5 @@
 from django.conf import settings
-from apps.AsignarUsuario.models import VallEmpleado, TRegistroAccionesModulo 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+from apps.AsignarUsuario.models import VallEmpleado
 
 
 class AtributosDeEmpleado: 

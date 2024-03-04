@@ -116,6 +116,17 @@
             
 
             </li>
+
+            <li
+            class="sidebar-item {% if active_page == 'agregar_usuario' %}active{% endif %} ">
+            <a href="{% url 'agregar_usuario' %}" class='sidebar-link'>
+                <i class="bi bi-shield-fill"></i>
+                <span>Agregar Usuarios Active Directory </span>
+            </a>
+            
+
+            </li>
+
             <li
             class="sidebar-item {% if active_page == 'bitacora' %}active{% endif %} ">
             <a href="{% url 'bitacora' %}" class='sidebar-link'>

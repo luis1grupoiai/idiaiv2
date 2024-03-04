@@ -81,7 +81,30 @@
             <li class="sidebar-title">Menu</li>
            
    
+            {% if ActiveDirectory is True %}
             
+            <li
+            class="sidebar-item ">
+            <a href="{% url 'usuariosID' %}" class='sidebar-link'>
+                <i class="bi bi-shield-fill"></i>
+                <span>Active Directory</span>
+            </a>
+            
+
+           
+            </li>
+
+
+            <li
+            class="sidebar-item {% if active_page == 'Nsolicitud' %}active{% endif %} ">
+            <a href="{% url 'nuevousuario' %}" class='sidebar-link'>
+                <i class="bi bi-person-circle"></i>
+                <span>Nuevo Personal </span>
+            </a>
+            
+
+            </li>
+            {% else %}
             <li
             class="sidebar-item {% if active_page == 'solicitud' %}active{% endif %} ">
             <a href="{% url 'solicitud' %}" class='sidebar-link'>
@@ -101,6 +124,9 @@
             
 
             </li>
+
+            {% endif %}
+
             </li>
 
         </ul>
@@ -240,7 +266,18 @@
                 <h4 class="card-title">{% block EncabezadoCard%}{% endblock EncabezadoCard %} </h4>
             </div>
             <div class="card-body">
-               
+                {% if messages %}
+                <div>
+                    {% for message in messages %}
+                        {% if forloop.last %}
+                            <div class="alert {% if 'error' in message.tags %}alert-danger{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %} 
                 {% block contenido %} 
                 <!-- Aquí va el contenido específico de cada página -->
                 {% endblock %}

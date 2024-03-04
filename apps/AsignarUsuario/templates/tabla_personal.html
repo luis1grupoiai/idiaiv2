@@ -14,6 +14,27 @@
             {% for user in users %}
             <tr>
                 <td class="text-center" >
+
+                    {% if ActiveDirectory is True %}
+                    <button type="button"
+                    class="btn btn-primary btn-sm "
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalAgregar"
+                    data-nombre="{{ user.username }}"
+                    data-nombrePila ="{{ user.Nombre_ps}}"
+                    data-apellidos ="{{ user.Apaterno_ps}} {{ user.Amaterno_ps}} "
+                    data-puesto ="{{ user.Nombre_ct }}"
+                    data-nombreSesion ="{{ user.username}}"
+                    data-nombreCompleto ="{{ user.NombreCompleto }}"
+                    data-email ="{{ user.email }}"
+                    data-deparamento="{{ user.nombre_direccion}}"
+                    data-distinguishedName="{{ user.username }}"
+                    onclick="AgregarUsuario(this);"
+                    >
+                    Agregar</button>
+
+                    {% else%}
+
                     {% if user.username is  none  %}
                     <button type="button"
                     class="btn btn-primary btn-sm "
@@ -38,7 +59,11 @@
                     onclick="SolicitarAlta(this);"
                     >
                     Solicitar Permisos</button>
-                    {% endif %}</td>
+                    {% endif %}
+                
+                    {% endif %}
+                
+                </td>
                
                    
               

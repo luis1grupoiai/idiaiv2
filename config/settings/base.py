@@ -14,7 +14,8 @@ BASE_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'sslserver', #python manage.py runsslserver  8080 --settings=config.settings.development
+    'sslserver', 
+    'widget_tweaks',#python manage.py runsslserver  8080 --settings=config.settings.development
     # 'django.contrib.staticfiles',
 ]
 
@@ -156,4 +157,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = 'home' 
 LOGOUT_REDIRECT_URL = 'home'
 
+# Tiempo de expiración de la sesión en segundos
+SESSION_COOKIE_AGE = 30000  # 5 minuto * 300 segundos
 
+# Asegurar que la sesión expire cuando el usuario cierre el navegador.
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# Asegurar que la sesión se actualice con cada solicitud, restableciendo el temporizador de expiración.
+SESSION_SAVE_EVERY_REQUEST = True

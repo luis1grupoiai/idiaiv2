@@ -41,6 +41,7 @@ Nombre de los Modulos
         {% if forloop.last %}
             <div class="alert {% if 'error' in message.tags %}alert-danger{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
                 {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         {% endif %}
     {% endfor %}
@@ -55,7 +56,7 @@ Nombre de los Modulos
 
 
                     <thead>
-                        <tr>
+                        <tr><th class="text-center" >Nombre</th>
                             <th class="text-center" >Nombre de Modulo</th>
                             <th class="text-center">Acciones</th>
                         </tr>
@@ -63,17 +64,18 @@ Nombre de los Modulos
                     <tbody>
                         {% for modulo_entry in object_list %}
                         <tr>
+                            <td class="text-center" >{{ modulo_entry.nombre_completo }}</td>
                             <td class="text-center" >{{ modulo_entry.nombre }}</td>
                             <td class="text-center" >
                                 <a href="{% url 'detalle_registro' modulo_entry.id %}" class="btn btn-primary"> <i class="bi bi-eye"></i> Ver</a>
                                 <a href="{% url 'modulo_update' modulo_entry.id %}" class="btn btn-secondary"> <i class="bi bi-pencil"></i> Editar</a>
-                                <button type="button"  class="btn btn-danger" data-toggle="modal" data-target="#passwordModal" data-url="{% url 'modulo_delete' modulo_entry.id %}" onclick="validacion(this);"> Eliminar</button>
+                               {# <button type="button"  class="btn btn-danger" data-toggle="modal" data-target="#passwordModal" data-url="{% url 'modulo_delete' modulo_entry.id %}" onclick="validacion(this);"> Eliminar</button>#}
 
 
                                 <!--
-                                <button type="button"  class="btn btn-primary" data-toggle="modal" data-target="#passwordModal" data-url="{% url 'detalle_registro' modulo_entry.id %}" onclick="validacion(this);"> Ver</button>
-                                <button type="button"  class="btn btn-secondary" data-toggle="modal" data-target="#passwordModal" data-url="{% url 'modulo_update' modulo_entry.id %}" onclick="validacion(this);"> Editar</button>
-                                <button type="button"  class="btn btn-danger" data-toggle="modal" data-target="#passwordModal" data-url="{% url 'modulo_delete' modulo_entry.id %}" onclick="validacion(this);"> Eliminar</button>
+                                {# <button type="button"  class="btn btn-primary" data-toggle="modal" data-target="#passwordModal" data-url="{% url 'detalle_registro' modulo_entry.id %}" onclick="validacion(this);"> Ver</button>#}
+                                {# <button type="button"  class="btn btn-secondary" data-toggle="modal" data-target="#passwordModal" data-url="{% url 'modulo_update' modulo_entry.id %}" onclick="validacion(this);"> Editar</button>#}
+                                {# <button type="button"  class="btn btn-danger" data-toggle="modal" data-target="#passwordModal" data-url="{% url 'modulo_delete' modulo_entry.id %}" onclick="validacion(this);"> Eliminar</button>#}
                                  -->
                             </td>
                         </tr>
@@ -151,7 +153,7 @@ Nombre de los Modulos
 <script>      
     $(document).ready(function() {
             var config = {
-                "pageLength": 5,
+                "pageLength": 50,
                 "language": {
                     "lengthMenu": "Mostrar _MENU_ usuarios por página",
                     "zeroRecords": "No se encontraron resultados",
@@ -217,7 +219,7 @@ Nombre de los Modulos
         }
 
         
-      modals.show();
+     // modals.show();
 
         function verificar(button) {
            

@@ -1,7 +1,7 @@
 {% extends "mazer/base.html" %}
 
 {% block title%}
-Usuario IDIAI - Activate Directory
+Agregar Usuarios  Active Directory
 {% endblock title %}
 
 {% block extra_css %}
@@ -14,8 +14,8 @@ Usuario IDIAI - Activate Directory
 {% endblock %}
 
 {% block Encabezado %}
-<h3>Bienvenido a IDIAI:</h3>
-<p >Su plataforma para visualizar usuarios.</p>
+<h3>Agregar Usuarios  Active Directory:</h3>
+<p >Su plataforma para agregar usuarios.</p>
 {% endblock %}
 
 
@@ -38,6 +38,7 @@ Usuarios de IDIAI
             {% if forloop.last %}
                 <div class="alert {% if 'error' in message.tags %}alert-danger{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
                     {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             {% endif %}
         {% endfor %}
@@ -70,7 +71,9 @@ Usuarios de IDIAI
         </li>
        
     </ul>
-
+    <div class="m-3">
+        <a href="{% url 'nuevousuario'%}" class="btn btn-primary"><i class="bi bi-person-plus-fill"></i> Crear Usuario IDIAI</a>
+        </div>
     <div class="tab-content" id="myTabContent">
         <div class="tab-pane fade " id="home" role="tabpanel" aria-labelledby="home-tab">
             <p class='my-2'>
@@ -254,6 +257,60 @@ Usuarios de IDIAI
                         </div>
                      </div>
                         
+{#----------------------------------------------------------modal de las llaves-------------------------------------------#}
+
+<div class="modal fade text-left" id="verUserkeyModal" tabindex="-1" role="dialog"
+aria-labelledby="myModalLabel33" aria-hidden="true">
+<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg"
+            role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4 class="modal-title" id="myModalLabel33">Contraseña</h4>
+            <button type="button" class="close" data-bs-dismiss="modal"
+                aria-label="Close">
+                <i data-feather="x"></i>
+            </button>
+        </div>
+       
+            <div class="modal-body">
+                         
+
+            <div class="row " >
+                    
+                <div class="col-6">
+
+                        <div class="mb-2">
+                        <label for="nombre_usuariokey" class="form-label">Nombre de Usuario:</label>
+                        
+                        <input type="text" class="form-control" name="nombre_usuariokey" id="nombre_usuariokey" required >
+                        </div>
+                </div>
+                <div class="col-6">
+                        <div class="mb-2">
+                        <label for="usuariokey" class="form-label">Contraseña:</label>   
+                        <input type="text" class="form-control" name="usuariokey" id="usuariokey" required >
+                        </div> 
+                </div> 
+
+            </div>
+        </div>
+       
+
+        
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light-primary"
+                    data-bs-dismiss="modal">
+                    <i class="bx bx-x d-block d-sm-none"></i>
+                    <span class="d-none d-sm-block">Aceptar</span>
+
+            </div>
+    </div>
+</div>
+</div>
+
+
+
+
                             {% endblock %}
 
     {% block script %} 
@@ -298,7 +355,7 @@ Usuarios de IDIAI
         });
         $(document).ready(function() {
             var config = {
-                "pageLength": 10,
+                "pageLength": 25,
                 "language": {
                     "lengthMenu": "Mostrar _MENU_ usuarios por página",
                     "zeroRecords": "No se encontraron resultados",
@@ -320,7 +377,7 @@ Usuarios de IDIAI
                         "sortDescending": ": activar para ordenar la columna de manera descendente"
                     }
                 },
-                "dom": 'Bfrtip',
+                "dom": 'lBfrtip',
                 "buttons": [
                     {
                         "extend": "excelHtml5",
@@ -379,15 +436,29 @@ Usuarios de IDIAI
                     var modal = new bootstrap.Modal(document.getElementById('crearUserModal'));
                     modal.show();
             }
+
+            function verUserkey(button) {
+                // Utiliza data attributes para obtener la información
+                  var nombre = button.getAttribute('data-nombre');
+                  // Rellena los campos del formulario en el modal
+                  document.getElementById('nombre_usuariokey').value = nombre ;
+
+                  
+                  //var modal = new bootstrap.Modal(document.getElementById('verUserkeyModal'));
+                  //modal.show();
+          }
+            
               
       
 
            
            
 
-            $('#crearUserModal').on('hidden.bs.modal', function () {
-                $('.modal-backdrop').remove();
-            });
+           $('#crearUserModal').on('hidden.bs.modal', function () {
+              $('.modal-backdrop').remove();
+                  // Forzar el cuerpo del documento a ser scrollable
+             $('body').css('overflow-y', 'auto');
+           });
           
 
             function mensaje() {

@@ -1,7 +1,7 @@
 {% extends "mazer/baseAU.html" %}
 
 {% block title%}
-Personal de Grupo IAI  - IDIAI
+{{ encabezados.title }}
 {% endblock title %}
 
 {% block extra_css %}
@@ -12,19 +12,19 @@ Personal de Grupo IAI  - IDIAI
 {% endblock %}
 
 {% block Encabezado %}
-<h3>Bienvenido a IDIAI:</h3>
-<p >Plataforma para solicitar usuarios para el personal del Grupo IAI</p>
+<h3>{{ encabezados.Encabezado }}</h3>
+<p >{{ encabezados.SubEncabezado }}</p>
 {% endblock %}
 
 
 {% block EncabezadoNav%}
-Solicitud
+{{ encabezados.EncabezadoNav }}
 {% endblock EncabezadoNav %}
 
 
 
 {% block EncabezadoCard%}
-Nuevo Personal de grupo IAI
+{{ encabezados.EncabezadoCard }}
 {% endblock EncabezadoCard %}
 
 

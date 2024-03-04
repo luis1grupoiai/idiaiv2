@@ -17,7 +17,7 @@ Activate Directory
 
 {% block Encabezado %}
 <h3>Bienvenido a Active Directory:</h3>
-<p >Su plataforma para visualizar, crear y editar usuarios.</p>
+<p >Su plataforma para visualizar  y editar usuarios.</p>
 {% endblock %}
 
 {% block EncabezadoNav%}
@@ -36,6 +36,7 @@ Usuarios de Activate Directory
         {% if forloop.last %}
             <div class="alert {% if 'error' in message.tags %}alert-danger{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
                 {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         {% endif %}
     {% endfor %}
@@ -291,7 +292,7 @@ Usuarios de Activate Directory
     <script>
         $(document).ready(function() {
             var config = {
-                "pageLength": 10,
+                "pageLength": 25,
                 "language": {
                     "lengthMenu": "Mostrar _MENU_ usuarios por página",
                     "zeroRecords": "No se encontraron resultados",
@@ -313,7 +314,7 @@ Usuarios de Activate Directory
                         "sortDescending": ": activar para ordenar la columna de manera descendente"
                     }
                 },
-                "dom": 'Bfrtip',
+                "dom": 'lBfrtip',
                 "buttons": [
                     {
                         "extend": "excelHtml5",

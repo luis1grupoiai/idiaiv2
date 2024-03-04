@@ -9,7 +9,7 @@
                             <th class="text-center" style="width: 20%;">Email</th>
                             <th class="text-center" style="width: 20%;">Direccion</th>
                             <th class="text-center" style="width: 20%;">Puesto</th>
-                            
+                            <th class="text-center" style="width: 20%;">Proyecto</th>
                         </tr>
         </thead>
         <tbody>
@@ -34,6 +34,12 @@
                     <i class="bi bi-person-plus"></i> 
                     </button>
 
+                    <button type="button" class="btn icon btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#verUserkeyModal" 
+                    data-nombre="{{ user.username }}"
+                    onclick="verUserkey(this);">
+                    <i class="bi bi-key"></i> 
+                    </button>
+
 
                     <!--
                     <button type="button" class="btn icon btn-primary btn-sm" onclick="mensaje();">
@@ -56,7 +62,7 @@
                 <td class="text-center" style="width: 20%;">{{ user.email}}</td>
                 <td class="text-center" style="width: 20%;">{{ user.nombre_direccion}}</td>
                 <td class="text-center" style="width: 20%;">{{ user.Nombre_ct}}</td>
-                
+                <td class="text-center" style="width: 20%;">proyecto</td>
                 
             </tr>
                         {% endfor %}

@@ -90,7 +90,7 @@ class ModuloUpdateView(LoginRequiredMixin,NombreUsuarioMixin,SuperuserRequiredMi
         modulo = self.get_object()
         # Establece los valores iniciales desencriptados para el formulario
         initial['nombre'] = modulo.nombre
-        #initial['descripcion'] = modulo.descripcion
+        initial['descripcion'] = modulo.descripcion
         return initial
     
     def get_context_data(self, **kwargs):
@@ -109,7 +109,7 @@ class ModuloUpdateView(LoginRequiredMixin,NombreUsuarioMixin,SuperuserRequiredMi
         # Validación para la descripción
         descripcion = form.cleaned_data.get('descripcion')
         if not descripcion:
-            messages.error(self.request, 'La descripción no puede estar vacía.')
+            messages.error(self.request, 'La contraseña no puede estar vacía.')
             return self.form_invalid(form)
          # Procesamiento normal si todas las validaciones pasan
         response = super(ModuloUpdateView, self).form_valid(form)

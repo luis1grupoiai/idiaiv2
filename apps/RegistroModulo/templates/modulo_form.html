@@ -14,7 +14,11 @@ Dashboard - Modulos
 
 
 {% block Encabezado %}
-<h3>Lista de Modulos</h3>
+{% if form.nombre_completo.value is not None %}
+<h3>Modulo de : {{ form.nombre_completo.value }} </h3>
+{% else %}
+<h3>Nuevo Modulo  </h3>
+{% endif %}
 <p class="text-subtitle text-muted"></p>
 {% endblock %}
 
@@ -25,7 +29,7 @@ Modulos
 
 
 {% block EncabezadoCard%}
-Nombre de los Modulos 
+Editar el Modulo 
 {% endblock EncabezadoCard %}
 
 {% block contenido %}
@@ -38,6 +42,7 @@ Nombre de los Modulos
         {% if forloop.last %}
             <div class="alert {% if 'error' in message.tags %}alert-danger{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
                 {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         {% endif %}
     {% endfor %}
@@ -46,16 +51,38 @@ Nombre de los Modulos
 <form method="post" class="mt-4">
     {% csrf_token %}
     <div class="form-group">
-        <label for="id__nombre">Nombre:</label>
-        {{ form.nombre }}
+        <label for="nombre_completo">Nombre:</label>
+        {{ form.nombre_completo }}
     </div>
-    <div class="form-group">
-        <label for="id__descripcion">Descripción:</label>
-        {{ form.descripcion }}
-    </div>
+    <div
+        class="row justify-content-center align-items-center g-2"
+    >
+        <div class="col-6">
+            <div class="form-group">
+                <label for="id__nombre">Nombre de Usuario :</label>
+                {{ form.nombre }}
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="form-group">
+                <label for="id__descripcion">Contraseña:</label>
+                {{ form.descripcion }}
+            </div>
+        </div>
+        
+    
+   
+    <div class="col-12 justify-content-center text-center">
     <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Guardar</button> 
     <a href="{% url 'modulo_list'  %}" class="btn btn-danger"><i class="bi bi-x-circle"></i> Cancelar</a>
+    </div>
+</div>
+    
 </form>
+
+
+
+
 
 <div class="modal fade" id="No_me_hackes_XD_Modal." tabindex="-1" role="dialog" aria-labelledby="passwordModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
@@ -94,7 +121,7 @@ Nombre de los Modulos
             backdrop: 'static', // Evita que se cierre al hacer clic fuera
             keyboard: false     // Evita que se cierre al presionar ESC
           });
-        modals.show();
+        //modals.show();
 
         function verificar(button) {
            

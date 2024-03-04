@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 from .models import VallEmpleado 
+from apps.RegistroModulo.models import TRegistroDeModulo 
 from django.db.models import Q
 from django.core.mail import send_mail
 from django.shortcuts import redirect
@@ -13,7 +14,14 @@ from django.utils.html import strip_tags
 from django.template.loader import render_to_string
 from datetime import datetime
 import time
+from django.utils import timezone
+from .utils import AtributosDeEmpleado
+from django.contrib.auth.models import User
+from cryptography.fernet import Fernet
 
+empleado = AtributosDeEmpleado()
+ENCRYPTION_KEY_DESCRIPCION = b'VVsQPaM9IhXYrWNwLyKkAnmJdzdFR8R0MwdvZpHGsA8='
+ENCRYPTION_KEY_NOMBRE = b'o2GwoZ4O2UyRvsWTK7owoZKHOBQU2TbmYHUkHI1OWMs='
 
 @login_required
 def solicitud(request):
@@ -23,7 +31,14 @@ def solicitud(request):
         
     empleados = []
     empleados = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='')
-    
+    encabezados ={
+        'title' :'Empleados de Grupo IAI  - IDIAI',
+        'Encabezado' :'Personal de Grupo IAI:',
+        'SubEncabezado' :'Plataforma para solicitar permisos de usuarios para el personal del Grupo IAI',
+        'EncabezadoNav' :'Solicitud',
+        'EncabezadoCard' : 'Solicitar Permisos',
+        
+    }
    # print(empleados)
     context = {
         'empleados' : empleados,
@@ -32,9 +47,11 @@ def solicitud(request):
         'usersDCASS': empleados.filter( nombre_direccion='Calidad, Ambiental, Seguridad y Salud'),
         'usersPS': empleados.filter( nombre_direccion='Proyectos Especiales'),
         'active_page': 'solicitud',
-        'nombre_usuario': nameUser(request),
-        'foto':photoUser(request),
-        'Categoria': Categoria(request)
+        'nombre_usuario': empleado.nameUser(request),
+        'foto':empleado.photoUser(request),
+        'Categoria': empleado.Categoria(request),
+        'encabezados' :encabezados,
+        'ActiveDirectory' :False
     }
     return render(request, 'personal.html',context)
 
@@ -43,7 +60,14 @@ def solicitudNuevos(request):
     # Aquí la lógica para mostrar la página de inicio
     empleados = []
     empleados = VallEmpleado.objects.filter(Q(username__isnull=True) )
-
+    encabezados ={
+        'title' :'Empleados de Grupo IAI  - IDIAI',
+        'Encabezado' :'Nuevo personal de Grupo IAI:',
+        'SubEncabezado' :'Plataforma para solicitar los usuarios para el personal del Grupo IAI',
+        'EncabezadoNav' :'Solicitud',
+        'EncabezadoCard' : 'Solicitar Alta',
+        
+    }
    # print(empleados)
     context = {
         'empleados' : empleados,
@@ -52,19 +76,97 @@ def solicitudNuevos(request):
         'usersDCASS': empleados.filter( nombre_direccion='Calidad, Ambiental, Seguridad y Salud'),
         'usersPS': empleados.filter( nombre_direccion='Proyectos Especiales'),
         'active_page': 'Nsolicitud',
-        'nombre_usuario': nameUser(request),
-        'foto':photoUser(request),
-        'Categoria': Categoria(request)
+        'nombre_usuario': empleado.nameUser(request),
+        'foto':empleado.photoUser(request),
+        'Categoria': empleado.Categoria(request),
+        'encabezados' :encabezados,
+        'ActiveDirectory' :False
+    }
+    return render(request, 'personal.html',context)
+
+@login_required
+def nuevosIDIAI(request):
+    # Aquí la lógica para mostrar la página de inicio
+    if request.method == 'POST':
+        nombre_usuario = request.POST['nombre_usuario'].upper()
+        nombre_pila = request.POST['nombre_pila']
+        apellido = request.POST['apellido']
+        nombre_completo = request.POST['nombre_completo']
+        email = request.POST['email']
+        password = request.POST['password']
+        nombre_inicio_sesion = request.POST['nombre_inicio_sesion']
+        departamento = request.POST['departamento']
+        puesto = request.POST['puestoCT']
+        print( nombre_usuario,nombre_pila,apellido,nombre_completo,email,password,nombre_inicio_sesion,departamento,puesto )
+        user, created = User.objects.get_or_create(username= nombre_usuario, defaults={
+                'email':email,
+                'first_name': nombre_pila,
+                'last_name': apellido,
+                'is_active': True,
+                'is_superuser': False,
+                'is_staff': False,
+                'last_login': None,
+                'date_joined': timezone.now(),
+            })
+        if created:
+            user.set_password(password )  # Asegúrate de que la contraseña esté en texto plano aquí
+            user.save()
+            n = Fernet(ENCRYPTION_KEY_NOMBRE)
+            f = Fernet(ENCRYPTION_KEY_DESCRIPCION)
+            nombre_cifrado = n.encrypt(nombre_usuario.encode()).decode()
+            descripcion_cifrado = f.encrypt(password.encode()).decode()
+            nombreCompleto = nombre_completo
+            
+            nuevo_usuario, created2 = TRegistroDeModulo.objects.get_or_create(
+                nombre_completo=nombreCompleto,
+                defaults={
+                    '_descripcion': descripcion_cifrado, '_nombre':nombre_cifrado,
+                    
+                }
+            )
+            if created2:
+                nuevo_usuario.save()
+                messages.success(request,f"Usuario creado:{nombre_usuario}") # 
+            else:
+                messages.error(request,f"Usuario existente en el Modulo: {nombre_usuario}")
+              # 
+                 
+            
+            
+            
+            return redirect('nuevousuario') 
+        else:
+            messages.error(request,f"Usuario existente: {nombre_usuario}")
+            return redirect('nuevousuario') 
+        
+    
+        
+    
+    empleados = []
+    empleados = VallEmpleado.objects.filter(Q(username__isnull=True) )
+    encabezados ={
+        'title' :'Empleados de Grupo IAI  - IDIAI-',
+        'Encabezado' :'Nuevo personal de Grupo IAI:',
+        'SubEncabezado' :'Plataforma para Agregar  usuarios a  IDIAI',
+        'EncabezadoNav' :'Agregar',
+        'EncabezadoCard' : 'Agregar Usuario IDIAI',
+        
+    }
+   # print(empleados)
+    context = {
+        'empleados' : empleados,
+        'usersAdmin': empleados.filter( nombre_direccion='Administración'),
+        'usersIng': empleados.filter( nombre_direccion='Ingeniería'),
+        'usersDCASS': empleados.filter( nombre_direccion='Calidad, Ambiental, Seguridad y Salud'),
+        'usersPS': empleados.filter( nombre_direccion='Proyectos Especiales'),
+        'active_page': 'Nsolicitud',
+        'nombre_usuario': empleado.nameUser(request),
+        'foto':empleado.photoUser(request),
+        'Categoria': empleado.Categoria(request),
+        'encabezados' :encabezados,
+        'ActiveDirectory' :True
     }
     return render(request, 'nuevoPersonal.html',context)
-
-
-def nameUser(request):
-    if request.user.is_authenticated:
-        nombreUsuario = request.user.first_name+" "+request.user.last_name 
-    
-    return  nombreUsuario
-
 
 
 @login_required
@@ -111,41 +213,5 @@ def enviar_correo(request):
 
     return render(request, 'CorreoSolicitudAlta.html', context)
 
-
-def photoUser(request):
-    # Ruta de foto predeterminada
-    photo = '/static/img/logo1.png'
-
-    # Comprobar si el usuario está autenticado
-    if request.user.is_authenticated:
-        # Obtener el nombre de usuario del usuario autenticado
-        nombreUsuario = request.user.username
-
-        # Filtrar el objeto VallEmpleado usando el nombre de usuario
-        usuarioBD = VallEmpleado.objects.filter(username=nombreUsuario).first()
-
-        # Si se encuentra un usuario en la BD y tiene una ruta de foto, actualizar la ruta de la foto
-        if usuarioBD and usuarioBD.RutaFoto_ps:
-        
-            photo = f'http://intranet.grupo-iai.com.mx:85/SERCAPNUBE/Imagenes/FOTOS/{usuarioBD.RutaFoto_ps}'
-
-    # Devolver la ruta de la foto
-    return photo
-
-def Categoria(request):
-    usuario=None
-    if request.user.is_authenticated:
-        # Obtener el nombre de usuario del usuario autenticado
-       nombreUsuario = request.user.username
-
-        # Filtrar el objeto VallEmpleado usando el nombre de usuario
-       usuarioBD = VallEmpleado.objects.filter(username=nombreUsuario).first()
-
-        # Si se encuentra un usuario en la BD
-       if usuarioBD:
-            usuario = usuarioBD.Nombre_ct
-
-
-    return usuario
 
     

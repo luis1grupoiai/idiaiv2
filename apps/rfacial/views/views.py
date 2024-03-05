@@ -42,6 +42,8 @@ from apps.mycore.views.ejecutarsp import CEjecutarSP
 from cryptography.fernet import Fernet
 
 
+
+
 import json
 import os
 import base64
@@ -233,7 +235,7 @@ class CAutenticacion(APIView):
 
             token = token+str(sTam)
 
-            print(token)
+            # print(token)
    
             # sToken_encoded = urlsafe_base64_encode(force_bytes(token))
             sToken_encoded = crfr.encrypt(token.encode()).decode()
@@ -601,7 +603,20 @@ class CAutenticacion(APIView):
                                     if keySis == os.environ.get('KEY_GTKG'):
                                         print("Se solicita generar TKG.")
 
-                                        gtkg = self.generarTKGlobal(jd['user'],jd['timeExp'],sistema)
+                                        #Se consulta que exista token global asignado al usuario
+                                        dUsTk = list(TokenGlobal.objects.filter(username=jd['user'], caduco=0).values())
+                                                    
+                                        if len(dUsTk) == 0:
+                                            # insertar TKG en BD 05/03/2024
+                                            gtkg = self.generarTKGlobal(jd['user'],jd['timeExp'],sistema)
+                                            insertTkG = TokenGlobal(username=jd['user'], token=gtkg,sistemaOrigen=sistema, caduco=0)
+                                            insertTkG.save()
+                                        else:
+                                            gtkg = dUsTk[0]['token']
+                                        
+                                                                                
+                                        
+                                        
 
 
                                         #Si el consumo de la Api tiene el key para generar Token Global
@@ -879,6 +894,66 @@ class CVerificaToken(APIView):
             # return False
 
         return JsonResponse(datos)  
+    
+
+class CVerificaTokenGlobal(APIView):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self,request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+    
+    
+    
+    def post(self,request):
+        # datos = {'message': 'Success'}
+        # 05/03/2024 Validación de TKG.
+        try:
+            jd = json.loads(request.body)
+            tkg = ""
+            bValido = True
+            dCamposJson = ['user']
+
+            nLenDef = len(dCamposJson) 
+
+            nItemJson = len(jd)
+            
+            if nItemJson != nLenDef:
+                sTexto = "El tamaño del JSON obtenido no es el esperado, por favor de verificar. "
+                bValido = False
+
+            for item in dCamposJson:
+                if item in jd:
+                    continue
+                else:
+                    sTexto += " El campo faltante es: "+item+". "
+                    bValido = False
+                    break
+
+            if bValido:
+                dUsTk = list(TokenGlobal.objects.filter(username=jd['user'], caduco=0).values())
+
+                if len(dUsTk)==1:
+                    #Se almacena valor de token                    
+                    tkg = dUsTk[0]['token']
+                    
+                    #Se desencripta token global
+                    tkDpt = crfr.decrypt(tkg.encode()).decode()
+
+                    #Se divide en partes el token...
+                    parts = tkDpt.split(',')
+
+
+                else:
+                    pass
+            else:
+                datos = {'message': 'JSON invalido.', 'error': sTexto}
+
+
+        except ValueError as error:
+            sTexto = "%s" % error
+            datos = {'message': 'JSON invalido. ', "error": sTexto}
+
+        return JsonResponse(datos)
     
 
     

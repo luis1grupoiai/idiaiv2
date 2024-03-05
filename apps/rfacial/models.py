@@ -17,4 +17,19 @@ class RasgosFaciales(models.Model):
     id_personal = models.CharField(max_length=200)
     rasgos_faciales = models.JSONField()
 
+class TokenGlobal(models.Model):
+
+    # Campo de opciones limitadas para el estado del sistema (Activo o Inactivo)
+    STATUS_CHOICES = [
+         ('1', '1'),
+         ('0', '0'),
+     ]
+    
+    username = models.CharField(max_length=50)
+    sistemaOrigen = models.IntegerField()
+    token = models.TextField()
+    caduco = models.IntegerField(choices=STATUS_CHOICES, default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    # updated_at = models.DateTimeField(auto_now=True)    
+
 

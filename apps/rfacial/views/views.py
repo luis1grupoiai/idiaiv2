@@ -48,7 +48,9 @@ import json
 import os
 import base64
 
-stky = Fernet.generate_key()
+# stky = Fernet.generate_key()
+# stky = b'VVsQPaM9IhXYrWNwLyKkAnmJdzdFR8R0MwdvZpHGsA8='
+stky = force_bytes(os.environ.get('KFNRAPIAUTH'))
 
 crfr = Fernet(stky)
 # from camera import VideoCamera, IPWebCam
@@ -229,7 +231,7 @@ class CAutenticacion(APIView):
             expiration_time = timestamp + (expiration_hours * 3600)  # 3600 segundos en una hora
             # expiration_time = timestamp + (expiration_hours * 60)  # 60 segundos en un minuto, solo para terminos de prueba ...
             
-            token = default_token_generator.make_token(user)+ ',' + str(expiration_time)+','+str(p_nIdSistema)+',TGK'
+            token = default_token_generator.make_token(user)+ ',' + str(expiration_time)+','+str(p_nIdSistema)+','+os.environ.get('SIGNAL')
 
             sTam = len(token)
 
@@ -608,7 +610,12 @@ class CAutenticacion(APIView):
                                                     
                                         if len(dUsTk) == 0:
                                             # insertar TKG en BD 05/03/2024
-                                            gtkg = self.generarTKGlobal(jd['user'],jd['timeExp'],sistema)
+                                            if jd['timeExp'] == 0:
+                                                sTimeExp = 3
+                                            else:
+                                                sTimeExp = jd['timeExp']
+
+                                            gtkg = self.generarTKGlobal(jd['user'],sTimeExp,sistema)
                                             insertTkG = TokenGlobal(username=jd['user'], token=gtkg,sistemaOrigen=sistema, caduco=0)
                                             insertTkG.save()
                                         else:
@@ -858,6 +865,9 @@ class CVerificaToken(APIView):
                 expiration_time = timestamp  # 3600 segundos en una hora
                 # expiration_time = timestamp + (1 * 60)  # 60 segundos prueba de 1 min.
 
+                print(expiration_time)
+                print(timezone.now().timestamp())
+
                 if expiration_time > timezone.now().timestamp():
                     # print("Aun no expira el token")
                     is_token_expired = False
@@ -896,22 +906,55 @@ class CVerificaToken(APIView):
         return JsonResponse(datos)  
     
 
+    
+    
+
 class CVerificaTokenGlobal(APIView):
+
+    tkgb = ""
 
     @method_decorator(csrf_exempt)
     def dispatch(self,request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
     
-    
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={               
+                'user': openapi.Schema(type=openapi.TYPE_STRING, description='Nombre de usuario.')
+            },
+            required=['user']
+        ),
+        responses={200: 'Token Validado'},
+    )
     
     def post(self,request):
         # datos = {'message': 'Success'}
         # 05/03/2024 Validación de TKG.
+        """
+        Realiza la validación del token global dado por la api de autenticación.
+
+        Para realizar un consulta exitosa, envía un objeto JSON con los siguientes campos:
+       
+        """
         try:
             jd = json.loads(request.body)
             tkg = ""
             bValido = True
             dCamposJson = ['user']
+            user = ""
+            sUserName = ""
+            nSistemaOrigen = 0
+            ntam = 0
+            nTamTot = 0
+            ltam = []
+            sSl = ""
+
+            is_token_valid = False
+            is_token_expired = True
+            is_system_origin = False
+            is_len = False
+            is_signal = False
 
             nLenDef = len(dCamposJson) 
 
@@ -930,31 +973,84 @@ class CVerificaTokenGlobal(APIView):
                     break
 
             if bValido:
-                dUsTk = list(TokenGlobal.objects.filter(username=jd['user'], caduco=0).values())
+                print("Se recibe user: "+jd['user'])
+                sUserName = jd['user']
+
+                dUsTk = list(TokenGlobal.objects.filter(username=sUserName, caduco=0).values())
 
                 if len(dUsTk)==1:
-                    #Se almacena valor de token                    
+                                    
                     tkg = dUsTk[0]['token']
-                    
-                    #Se desencripta token global
+                    nSistemaOrigen = int(dUsTk[0]['sistemaOrigen'])
+                    user = User.objects.get(username=sUserName) 
+
+                    print("Se obtiene el token.")
+
                     tkDpt = crfr.decrypt(tkg.encode()).decode()
 
-                    #Se divide en partes el token...
-                    parts = tkDpt.split(',')
+                    print(tkDpt)
+                    
+                    ltam = tkDpt.split(os.environ.get('USGL'))
+
+                    ntam = int(ltam[1])
+
+                    nTamTot = len(ltam[0]+os.environ.get('USGL'))
+
+                    if ntam == nTamTot:
+                        is_len = True
+
+                        parts = tkDpt.split(',')
+
+                        if len(parts)>0:
+                            # print(parts[0])
+                            
+                            is_token_valid = default_token_generator.check_token(user,parts[0])
+                            if is_token_valid:
+                                print("el token si es valido...")
+
+                            timestamp = int(parts[1])
+                            expiration_time = timestamp
+
+                            print(expiration_time)
+                            print( timezone.now().timestamp())
+
+                            if expiration_time > timezone.now().timestamp():                    
+                                is_token_expired = False #Si es false entonces el token aun no expira.
+                            else:
+                                print("Expirto token...")
+
+                            if nSistemaOrigen == int(parts[2]):
+                                is_system_origin = True #Si es true entonces el sistema origien es el correcto.
+
+                            sSl = parts[3]
+
+                            if sSl[:3] == os.environ.get('SIGNAL'):
+                                is_signal = True
+
+
+                        if is_len and is_token_valid and not is_token_expired and is_system_origin and is_signal:
+                            sTexto = "El token Global es valido."
+
+                            datos = {'message': 'Success', 'Resultado': sTexto}
+                        else:
+                            sTexto = "El token Global no es valido."
+                            #TODO: agregar actualización registros de tkg relacionados al usuario (campo token vacio y campo caduco igual a 1)
+                            datos = {'message': 'Error', 'Resultado': sTexto}
 
 
                 else:
-                    pass
+                     sTexto = "No existe Token Global para este usuario."
+                     datos = {'message': 'Error', 'Resultado': sTexto}
             else:
-                datos = {'message': 'JSON invalido.', 'error': sTexto}
+                datos = {'message': 'JSON invalido.', 'Resultado': sTexto}
 
 
         except ValueError as error:
             sTexto = "%s" % error
-            datos = {'message': 'JSON invalido. ', "error": sTexto}
+            datos = {'message': 'JSON invalido. ', "Resultado": sTexto}
 
         return JsonResponse(datos)
     
-
+    
     
 

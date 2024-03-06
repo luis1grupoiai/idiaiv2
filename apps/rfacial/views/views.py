@@ -610,6 +610,7 @@ class CAutenticacion(APIView):
                                                     
                                         if len(dUsTk) == 0:
                                             # insertar TKG en BD 05/03/2024
+                                            # sTimeExp = 0
                                             if jd['timeExp'] == 0:
                                                 sTimeExp = 3
                                             else:
@@ -973,7 +974,7 @@ class CVerificaTokenGlobal(APIView):
                     break
 
             if bValido:
-                print("Se recibe user: "+jd['user'])
+                print("CVerificaTokenGlobal - Se recibe user: "+jd['user'])
                 sUserName = jd['user']
 
                 dUsTk = list(TokenGlobal.objects.filter(username=sUserName, caduco=0).values())
@@ -984,11 +985,11 @@ class CVerificaTokenGlobal(APIView):
                     nSistemaOrigen = int(dUsTk[0]['sistemaOrigen'])
                     user = User.objects.get(username=sUserName) 
 
-                    print("Se obtiene el token.")
+                    # print("Se obtiene el token.")
 
                     tkDpt = crfr.decrypt(tkg.encode()).decode()
 
-                    print(tkDpt)
+                    # print(tkDpt)
                     
                     ltam = tkDpt.split(os.environ.get('USGL'))
 
@@ -1005,19 +1006,19 @@ class CVerificaTokenGlobal(APIView):
                             # print(parts[0])
                             
                             is_token_valid = default_token_generator.check_token(user,parts[0])
-                            if is_token_valid:
-                                print("el token si es valido...")
+                            # if is_token_valid:
+                            #     print("el token si es valido...")
 
                             timestamp = int(parts[1])
                             expiration_time = timestamp
 
-                            print(expiration_time)
-                            print( timezone.now().timestamp())
+                            # print(expiration_time)
+                            # print( timezone.now().timestamp())
 
                             if expiration_time > timezone.now().timestamp():                    
                                 is_token_expired = False #Si es false entonces el token aun no expira.
-                            else:
-                                print("Expirto token...")
+                            # else:
+                            #     print("Expirto token...")
 
                             if nSistemaOrigen == int(parts[2]):
                                 is_system_origin = True #Si es true entonces el sistema origien es el correcto.
@@ -1034,7 +1035,14 @@ class CVerificaTokenGlobal(APIView):
                             datos = {'message': 'Success', 'Resultado': sTexto}
                         else:
                             sTexto = "El token Global no es valido."
-                            #TODO: agregar actualización registros de tkg relacionados al usuario (campo token vacio y campo caduco igual a 1)
+
+                            #Se actualiza registro de token. campo token vacio y campo caduco igual a 1
+                            regAct = TokenGlobal.objects.get(username=sUserName, caduco=0)
+
+                            regAct.caduco = 1
+                            regAct.token = ""
+                            regAct.save()
+                            
                             datos = {'message': 'Error', 'Resultado': sTexto}
 
 
@@ -1048,6 +1056,9 @@ class CVerificaTokenGlobal(APIView):
         except ValueError as error:
             sTexto = "%s" % error
             datos = {'message': 'JSON invalido. ', "Resultado": sTexto}
+
+        
+        print(datos)
 
         return JsonResponse(datos)
     

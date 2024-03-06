@@ -165,16 +165,21 @@ Usuarios de IDIAI
                                         <div class="col-6">
                                                 <div class="mb-2">
                                                     <label for="nombre_inicio_sesion" class="form-label">Nombre de inicio de sesion de usuario:</label>
-                                                    <input type="text" class="form-control" name="nombre_inicio_sesion" id="nombre_inicio_sesion" required>
+                                                    <input type="text" class="form-control" name="nombre_inicio_sesion" id="nombre_inicio_sesion" required >
                                                 </div>
                                                 <div class="mb-2">
+                                                 
                                                 <!--  <label for="nombre_usuario" class="form-label">Nombre de Usuario:</label>--> 
                                                     <input type="hidden" class="form-control" name="nombre_usuario" id="nombre_usuario" required >
                                                     <input type="hidden" class="form-control" name="distinguished_name" id="distinguished_name" required >
                                                 </div>
                                         </div>
+
+                                        
                                         <div class="col-6">
-                                            
+                                            <label for="nameProyecto" class="form-label">Proyecto :</label>
+                                            <input type="text" class="form-control" name="nameProyecto" id="nameProyecto" required >
+
                                         </div>    
                         
                                         <div class="col-6">
@@ -220,7 +225,7 @@ Usuarios de IDIAI
                         
                                         <div class="mb-2">
                                             <label for="email" class="form-label">Correo electronico :</label>
-                                            <input type="email" class="form-control" name="email" id="email" onblur="addDomainIfEmpty(this)" required>
+                                            <input type="email" class="form-control" name="email" id="email" required>
                                         </div>
                                       
                                         <div class="col-md-6">
@@ -265,7 +270,7 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
             role="document">
     <div class="modal-content">
         <div class="modal-header">
-            <h4 class="modal-title" id="myModalLabel33">Contraseña</h4>
+            <h4 class="modal-title" id="myModalLabel33">  <p id="nombreCompletokey"></p> </h4>
             <button type="button" class="close" data-bs-dismiss="modal"
                 aria-label="Close">
                 <i data-feather="x"></i>
@@ -282,10 +287,17 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
                         <div class="mb-2">
                         <label for="nombre_usuariokey" class="form-label">Nombre de Usuario:</label>
                         
-                        <input type="text" class="form-control" name="nombre_usuariokey" id="nombre_usuariokey" required >
+                        <input type="text" class="form-control" name="nombre_usuariokey" id="nombre_usuariokey" required readonly>
+                        <input type="hidden" class="form-control" name="idmodelo" id="idmodelo" required >
+                        
                         </div>
                 </div>
                 <div class="col-6">
+
+
+
+
+                    
                         <div class="mb-2">
                         <label for="usuariokey" class="form-label">Contraseña:</label>   
                         <input type="text" class="form-control" name="usuariokey" id="usuariokey" required >
@@ -298,11 +310,18 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
 
         
             <div class="modal-footer">
+                <button type="button" class="btn btn-light-danger"
+                data-bs-dismiss="modal">
+                <i class="bx bx-x d-block d-sm-none"></i>
+                <span class="d-none d-sm-block">Actualizar</span>
+
+             </button>
                 <button type="button" class="btn btn-light-primary"
                     data-bs-dismiss="modal">
                     <i class="bx bx-x d-block d-sm-none"></i>
-                    <span class="d-none d-sm-block">Aceptar</span>
+                    <span class="d-none d-sm-block">Cerrar</span>
 
+                 </button>
             </div>
     </div>
 </div>
@@ -415,6 +434,7 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
                     var email = button.getAttribute('data-email');
                     var departamento = button.getAttribute('data-deparamento');
                     var distinguishedName = button.getAttribute('data-distinguishedName');
+                    var nombreProyecto =button.getAttribute('data-proyecto');
                     verificarUsuario(nombre);
                     // Rellena los campos del formulario en el modal
                     document.getElementById('nombre_usuario').value = nombre ;
@@ -424,6 +444,7 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
                     document.getElementById('nombre_inicio_sesion').value = nombreSesion;
                     document.getElementById('nombre_completo').value = nombreCompleto ;
                     document.getElementById('email').value = email ;
+                    document.getElementById('nameProyecto').value = nombreProyecto ;
                     //document.getElementById('departamento').value = departamento ;
                     var selectElement = document.getElementById('departamento');
                     selectElement.value = departamento; // Cambia el valor como antes
@@ -440,10 +461,12 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
             function verUserkey(button) {
                 // Utiliza data attributes para obtener la información
                   var nombre = button.getAttribute('data-nombre');
+                  var nombreCompleto = button.getAttribute('data-nombreCompleto');
                   // Rellena los campos del formulario en el modal
+                  document.getElementById('usuariokey').value = '¿?';
                   document.getElementById('nombre_usuariokey').value = nombre ;
-
-                  
+                  document.getElementById("nombreCompletokey").innerText = 'Contraseña: ' + nombreCompleto ;
+                  keyUsuario(nombre, nombreCompleto);
                   //var modal = new bootstrap.Modal(document.getElementById('verUserkeyModal'));
                   //modal.show();
           }
@@ -469,7 +492,93 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
                 });
             }
 
+      
+
+        function getCSRFToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]').value;
+        }
+
+        function keyUsuario(nombreUsuario,nombreCompleto){
+            // Preparar el cuerpo de la solicitud
+            const datos = JSON.stringify({ nombre_usuario: nombreUsuario,nombre_completo: nombreCompleto });
+        
+            fetch(`/modulo-usuario/`, {
+                method: 'POST', // Cambiar a método POST
+                headers: {
+                    'Content-Type': 'application/json',
+                    // Incluir CSRF token si es necesario
+                    'X-CSRFToken': getCSRFToken()// devuelve el valor de csrftoken correctamente
+                },
+                body: datos // Datos de la solicitud
+            })
+            .then(response => response.json())
+            .then(data => {
+                let modulo = document.getElementById('usuariokey');
+                let nombreusuario =document.getElementById('nombre_usuariokey');
+                let idmodulo = document.getElementById('idmodelo');
+                let titulomodal =document.getElementById('nombreCompletokey');
+                if (data.existe) {
+                    modulo.value = data.existe.modulo;
+                    nombreusuario.value=data.existe.usuario ;
+                    idmodulo.value = data.existe.id;
+                    titulomodal.innerText = 'Contraseña: ' +data.existe.nombre_completo;
+                   
+                } else {
+                    titulomodal.innerText =  'Usuario no encontrado';
+                    modulo.value =''
+                    Swal.fire({
+                        title: '¡Usuario no existe !',
+                        text: 'en el modulo.',
+                        icon: "warning",  // 'success', 'error', 'warning', 'info', 'question'
+                        confirmButtonText: 'Ok'
+                    });
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+
+        function ActualizarkeyUsuario(nombreUsuario,nombreCompleto){
+              // Preparar el cuerpo de la solicitud
+              const datos = JSON.stringify({ nombre_usuario: nombreUsuario,nombre_completo: nombreCompleto });
+        
+              fetch(`/modulo-usuario/`, {
+                  method: 'POST', // Cambiar a método POST
+                  headers: {
+                      'Content-Type': 'application/json',
+                      // Incluir CSRF token si es necesario
+                      'X-CSRFToken': getCSRFToken()// devuelve el valor de csrftoken correctamente
+                  },
+                  body: datos // Datos de la solicitud
+              })
+              .then(response => response.json())
+              .then(data => {
+                  let modulo = document.getElementById('usuariokey');
+                  let nombreusuario =document.getElementById('nombre_usuariokey');
+                  let idmodulo = document.getElementById('idmodelo');
+                  let titulomodal =document.getElementById('nombreCompletokey');
+                  if (data.existe) {
+                      modulo.value = data.existe.modulo;
+                      nombreusuario.value=data.existe.usuario ;
+                      idmodulo.value = data.existe.id;
+                      titulomodal.innerText = 'Contraseña: ' +data.existe.nombre_completo;
+                     
+                  } else {
+                      titulomodal.innerText =  'Usuario no encontrado';
+                      modulo.value =''
+                      Swal.fire({
+                          title: '¡Usuario no existe !',
+                          text: 'en el modulo.',
+                          icon: "warning",  // 'success', 'error', 'warning', 'info', 'question'
+                          confirmButtonText: 'Ok'
+                      });
+                  }
+              })
+              .catch(error => console.error('Error:', error));
+        }
+
         function verificarUsuario(nombreUsuario) {
+            document.getElementById('botonGuardar').disabled = false;
             fetch(`/verificar-usuario/${nombreUsuario}/`)
             .then(response => response.json())
             .then(data => {
@@ -479,11 +588,13 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
                     botonGuardar.innerText = "Usuario Existente"; // Cambia el texto
                     botonGuardar.classList.add('btn-danger');
                     botonGuardar.classList.remove('btn-primary');
+                    mensaje();
                 } else {
                     botonGuardar.disabled = false;
                     botonGuardar.innerText = "Guardar"; // Restablece el texto original o elige uno nuevo
                     botonGuardar.classList.add('btn-primary');
                     botonGuardar.classList.remove('btn-danger');
+                    
                 }
             })
             .catch(error => console.error('Error:', error));

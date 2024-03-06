@@ -30,12 +30,14 @@
                     data-email ="{{ user.email }}"
                     data-deparamento="{{ user.nombre_direccion}}"
                     data-distinguishedName="{{ user.username }}"
+                    data-proyecto = "{{user.Proyecto}}"
                     onclick="creartUser(this);">
                     <i class="bi bi-person-plus"></i> 
                     </button>
 
                     <button type="button" class="btn icon btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#verUserkeyModal" 
                     data-nombre="{{ user.username }}"
+                    data-nombreCompleto ="{{ user.NombreCompleto }}"
                     onclick="verUserkey(this);">
                     <i class="bi bi-key"></i> 
                     </button>
@@ -62,7 +64,7 @@
                 <td class="text-center" style="width: 20%;">{{ user.email}}</td>
                 <td class="text-center" style="width: 20%;">{{ user.nombre_direccion}}</td>
                 <td class="text-center" style="width: 20%;">{{ user.Nombre_ct}}</td>
-                <td class="text-center" style="width: 20%;">proyecto</td>
+                <td class="text-center" style="width: 20%;">{{ user.Proyecto}}</td>
                 
             </tr>
                         {% endfor %}

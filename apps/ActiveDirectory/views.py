@@ -6,11 +6,14 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import logout
 from django.http import JsonResponse
 from django.utils import timezone
+from django.views.decorators.http import require_http_methods
 import re
 import time
 from apps.AsignarUsuario.models import VallEmpleado, TRegistroAccionesModulo 
 from .models import TActiveDirectoryIp
+from apps.RegistroModulo.models import TRegistroDeModulo
 from .utils import AtributosDeEmpleado , IPSinBaseDatos
+import json
 
 def es_superusuario(user):
     return user.is_authenticated and user.is_superuser
@@ -194,7 +197,7 @@ def consultarUsuariosIDIAI(request):
         nombre_inicio_sesion = request.POST['nombre_inicio_sesion']
         departamento = request.POST['departamento']
         puesto = request.POST['puesto']
-    
+        proyecto =request.POST['nameProyecto']
         # ... otros campos
         #imprimir(password)
         # Preparar la contraseña en formato adecuado para AD
@@ -222,7 +225,7 @@ def consultarUsuariosIDIAI(request):
                    'userPassword': quoted_password,
                    'unicodePwd':quoted_password, #este linea guarda la contraseña en AD PERO DEBE CUMPLIR CON LAS CODICIONES DE SSL EN EL SERVIDOR WEB Y EL SEVIDOR AD CON EL PUERTO 636
                     #'userAccountControl':'512', # Habilita la cuenta
-                   
+                   'physicalDeliveryOfficeName'  : proyecto,
                     # ... otros atributos
                 })
                 # Verificar el resultado de la creación del usuario
@@ -276,7 +279,7 @@ def consultarUsuariosIDIAI(request):
 
 @login_required
 @user_passes_test(es_superusuario) # Solo permitir a superusuarios
-def consultar_usuarios(request):
+def consultar_usuarios(request): #Consulta los usuarios de Active Directory 
     
     usuarios = []
     usuariosAdmin =[]
@@ -319,14 +322,14 @@ def consultar_usuarios(request):
                     'usuario_principal': entry.userPrincipalName.value if 'userPrincipalName' in entry else None,
                     'nombre_inicio_sesion': entry.sAMAccountName.value if 'sAMAccountName' in entry else None, 
                     'nombre_dominio':domain_name, #entry.distinguishedName.value if 'distinguishedName' in entry else None, 
-                    'oficina': entry.physicalDeliveryOfficeName.value if 'physicalDeliveryOfficeName' in entry else None,
+                    'nproyecto': entry.physicalDeliveryOfficeName.value if 'physicalDeliveryOfficeName' in entry else None,
                     'descripcion': entry.description.value if 'description' in entry else None,
                     'departamento': entry.department.value if 'department' in entry else None,  # Nuevo atributo
                     'puesto': entry.title.value if 'title' in entry else None,  # Nuevo atributo
                     'userAccountControl': entry.userAccountControl.value if 'userAccountControl' in entry else None,
                     'esta_deshabilitado': is_account_disabled(useraccountcontrol_str),
                     'DistinguishedName' : entry.distinguishedName.value if 'DistinguishedName' in entry else None,
-        
+                    
                 }
 
               
@@ -393,6 +396,7 @@ def editar_usuario(request):
         puesto = request.POST.get('puesto')
         nombre_inicio_sesion = request.POST.get('nombre_inicio_sesion')
         user_dn = request.POST.get('distinguished_name')
+        proyecto =request.POST['nameProyecto']
         # ... otros campos ....
         #imprimir(nombre_usuario)
         #imprimir(user_dn)
@@ -420,7 +424,8 @@ def editar_usuario(request):
                     'department': [(MODIFY_REPLACE, [departamento])],
                     'title': [(MODIFY_REPLACE, [puesto])],
                     'sAMAccountName': [(MODIFY_REPLACE, [nombre_inicio_sesion])],
-                    # ... otros atributos ...
+                    'physicalDeliveryOfficeName': [(MODIFY_REPLACE, [proyecto])],
+                    # ... otros atributos ..
                 })
 
                 # Verificar resultado de la modificación
@@ -706,6 +711,77 @@ def connect_to_ad():
 def verificar_usuario(request, nombre_usuario):
     existe = existeUsuario(nombre_usuario)
     return JsonResponse({'existe': existe}) 
+
+@login_required  
+@require_http_methods(["POST"])  # Asegurar que esta vista solo acepte solicitudes POST
+def key_usuario(request):
+    # Extraer el cuerpo de la solicitud y convertirlo de JSON a un diccionario de Python
+    datos = json.loads(request.body)
+    nombre_usuario = datos.get('nombre_usuario')
+    nombre_completo = datos.get('nombre_completo')
+    imprimir( f'{nombre_usuario} : {nombre_completo}')
+    
+    # Paso 1: Filtrar por 'nombre_completo'
+    registros_filtrados_por_nombre_completo = TRegistroDeModulo.objects.filter(nombre_completo=nombre_completo)
+
+    # Paso 2: Filtrar programáticamente por 'nombre'
+    existe = next((registro for registro in registros_filtrados_por_nombre_completo if registro.nombre == nombre_usuario), None)
+    
+          
+    
+    #existe = TRegistroDeModulo.objects.filter(nombre_completo=nombre_completo).first()
+        
+    
+    if existe:
+        # Crear un diccionario con la información necesaria
+        imprimir(f'Nombre Completo: {existe.nombre_completo}, Nombre: {existe.nombre}')
+        data = {
+            'nombre_completo': existe.nombre_completo,
+            'modulo': existe.descripcion,
+            'id': existe.id,
+            'usuario' : existe.nombre
+            # Añade más campos según sea necesario
+        }
+        return JsonResponse({'existe': data})
+    else:
+        imprimir("No se encontraron registros que coincidan con ambos criterios.")
+        return JsonResponse({'error': 'Usuario no encontrado'}, status=404)
+
+
+
+def update_usuario (request):
+     # Extraer el cuerpo de la solicitud y convertirlo de JSON a un diccionario de Python
+    datos = json.loads(request.body)
+    nombre_usuario = datos.get('nombre_usuario')
+    nombre_completo = datos.get('nombre_completo')
+    imprimir( f'{nombre_usuario} : {nombre_completo}')
+    
+    # Paso 1: Filtrar por 'nombre_completo'
+    registros_filtrados_por_nombre_completo = TRegistroDeModulo.objects.filter(nombre_completo=nombre_completo)
+
+    # Paso 2: Filtrar programáticamente por 'nombre'
+    existe = next((registro for registro in registros_filtrados_por_nombre_completo if registro.nombre == nombre_usuario), None)
+    
+          
+    
+    #existe = TRegistroDeModulo.objects.filter(nombre_completo=nombre_completo).first()
+        
+    
+    if existe:
+        # Crear un diccionario con la información necesaria
+        imprimir(f'Nombre Completo: {existe.nombre_completo}, Nombre: {existe.nombre}')
+        data = {
+            'nombre_completo': existe.nombre_completo,
+            'modulo': existe.descripcion,
+            'id': existe.id,
+            'usuario' : existe.nombre
+            # Añade más campos según sea necesario
+        }
+        return JsonResponse({'existe': data})
+    else:
+        imprimir("No se encontraron registros que coincidan con ambos criterios.")
+        return JsonResponse({'error': 'Usuario no encontrado'}, status=404)
+
 
 
 def mover_usuario_ou(nombre_usuario, nueva_ou,request):

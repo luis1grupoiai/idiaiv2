@@ -21,6 +21,7 @@
                     data-puesto ="{{ user.puesto}}"
                     data-nombreSesion ="{{ user.nombre_inicio_sesion}}"
                     data-nombreUsuarioPrincipal ="{{ user.usuario_principal }}"
+                    data-proyecto = "{{user.nproyecto}}"
                     onclick="showUserDetails(this);">
                     <span class="text-white"><i class="bi bi-info-circle"></i></span>
                     </button>
@@ -34,6 +35,7 @@
                     data-email ="{{ user.correo }}"
                     data-deparamento="{{ user.departamento}}"
                     data-distinguishedName="{{ user.DistinguishedName}}"
+                    data-proyecto = "{{user.nproyecto}}"
                     onclick="editUser(this);">
                     <i class="bi bi-pencil"></i>
                     </button>

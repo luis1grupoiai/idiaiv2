@@ -42,6 +42,7 @@ class TRegistroDeModulo(models.Model):
         managed = False  # Django no administrará la creación de la tabla para este modelo
         db_table = 'TRegistroDeModulo'  # Asegúrate de que este nombre coincida con el nombre de tu tabla en la base de datos
 # Create your models here.
+
 class VUsuariosModulo(models.Model):
     id = models.BigAutoField(primary_key=True)  # Asegura que corresponda al tipo de dato y llave primaria usada en la vista
     _nombre = models.CharField(max_length=255)  # Ajusta el max_length según tus necesidades

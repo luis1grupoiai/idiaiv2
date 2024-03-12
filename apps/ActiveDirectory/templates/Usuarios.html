@@ -156,13 +156,11 @@ Usuarios de Activate Directory
                                                 <p id="modalPuesto"></p> 
 
                                                 </div>
-                                                <div class="col-md-6"> 
+                                                <div class="col-md-12"> 
                                                 <p id="modalNombre"></p>
                                                 
                                                 </div>
-                                                <div class="col-md-6"> 
-                                                <p id="modalApellidos"></p>
-                                                </div>
+                                                
                                                 <div class="col-md-12">    
                                                 <p id="modalnombreSesion"></p>   
                                                 <p id="modalNombreUsuarioPrincipal"></p>
@@ -212,7 +210,12 @@ Usuarios de Activate Directory
                                                 </div>
                                             </div>
                                             <div class="col-6">
-                                                
+                                               
+                                                    <label for="nameProyecto" class="form-label">Proyecto :</label>
+                                                    <input type="text" class="form-control" name="nameProyecto" id="nameProyecto" required >
+        
+                                                 
+                                
                                             </div>    
                             
                                             <div class="col-6">
@@ -345,8 +348,8 @@ Usuarios de Activate Directory
                 var puesto = button.getAttribute('data-puesto');
                 var nombreSesion = button.getAttribute('data-nombreSesion');
                 var nombreUsuarioPrincipal = button.getAttribute('data-nombreUsuarioPrincipal');
-                var nombrePila = button.getAttribute('data-nombrePila');
-                var apellidos = button.getAttribute('data-apellidos');
+                var nombreProyecto = button.getAttribute('data-proyecto');
+               // var apellidos = button.getAttribute('data-apellidos');
 
 
                 // ... obtén otros datos usando data attributes
@@ -355,8 +358,8 @@ Usuarios de Activate Directory
                 document.getElementById("modalPuesto").innerText = "Puesto: " + puesto;
                 document.getElementById("modalnombreSesion").innerText = "Nombre de Sesión: " + nombreSesion;
                 document.getElementById("modalNombreUsuarioPrincipal").innerText = "Usuario Principal: " + nombreUsuarioPrincipal;
-                document.getElementById("modalNombre").innerText = "Nombre : " + nombrePila;
-                document.getElementById("modalApellidos").innerText = "Apellidos : " + apellidos;
+                document.getElementById("modalNombre").innerText = "Proyecto : " + nombreProyecto;
+               // document.getElementById("modalApellidos").innerText = "Apellidos : " + apellidos;
 
                 
                 // ... rellena otros campos del modal
@@ -376,7 +379,7 @@ Usuarios de Activate Directory
                     var email = button.getAttribute('data-email');
                     var departamento = button.getAttribute('data-deparamento');
                     var distinguishedName = button.getAttribute('data-distinguishedName');
-
+                    var nombreProyecto =button.getAttribute('data-proyecto');
                     // Rellena los campos del formulario en el modal
                     document.getElementById('nombre_usuario').value = nombre ;
                     document.getElementById('nombre_pila').value = nombrePila;
@@ -387,6 +390,7 @@ Usuarios de Activate Directory
                     document.getElementById('email').value = email ;
                     document.getElementById('departamento').value = departamento ;
                     document.getElementById('distinguished_name').value =distinguishedName;
+                    document.getElementById('nameProyecto').value = nombreProyecto ;
                     // Abre el modal
                     var modal = new bootstrap.Modal(document.getElementById('editUserModal'));
                     modal.show();

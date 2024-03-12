@@ -1,4 +1,4 @@
-
+from django.db import IntegrityError
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
@@ -17,7 +17,49 @@ def es_superusuario(user):
 
 @login_required
 @user_passes_test(lambda user: user.is_superuser)  # Solo permitir a superusuarios
-def importarmodulo(request):
+def importarmodulo(request):   #cambia el nombre a importarmodulo cuando quieran importar todos los modulos 
+    if request.method == "POST":
+        n = Fernet(ENCRYPTION_KEY_NOMBRE)
+        f = Fernet(ENCRYPTION_KEY_DESCRIPCION)
+        usuarios = VUsuariosModulo.objects.all()
+        count=usuarios.count()
+        for usuario in usuarios:
+            count-=1
+            # Cifrar el nombre y la descripción
+            nombre_cifrado = n.encrypt(usuario._nombre.strip().encode()).decode()
+            descripcion_cifrado = f.encrypt(usuario._descripcion.encode()).decode()
+
+            # Intentar obtener o crear un nuevo registro en TRegistroDeModulo
+            # Asegúrate de usar los campos correctos para definir la "unicidad"
+            obj, created = TRegistroDeModulo.objects.get_or_create(
+                _nombre=nombre_cifrado,  # Este campo determina la unicidad junto con nombre_completo NO FUNCIONA POR QUE ENCRIPTA DIFERENTE ......
+                defaults={
+                    'nombre_completo': usuario.nombre_completo,  # Asumiendo que quieres actualizar este campo si _nombre coincide
+                    '_descripcion': descripcion_cifrado,
+                }
+            )
+
+            if created:
+                print(f"{count}: Nuevo registro creado: {usuario.nombre_completo}, Nombre: {usuario._nombre}")
+            else:
+                # Si el registro ya existe y quieres actualizar otros campos, puedes hacerlo aquí
+                obj._descripcion = descripcion_cifrado  # Por ejemplo, actualizar la descripción
+                obj.save()
+                print(f"{count}:Registro existente actualizado: {usuario.nombre_completo}, Nombre: {usuario._nombre}")
+
+        messages.success(request, "Usuarios importados correctamente.")
+        return redirect('importarmodulos')
+
+    # Si es GET, mostrar la página con el formulario
+    return render(request, 'importar_modulos.html')
+
+
+
+
+
+@login_required
+@user_passes_test(lambda user: user.is_superuser)  # Solo permitir a superusuarios
+def importarmodulo__(request):  # deja de guncionar cuando tiene mulple registro , se tiene que mejorar el codigo manuel zarate 
     if request.method == "POST":
         n = Fernet(ENCRYPTION_KEY_NOMBRE)
         f = Fernet(ENCRYPTION_KEY_DESCRIPCION)
@@ -31,6 +73,7 @@ def importarmodulo(request):
             nombreCompleto = usuario.nombre_completo
             # Intentar obtener o crear un nuevo registro en TRegistroDeModulo
             nuevo_usuario, created = TRegistroDeModulo.objects.get_or_create(
+                
                 nombre_completo=nombreCompleto,
                 defaults={
                     '_descripcion': descripcion_cifrado, '_nombre':nombre_cifrado,
@@ -40,9 +83,14 @@ def importarmodulo(request):
             
             if created:
                 nuevo_usuario.save()
-                print(count,"Usuario creado:", usuario.nombre_completo)  # Opcional: imprimir/loguear los nombres de los usuarios creados
+                print(count,"Usuario creado:", usuario.nombre_completo , usuario._nombre )    # Opcional: imprimir/loguear los nombres de los usuarios creados
             else:
-                print(count,"Usuario existente:", usuario.nombre_completo)  # Opcional: imprimir/loguear los nombres de los usuarios ya existentes
+                print(" ") 
+                print(count,"Usuario existente:", usuario.nombre_completo , usuario._nombre) 
+
+         
+                         
+                    
 
         messages.success(request, "Usuarios importados correctamente.")
         return redirect('importarmodulos')  # Asegúrate de que este nombre de URL exista en tus urls.py

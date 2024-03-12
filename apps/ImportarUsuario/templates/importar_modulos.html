@@ -54,8 +54,10 @@
             <form method="post" id="importar-usuarios">
               {% csrf_token %}
               <button type="button" class="btn btn-primary btn-block" onclick="confirmarImportacion()">Importar Modulo</button>
-              <a href="{% url 'home' %}" class="btn btn-outline-secondary btn-block">Cancelar</a>
+    
             </form>
+           
+            <a href="{% url 'home' %}" class="btn btn-outline-secondary btn-block">Cancelar</a>
           </div>
         </div>
       </div>

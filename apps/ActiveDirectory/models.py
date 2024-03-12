@@ -1,8 +1,8 @@
 from django.db import models
 
 class TActiveDirectoryIp(models.Model):
-    server = models.CharField(max_length=50)  # Asumiendo que 'server' es un campo de texto
-    ip = models.CharField(max_length=50)  # Asumiendo que 'ip' es un campo de texto para almacenar una dirección IP
+    server = models.CharField(max_length=250)  # Asumiendo que 'server' es un campo de texto
+    ip = models.CharField(max_length=250)  # Asumiendo que 'ip' es un campo de texto para almacenar una dirección IP
 
     class Meta:
         managed = False

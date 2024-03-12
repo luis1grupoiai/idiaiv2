@@ -6,11 +6,15 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import logout
 from django.http import JsonResponse
 from django.utils import timezone
+from django.views.decorators.http import require_http_methods
 import re
 import time
 from apps.AsignarUsuario.models import VallEmpleado, TRegistroAccionesModulo 
 from .models import TActiveDirectoryIp
+from apps.RegistroModulo.models import TRegistroDeModulo
 from .utils import AtributosDeEmpleado , IPSinBaseDatos
+from django.contrib.auth.models import User
+import json
 
 def es_superusuario(user):
     return user.is_authenticated and user.is_superuser
@@ -53,7 +57,7 @@ def obtener_servidor_ad():
 
 #FIN DE CONFIGURACION PARA EL IP DEL SERVIDOR AD -------------------------------------------------------
 
-# Create your views here.
+# crea las variables de domino 
 domino=asignar_dominio()['dominio']
 dominoRaiz=asignar_dominio()['dominioRaiz']
 unidadOrganizativa = ('OU=Bajas','OU=Administracion','OU=Ingeniería','OU=DCASS','OU=Proyectos Especiales') #esta variable esta relacionada con las funciones de   mover_usuario_ou y asignar_Departamento
@@ -194,7 +198,7 @@ def consultarUsuariosIDIAI(request):
         nombre_inicio_sesion = request.POST['nombre_inicio_sesion']
         departamento = request.POST['departamento']
         puesto = request.POST['puesto']
-    
+        proyecto =request.POST['nameProyecto']
         # ... otros campos
         #imprimir(password)
         # Preparar la contraseña en formato adecuado para AD
@@ -222,7 +226,7 @@ def consultarUsuariosIDIAI(request):
                    'userPassword': quoted_password,
                    'unicodePwd':quoted_password, #este linea guarda la contraseña en AD PERO DEBE CUMPLIR CON LAS CODICIONES DE SSL EN EL SERVIDOR WEB Y EL SEVIDOR AD CON EL PUERTO 636
                     #'userAccountControl':'512', # Habilita la cuenta
-                   
+                   'physicalDeliveryOfficeName'  : proyecto,
                     # ... otros atributos
                 })
                 # Verificar el resultado de la creación del usuario
@@ -244,8 +248,8 @@ def consultarUsuariosIDIAI(request):
                     
                     
                 else:
-                    messages.error(request, f"Error al crear usuario: {conn.result['description']}")
-                    mensaje = {'titulo': 'Error', 'texto': f"Error al crear usuario {conn.result['description']}", 'tipo': 'error'}
+                    messages.error(request, f"Error {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])}")
+                    mensaje = {'titulo': 'Error', 'texto': f"Error {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])}", 'tipo': 'error'}
                     imprimir(mensaje)
                     #return redirect('usuariosID')
         except Exception as e:
@@ -276,7 +280,7 @@ def consultarUsuariosIDIAI(request):
 
 @login_required
 @user_passes_test(es_superusuario) # Solo permitir a superusuarios
-def consultar_usuarios(request):
+def consultar_usuarios(request): #Consulta los usuarios de Active Directory 
     
     usuarios = []
     usuariosAdmin =[]
@@ -319,17 +323,17 @@ def consultar_usuarios(request):
                     'usuario_principal': entry.userPrincipalName.value if 'userPrincipalName' in entry else None,
                     'nombre_inicio_sesion': entry.sAMAccountName.value if 'sAMAccountName' in entry else None, 
                     'nombre_dominio':domain_name, #entry.distinguishedName.value if 'distinguishedName' in entry else None, 
-                    'oficina': entry.physicalDeliveryOfficeName.value if 'physicalDeliveryOfficeName' in entry else None,
+                    'nproyecto': entry.physicalDeliveryOfficeName.value if 'physicalDeliveryOfficeName' in entry else None,
                     'descripcion': entry.description.value if 'description' in entry else None,
                     'departamento': entry.department.value if 'department' in entry else None,  # Nuevo atributo
                     'puesto': entry.title.value if 'title' in entry else None,  # Nuevo atributo
                     'userAccountControl': entry.userAccountControl.value if 'userAccountControl' in entry else None,
                     'esta_deshabilitado': is_account_disabled(useraccountcontrol_str),
                     'DistinguishedName' : entry.distinguishedName.value if 'DistinguishedName' in entry else None,
-        
+                    
                 }
 
-              
+                #imprimir( entry.distinguishedName.value)
                 #if 'cn' in entry and entry.cn.value.lower() != 'administrador':
                 if not is_account_disabled(useraccountcontrol_str):
                     usuarios.append(usuario)
@@ -372,7 +376,7 @@ def consultar_usuarios(request):
         # Puedes agregar más variables aquí si lo necesitas
     }
     
-    imprimir(empleado.photoUser(request))
+    # imprimir(empleado.photoUser(request))
     # Renderiza la lista de usuarios en una plantilla HTML
     return render(request, 'Usuarios.html', context)
 
@@ -393,6 +397,7 @@ def editar_usuario(request):
         puesto = request.POST.get('puesto')
         nombre_inicio_sesion = request.POST.get('nombre_inicio_sesion')
         user_dn = request.POST.get('distinguished_name')
+        proyecto =request.POST['nameProyecto']
         # ... otros campos ....
         #imprimir(nombre_usuario)
         #imprimir(user_dn)
@@ -420,7 +425,8 @@ def editar_usuario(request):
                     'department': [(MODIFY_REPLACE, [departamento])],
                     'title': [(MODIFY_REPLACE, [puesto])],
                     'sAMAccountName': [(MODIFY_REPLACE, [nombre_inicio_sesion])],
-                    # ... otros atributos ...
+                    'physicalDeliveryOfficeName': [(MODIFY_REPLACE, [proyecto])],
+                    # ... otros atributos ..
                 })
 
                 # Verificar resultado de la modificación
@@ -428,8 +434,8 @@ def editar_usuario(request):
                     messages.success(request, 'Usuario editado correctamente.')
                     imprimir('Usuario editado correctamente.')
                 else:
-                    messages.error(request, f"Error al editar usuario: {conn.result['description']}")
-                    imprimir( f"Error al editar usuario: {conn.result['description']}")
+                    messages.error(request, f"Error al editar usuario: {obtener_mensaje_error_ad(conn.result['result'])}")
+                    imprimir( f"Error al editar usuario: {obtener_mensaje_error_ad(conn.result['result'])}")
         except Exception as e:
             messages.error(request, f"Error al conectar con AD: {str(e)}")
             imprimir(f"Error al conectar con AD: {str(e)}")
@@ -439,8 +445,9 @@ def editar_usuario(request):
     return redirect('usuarios')
 
  
-@login_required
+
 #@user_passes_test(es_superusuario) # Solo permitir a superusuarios
+@login_required
 def home(request):
    # Inicializa la variable que determina si el usuario es superusuario
     es_super = es_superusuario(request.user)
@@ -459,7 +466,7 @@ def salir (request):
 
 
 @login_required  
-def agregar_usuario(request): # esta funcion o vista la deje por que tal vez se utilice en el futuro , solo revisien bien las variables porque se han modificado el domino.....
+def agregar_usuario(request): #Esta función o vista fue mantenida con la posibilidad de que se pueda necesitar en el futuro. Por favor, revisen cuidadosamente las variables, ya que el dominio ha sido modificado.
     mensaje=None
     if request.method == 'POST':
         dominio_Principal = '@'+'.'.join(part.replace('DC=', '') for part in domino.split(',') if part.startswith('DC='))
@@ -517,8 +524,8 @@ def agregar_usuario(request): # esta funcion o vista la deje por que tal vez se 
                     )
                     return redirect('agregar_usuario')
                 else:
-                    messages.error(request, f"Error al crear usuario: {conn.result['description']}")
-                    mensaje = {'titulo': 'Error', 'texto': f"Error al crear usuario {conn.result['description']}", 'tipo': 'error'}
+                    messages.error(request, f"Error al crear usuario {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])}")
+                    mensaje = {'titulo': 'Error', 'texto': f"Error al crear usuario {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])}", 'tipo': 'error'}
                     imprimir(mensaje)
                     return redirect('agregar_usuario')
         except Exception as e:
@@ -599,7 +606,7 @@ def activar_usuario(request, nombre_usuario):
             conn.modify(user_dn, {'userAccountControl': [(MODIFY_REPLACE, [512])]}) # debe activarse con el 512 pero eso lo vamos a dejar al ultimo ajajajajaj #26/02/2024 se logro hacer 
             if conn.result['result'] == 0:
                 messages.success(request, 'Usuario activado correctamente.')
-                imprimir('Usuario activado correctamente.')
+                imprimir(f'Usuario activado correctamente.{user_dn }')
                 mover = buscar_usuario_por_dn(nombre_usuario)
                 imprimir(mover_usuario_ou(mover['cn'], unidadOrganizativa[asignar_Departamento(mover['department'])],request))
                 insertar_registro_accion(
@@ -707,6 +714,170 @@ def verificar_usuario(request, nombre_usuario):
     existe = existeUsuario(nombre_usuario)
     return JsonResponse({'existe': existe}) 
 
+@login_required  
+@require_http_methods(["POST"])  # Asegurar que esta vista solo acepte solicitudes POST
+def key_usuario(request):
+    # Extraer el cuerpo de la solicitud y convertirlo de JSON a un diccionario de Python
+    datos = json.loads(request.body)
+    nombre_usuario = datos.get('nombre_usuario')
+    nombre_completo = datos.get('nombre_completo')
+    imprimir("Datos que recibe del POST :")
+    imprimir(f'Nombre de Usuario:{nombre_usuario} : Nombre Completo:{nombre_completo}')
+    
+    # Paso 1: Filtrar por 'nombre_completo'
+    registros_filtrados_por_nombre_completo = TRegistroDeModulo.objects.filter(nombre_completo=nombre_completo)
+
+    # Paso 2: Filtrar programáticamente por 'nombre'
+    existe = next((registro for registro in registros_filtrados_por_nombre_completo if registro.nombre == nombre_usuario), None)
+    
+          
+    
+    #existe = TRegistroDeModulo.objects.filter(nombre_completo=nombre_completo).first()
+        
+    
+    if existe:
+        # Crear un diccionario con la información necesaria
+        print()
+        imprimir("Registro encontrado : ")
+        imprimir(f'Nombre Completo: {existe.nombre_completo}, Nombre de Usuario: {existe.nombre}')
+        print()
+        data = {
+            'nombre_completo': existe.nombre_completo,
+            'modulo': existe.descripcion,
+            'id': existe.id,
+            'usuario' : existe.nombre
+            # Añade más campos según sea necesario
+        }
+        return JsonResponse({'existe': data})
+    else:
+        imprimir("No se encontraron registros que coincidan con ambos criterios.")
+        return JsonResponse({'error': 'Usuario no encontrado'}, status=404)
+
+
+
+@login_required  
+@require_http_methods(["POST"])  # vista para actualizar las contraseña del usuario 
+def update_usuario (request):
+    estatusModulo =" "
+    estatusIDIAI =" "
+    estatusAD =" "
+    statusIcon= 'info'
+    titulo = 'Usuario  Actualizado  '
+     # Extraer el cuerpo de la solicitud y convertirlo de JSON a un diccionario de Python
+    datos = json.loads(request.body)
+    nombre_usuario = datos.get('nombre_usuario')
+    keyPass= datos.get('keypass')
+    nombre_completo = datos.get('nombre_completo')
+    direccion = datos.get('direccion')
+   # imprimir("Actualizar : Datos que recibe del POST :")
+    imprimir(f'{direccion} Nombre de Usuario:{nombre_usuario} : Nombre Completo:{nombre_completo} : Contraseña : {keyPass}')
+    
+    # Paso 1: Filtrar por 'nombre_completo'
+    registros_filtrados_por_nombre_completo = TRegistroDeModulo.objects.filter(nombre_completo=nombre_completo)
+
+    # Paso 2: Filtrar programáticamente por 'nombre'
+    existe = next((registro for registro in registros_filtrados_por_nombre_completo if registro.nombre == nombre_usuario), None)
+    
+          
+    
+    #existe = TRegistroDeModulo.objects.filter(nombre_completo=nombre_completo).first()
+        
+    
+    if existe:
+        print()
+        #imprimir("Actualizar Registro encontrado : ")
+        #imprimir(f'Nombre Completo: {existe.nombre_completo}, Nombre de Usuario: {existe.nombre}: Contraseña : {existe.descripcion}')
+        print()
+        
+        #Inicio ---- codigo para cambiar la contraseña en el repositorio del modulo : 
+        try:
+            existe.descripcion=keyPass
+            existe.save()
+            #imprimir("Se Actualizo la Contraseña en el Modulo : ")
+            #imprimir(f'Nombre Completo: {existe.nombre_completo}, Nombre de Usuario: {existe.nombre}: Contraseña : {existe.descripcion}')
+            estatusModulo ="Modulo : OK "
+        except Exception as e : 
+             estatusModulo =f"Modulo : Error {e}"
+             imprimir(f"Error al guardar el registro en repositorios de los modulos : {e}")
+             statusIcon= 'warning'
+             titulo = 'Usuario  Actualizado  excepto en el Modulo '
+         #FIN ---- codigo para cambiar la contraseña en el repositorio del modulo : 
+        
+        
+         #Inicio ---- codigo para cambiar la contraseña en el repositorio del IDIAI : 
+        try:
+            user = User.objects.get(username=nombre_usuario)
+            #user.set_password(keyPass)  # Asegúrate de que la contraseña esté en texto plano aquí
+            #user.save()
+            #imprimir("Se Actualizo la Contraseña en IDIAI: ")
+            #imprimir(f'Nombre Completo: {user.get_username()}, Nombre de Usuario: {user.get_username()}: Contraseña : {keyPass}')
+            estatusIDIAI  ="IDIAI V2 : OK "
+        except Exception as e : 
+             estatusIDIAI =f"IDIAI V2  : Error {e}"
+             imprimir(f"Error al guardar el registro en repositorios de IDIAI : {e}")
+             statusIcon='warning'
+             titulo = 'Usuario  Actualizado  excepto en IDIAI '
+         #FIN ---- codigo para cambiar la contraseña en el repositorio del IDIAI : 
+         
+         
+         
+         #Inicio ---- codigo para cambiar la contraseña en Active Directory  : 
+        try:
+            # Preparar la contraseña en formato adecuado para AD
+            _password = f'"{keyPass}"'.encode('utf-16-le')
+            user_dn =f'CN={nombre_usuario},{unidadOrganizativa[asignar_Departamento(direccion)]},{domino}'
+            # Establecer conexión con Active Directory
+            with connect_to_ad() as conn:
+                conn.modify(user_dn, {'unicodePwd': [(MODIFY_REPLACE, [_password])],
+                                      'userPassword': [(MODIFY_REPLACE, [_password])],
+                                      'department': [(MODIFY_REPLACE, [direccion])],
+                                      }) 
+                if conn.result['result'] == 0:   
+                   imprimir("Se Actualizo la Contraseña en Active Directory: ")
+                   imprimir(f'Nombre Completo: { nombre_completo}, Nombre de Usuario: {nombre_usuario}: Contraseña : {keyPass}')
+                   estatusAD  ="Active Directory : OK "
+                   
+                   
+                else:
+                   titulo = 'Usuario  Actualizado  excepto en Active Directory '
+                   statusIcon='warning'
+                   estatusAD = f"Active Directory Error {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])}"
+                   imprimir(estatusAD) 
+            
+           
+        except Exception as e : 
+             titulo = 'Usuario  Actualizado  excepto en Active Directory '
+             estatusAD +=f" Error {e}"
+             imprimir(f"Error al guardar el registro en Active Directory : {e}")
+             statusIcon='warning'
+             #ten en cuenta que cambiar contraseñas en Active Directory puede requerir permisos específicos 
+             # y configuraciones adicionales en el servidor de Active Directory. Asegúrate de que el usuario 
+             # que ejecuta este código tenga los permisos adecuados para cambiar contraseñas en Active Directory. 
+             # Además, ten precaución al manipular contraseñas en texto plano y asegúrate de que se tomen las 
+             # medidas adecuadas para proteger la seguridad de las contraseñas. aquí estuvo goku XD
+         #FIN ---- codigo para cambiar la contraseña en  Active Directory : 
+        
+        
+            
+        
+        data = {
+            'nombre_completo': existe.nombre_completo,
+            'modulo': existe.descripcion,
+            'id': existe.id,
+            'usuario' : existe.nombre,
+            'statusModulo':estatusModulo,
+            'statusIDIAI' : estatusIDIAI,
+            'statusAD' :estatusAD,
+            'statusicon' : statusIcon,
+            'titulo':titulo
+            # Añade más campos según sea necesario
+        }
+        return JsonResponse({'existe': data})
+    else:
+        imprimir("No se encontraron registros que coincidan con ambos criterios.")
+        return JsonResponse({'error': 'Usuario no encontrado'}, status=404)
+
+
 
 def mover_usuario_ou(nombre_usuario, nueva_ou,request):
     mensaje = None
@@ -740,7 +911,7 @@ def mover_usuario_ou(nombre_usuario, nueva_ou,request):
                     'N/A'
                     )
                 else:
-                    mensaje = f"Error al mover usuario: {conn.result['description']}"
+                    mensaje = f"Error al mover usuario {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])}"
             else:
                 mensaje = "Usuario no encontrado en AD."
     except Exception as e:
@@ -832,12 +1003,29 @@ def get_client_ip(request):
     # Si no se encuentra en las cabeceras, tomar la dirección del remitente de la solicitud
     return request.META.get('REMOTE_ADDR')
 
-def imprimir(mensaje): #funcion para imprimir en la consola 
+def imprimir(mensaje): #funcion para imprimir en la consola  en modo desarrollador 
     if settings.DEBUG:
         print(mensaje)
 
 
-
+def obtener_mensaje_error_ad(result_code):
+    mensajes = {
+        0: "La operación se realizó correctamente.",
+        1: "Error interno del servidor.",
+        2: "El cliente ha enviado una solicitud incorrecta al servidor.",
+        32: "No se ha encontrado el objeto o usuario especificado en Active Directory.",
+        49: "Las credenciales proporcionadas no son válidas.",
+        50: "La contraseña proporcionada no cumple con los requisitos de complejidad.",
+        52: "Problema de autenticación.",
+        53: "La contraseña proporcionada no cumple con los requisitos de complejidad o no se ha encontrado el objeto especificado  ",
+        701: "Se ha excedido el límite de búsquedas en el servidor.",
+        773: "El usuario debe cambiar la contraseña antes de iniciar sesión.",
+        775: "El usuario ha intentado iniciar sesión demasiadas veces con una contraseña incorrecta.",
+        # Añade más códigos de error y mensajes correspondientes según necesites
+    }
+    
+    
+    return mensajes.get(result_code, "Ocurrió un error desconocido.")
 
 
 

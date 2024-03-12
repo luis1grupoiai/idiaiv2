@@ -769,6 +769,7 @@ def update_usuario (request):
     keyPass= datos.get('keypass')
     nombre_completo = datos.get('nombre_completo')
     direccion = datos.get('direccion')
+    
    # imprimir("Actualizar : Datos que recibe del POST :")
     imprimir(f'{direccion} Nombre de Usuario:{nombre_usuario} : Nombre Completo:{nombre_completo} : Contraseña : {keyPass}')
     
@@ -807,8 +808,8 @@ def update_usuario (request):
          #Inicio ---- codigo para cambiar la contraseña en el repositorio del IDIAI : 
         try:
             user = User.objects.get(username=nombre_usuario)
-            #user.set_password(keyPass)  # Asegúrate de que la contraseña esté en texto plano aquí
-            #user.save()
+            user.set_password(keyPass)  # Asegúrate de que la contraseña esté en texto plano aquí
+            user.save()
             #imprimir("Se Actualizo la Contraseña en IDIAI: ")
             #imprimir(f'Nombre Completo: {user.get_username()}, Nombre de Usuario: {user.get_username()}: Contraseña : {keyPass}')
             estatusIDIAI  ="IDIAI V2 : OK "
@@ -824,6 +825,7 @@ def update_usuario (request):
          #Inicio ---- codigo para cambiar la contraseña en Active Directory  : 
         try:
             # Preparar la contraseña en formato adecuado para AD
+            imprimir(mover_usuario_ou(nombre_usuario, unidadOrganizativa[asignar_Departamento(direccion)],request)) 
             _password = f'"{keyPass}"'.encode('utf-16-le')
             user_dn =f'CN={nombre_usuario},{unidadOrganizativa[asignar_Departamento(direccion)]},{domino}'
             # Establecer conexión con Active Directory
@@ -885,7 +887,7 @@ def mover_usuario_ou(nombre_usuario, nueva_ou,request):
         with connect_to_ad() as conn:
             # Buscar el Distinguished Name (DN) actual del usuario
             search_filter = f'(sAMAccountName={nombre_usuario})'
-            conn.search(search_base=dominoRaiz, search_filter=search_filter, attributes=['distinguishedName'])
+            conn.search(search_base=domino, search_filter=search_filter, attributes=['distinguishedName'])
 
             if conn.entries:
                 dn_actual = conn.entries[0].distinguishedName.value

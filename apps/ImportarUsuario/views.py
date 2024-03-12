@@ -26,7 +26,7 @@ def importarmodulo(request):   #cambia el nombre a importarmodulo cuando quieran
         for usuario in usuarios:
             count-=1
             # Cifrar el nombre y la descripción
-            nombre_cifrado = n.encrypt(usuario._nombre.encode()).decode()
+            nombre_cifrado = n.encrypt(usuario._nombre.strip().encode()).decode()
             descripcion_cifrado = f.encrypt(usuario._descripcion.encode()).decode()
 
             # Intentar obtener o crear un nuevo registro en TRegistroDeModulo

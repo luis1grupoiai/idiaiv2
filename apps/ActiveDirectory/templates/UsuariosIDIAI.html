@@ -288,8 +288,10 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
                         <label for="nombre_usuariokey" class="form-label">Nombre de Usuario:</label>
                         
                         <input type="text" class="form-control" name="nombre_usuariokey" id="nombre_usuariokey" required readonly>
-                        <input type="hidden" class="form-control" name="idmodelo" id="idmodelo" required >
-                        
+                        <input type="hidden" class="form-control" name="idmodelo" id="idmodelo"  >
+                        <input type="hidden" class="form-control" name="nombreCompleto" id="nombreCompleto">
+                        <input type="hidden" class="form-control" name="nombredireccion" id="nombredireccion">
+    
                         </div>
                 </div>
                 <div class="col-6">
@@ -311,14 +313,14 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
         
             <div class="modal-footer">
                 <button type="button" class="btn btn-light-danger"
-                data-bs-dismiss="modal">
-                <i class="bx bx-x d-block d-sm-none"></i>
+                data-bs-dismiss="modal" onclick="updateUserkey();" id="botonActualizar" name "botonActualizar">
+               
                 <span class="d-none d-sm-block">Actualizar</span>
 
              </button>
                 <button type="button" class="btn btn-light-primary"
                     data-bs-dismiss="modal">
-                    <i class="bx bx-x d-block d-sm-none"></i>
+                   
                     <span class="d-none d-sm-block">Cerrar</span>
 
                  </button>
@@ -436,6 +438,7 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
                     var distinguishedName = button.getAttribute('data-distinguishedName');
                     var nombreProyecto =button.getAttribute('data-proyecto');
                     verificarUsuario(nombre);
+
                     // Rellena los campos del formulario en el modal
                     document.getElementById('nombre_usuario').value = nombre ;
                     document.getElementById('nombre_pila').value = nombrePila;
@@ -462,14 +465,29 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
                 // Utiliza data attributes para obtener la información
                   var nombre = button.getAttribute('data-nombre');
                   var nombreCompleto = button.getAttribute('data-nombreCompleto');
+                  var direccion = button.getAttribute('data-deparamento');
                   // Rellena los campos del formulario en el modal
-                  document.getElementById('usuariokey').value = '¿?';
+                  document.getElementById('usuariokey').value = '**************';
                   document.getElementById('nombre_usuariokey').value = nombre ;
-                  document.getElementById("nombreCompletokey").innerText = 'Contraseña: ' + nombreCompleto ;
+                  document.getElementById("nombreCompletokey").innerText =nombreCompleto ;
+                  document.getElementById('nombreCompleto').value = nombreCompleto ;
+                  document.getElementById('nombredireccion').value = direccion ;
+                  
                   keyUsuario(nombre, nombreCompleto);
                   //var modal = new bootstrap.Modal(document.getElementById('verUserkeyModal'));
                   //modal.show();
           }
+
+          function updateUserkey() {
+            // Utiliza data attributes para obtener la información
+              var nombre = document.getElementById('nombre_usuariokey').value;
+              var nombreCompleto  = document.getElementById('nombreCompleto').value;
+              // Rellena los campos del formulario en el modal
+              
+              ActualizarkeyUsuario(nombre, nombreCompleto);
+              //var modal = new bootstrap.Modal(document.getElementById('verUserkeyModal'));
+              //modal.show();
+      }
             
               
       
@@ -513,19 +531,24 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
             })
             .then(response => response.json())
             .then(data => {
+                let botonActualizar = document.getElementById('botonActualizar');
                 let modulo = document.getElementById('usuariokey');
                 let nombreusuario =document.getElementById('nombre_usuariokey');
                 let idmodulo = document.getElementById('idmodelo');
                 let titulomodal =document.getElementById('nombreCompletokey');
                 if (data.existe) {
+                    botonActualizar.disabled = false;
+                    botonActualizar.innerText = "Actualizar Usuario";
                     modulo.value = data.existe.modulo;
                     nombreusuario.value=data.existe.usuario ;
                     idmodulo.value = data.existe.id;
-                    titulomodal.innerText = 'Contraseña: ' +data.existe.nombre_completo;
+                    titulomodal.innerText = 'Usuario: ' +data.existe.nombre_completo;
                    
                 } else {
-                    titulomodal.innerText =  'Usuario no encontrado';
-                    modulo.value =''
+                    titulomodal.innerText =  'Usuario no encontrado - Error 404';
+                    modulo.value =' '
+                    botonActualizar.disabled = true;
+                    botonActualizar.innerText = "Actualizar";
                     Swal.fire({
                         title: '¡Usuario no existe !',
                         text: 'en el modulo.',
@@ -540,9 +563,17 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
 
         function ActualizarkeyUsuario(nombreUsuario,nombreCompleto){
               // Preparar el cuerpo de la solicitud
-              const datos = JSON.stringify({ nombre_usuario: nombreUsuario,nombre_completo: nombreCompleto });
+              var contrasena  = document.getElementById('usuariokey').value;
+              var setDireccion = document.getElementById('nombredireccion').value;
+             console.log("---------------------------------------")
+             console.log("Nombre de Usuario : " + nombreUsuario)
+             console.log("Contraseña : " + contrasena)
+             console.log("Nombre Completo : " + nombreCompleto)
+             console.log("Direccion  : " + setDireccion)
+             console.log("---------------------------------------")
+              const datos = JSON.stringify({ direccion:setDireccion , keypass:contrasena, nombre_usuario:nombreUsuario,nombre_completo:nombreCompleto });
         
-              fetch(`/modulo-usuario/`, {
+              fetch(`/modulo-update/`, {
                   method: 'POST', // Cambiar a método POST
                   headers: {
                       'Content-Type': 'application/json',
@@ -553,23 +584,21 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
               })
               .then(response => response.json())
               .then(data => {
-                  let modulo = document.getElementById('usuariokey');
-                  let nombreusuario =document.getElementById('nombre_usuariokey');
-                  let idmodulo = document.getElementById('idmodelo');
-                  let titulomodal =document.getElementById('nombreCompletokey');
+                  
                   if (data.existe) {
-                      modulo.value = data.existe.modulo;
-                      nombreusuario.value=data.existe.usuario ;
-                      idmodulo.value = data.existe.id;
-                      titulomodal.innerText = 'Contraseña: ' +data.existe.nombre_completo;
+                    Swal.fire({
+                        title: '¡ '+data.existe.titulo +'!',
+                        text: ' -- ' + data.existe.statusModulo +' -- ' +data.existe.statusIDIAI+' -- ' +data.existe.statusAD ,
+                        icon: data.existe.statusicon,  // 'success', 'error', 'warning', 'info', 'question'
+                        confirmButtonText: 'Ok'
+                    });
                      
                   } else {
-                      titulomodal.innerText =  'Usuario no encontrado';
-                      modulo.value =''
+                     
                       Swal.fire({
-                          title: '¡Usuario no existe !',
-                          text: 'en el modulo.',
-                          icon: "warning",  // 'success', 'error', 'warning', 'info', 'question'
+                          title: '¡Usuario no Actualizado !',
+                          text: 'error',
+                          icon: "error",  // 'success', 'error', 'warning', 'info', 'question'
                           confirmButtonText: 'Ok'
                       });
                   }

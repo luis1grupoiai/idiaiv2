@@ -173,3 +173,22 @@ left JOIN TDetalleRequisiciones  TDR ON PERCAT.Id_categoria=TDR.Categoria_d
 								WHEN TODOSC.Historial_co = 1 AND TDR.Consecutivo_d=TODOSC.consecutivo_d THEN TODOSC.consecutivo_d
 								ELSE TODOSR.Consecutivo_d  END
 								--WHERE vPC.proyecto='IN-GEH-002/23'
+
+
+SELECT TOP (1000) [id]
+      ,[_nombre]
+      ,[_descripcion]
+      ,[nombre_completo]
+  FROM [IDIAI_v2].[dbo].[TRegistroDeModulo]  where  [nombre_completo]= 'Abraham Barrios Jiménez'
+
+  delete
+  FROM [IDIAI_v2].[dbo].[TRegistroDeModulo]
+
+  SELECT nombre_completo, COUNT(*) as Repetidos
+FROM [IDIAI_v2].[dbo].[TRegistroDeModulo]
+GROUP BY nombre_completo
+HAVING COUNT(*) > 1
+ORDER BY Repetidos DESC;
+
+DELETE FROM [IDIAI_v2].[dbo].[TRegistroDeModulo]
+WHERE id = 7601

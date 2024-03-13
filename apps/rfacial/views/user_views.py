@@ -140,31 +140,6 @@ class CCompareFaces(APIView):
 
         return all_encodings
 
-# Ejemplo de usocx
-
-    def eye_aspect_ratio(eye):
-        # Calcula las distancias euclidianas entre los dos sets de puntos verticales (x, y) - coordenadas
-        A = np.linalg.norm(eye[1] - eye[5])
-        B = np.linalg.norm(eye[2] - eye[4])
-
-        # Calcula la distancia euclidiana entre los puntos horizontales
-        C = np.linalg.norm(eye[0] - eye[3])
-
-        # Calcula el eye aspect ratio
-        ear = (A + B) / (2.0 * C)
-
-        return ear
-
-    def detect_blink(self, eye_points, facial_landmarks):
-        # Obtiene las coordenadas de los puntos del ojo
-        eye = np.array([(facial_landmarks.part(eye_points[i]).x, 
-                        facial_landmarks.part(eye_points[i]).y) for i in range(6)])
-        ear = self.eye_aspect_ratio(eye)
-
-        # Umbral para determinar si hay parpadeo
-        EAR_THRESHOLD = 0.3  
-
-        return ear < EAR_THRESHOLD
     
 
     @swagger_auto_schema(
@@ -204,7 +179,7 @@ class CCompareFaces(APIView):
 
             # Generar un nombre de archivo único para la imagen
             temp_file_name = f"{uuid4()}.jpg"
-            temp_file_path = os.path.join('static', 'admin', 'img', temp_file_name)
+            temp_file_path = os.path.join('staticfiles', 'admin', 'img', temp_file_name)
 
             # Guardar la imagen en un archivo temporal
             image.save(temp_file_path)

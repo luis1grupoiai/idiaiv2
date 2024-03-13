@@ -315,12 +315,14 @@ class CAutenticacion(APIView):
         try:
             sTextFinal = base64.b64decode(p_decodificado)
             sTextFinal = sTextFinal.decode('utf-8')
+            sTextFinal = str(sTextFinal)
 
         except ValueError as error:
             sTexto = "%s" % error
             datos = {'message': 'Error al convertir de base64. ', "error": sTexto}
 
             print(datos)
+        print(sTextFinal)
 
     
         return sTextFinal
@@ -506,15 +508,17 @@ class CAutenticacion(APIView):
                 # 2.1. Para el sistema de RF (Reconocimiento Facial) el  token =4  - KEY_RF
                 # keySis = base64.b64decode(jd['token'])
                 # keySis = keySis.decode('utf-8')
-
-                keySis = self.decodificarB64(jd['token'])
+                skTk = str(jd['token'])
+                # keySis = self.decodificarB64(jd['token'])
+                keySis = self.decodificarB64(skTk)
+                print(keySis)
 
                 # print(keySis)
                 # print(os.environ.get('KEY_RF'))
                
                  #20/02/2024 valida llaves: Llave que permite consumir api, llave para reconocimiento facial y la llave para Token Global
-                if((keySis == os.environ.get('SECRET_KEY')) or (keySis == os.environ.get('KEY_RF')) or (keySis == os.environ.get('KEY_GTKG'))):
-                    print("secrey key valida")
+                if((keySis == str(os.environ.get('SECRET_KEY'))) or (keySis == str(os.environ.get('KEY_RF'))) or (keySis == str(os.environ.get('KEY_GTKG')))):
+                    print("Secret key valida")
                     #Valida si el sistema existe en el catalogo de sistemas.
                     # consultarSistema
                     # dSistema = list(Sistemas.objects.filter(id=jd['idSistema']).values())
@@ -530,7 +534,9 @@ class CAutenticacion(APIView):
                             #3. Decodifica el password en base64
                             # pwdD64 = base64.b64decode(jd['password'])
                             #decodificarB64
-                            pwdD64 = self.decodificarB64(jd['password'])
+                            sPwd = str(jd['password'])
+                            # pwdD64 = self.decodificarB64(jd['password'])
+                            pwdD64 = self.decodificarB64(sPwd)
                         
                             #Obtiene el registro del usuario mediante el userName.
                             # dUsuario = list(User.objects.filter(username=jd['user'], is_active=1).values())

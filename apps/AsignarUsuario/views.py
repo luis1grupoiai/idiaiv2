@@ -18,10 +18,15 @@ from django.utils import timezone
 from .utils import AtributosDeEmpleado
 from django.contrib.auth.models import User
 from cryptography.fernet import Fernet
-
+import os
+import base64
 empleado = AtributosDeEmpleado()
-ENCRYPTION_KEY_DESCRIPCION = b'VVsQPaM9IhXYrWNwLyKkAnmJdzdFR8R0MwdvZpHGsA8='
-ENCRYPTION_KEY_NOMBRE = b'o2GwoZ4O2UyRvsWTK7owoZKHOBQU2TbmYHUkHI1OWMs='
+
+ENCRYPTION_KEY_DESCRIPCION =os.environ.get('KEY_DESCRIPCION').encode()
+ENCRYPTION_KEY_NOMBRE = os.environ.get('KEY_NOMBRE').encode()
+
+
+
 
 @login_required
 def solicitud(request):
@@ -86,6 +91,10 @@ def solicitudNuevos(request):
 
 @login_required
 def nuevosIDIAI(request):
+   
+  
+  
+  
     # Aquí la lógica para mostrar la página de inicio
     if request.method == 'POST':
         nombre_usuario = request.POST['nombre_usuario'].upper()

@@ -20,7 +20,7 @@ def es_superusuario(user):
     return user.is_authenticated and user.is_superuser
 
 empleado = AtributosDeEmpleado()
-ip_sin_base_dato = IPSinBaseDatos().cambiar_ip('192.168.1.1') #en caso que no funcione la base datos
+ip_sin_base_dato = IPSinBaseDatos().cambiar_ip('192.192.194.10') #en caso que no funcione la base datos
 
 
 
@@ -30,11 +30,11 @@ def asignar_ip():
     
      # Determina el servidor basado en el entorno
     servidor = 'ADVirtual' if settings.DEBUG else 'ADProduccion'
-    
+    print(servidor )
     # Realiza la consulta una sola vez usando la variable `servidor`
     ip = TActiveDirectoryIp.objects.filter(server=servidor).first()
-
-    return ip if ip else ip_sin_base_dato  
+    print(ip.ip)
+    return ip #if ip else ip_sin_base_dato  
 
 def asignar_dominio():
     if settings.DEBUG:
@@ -109,7 +109,7 @@ def ipconfig(request): #vista para la gestion de la ip de AD
             registro = get_object_or_404(TActiveDirectoryIp, id=registro_id)
 
             # Verifica si 'nueva_ip' no está vacía
-            if nueva_ip and re.match(ip_regex, nueva_ip):
+            if nueva_ip : # and re.match(ip_regex, nueva_ip):
                 registro.ip = nueva_ip  # Actualiza el campo 'ip' del registro
                 time.sleep(5)
                 registro.save()  # Guarda los cambios en la base de datos
@@ -119,7 +119,7 @@ def ipconfig(request): #vista para la gestion de la ip de AD
             else:
                 # Maneja el caso en que 'nueva_ip' esté vacía
                 time.sleep(5)
-                messages.error(request, "La nueva IP no puede estar vacía y debe tener un formato válido (0.0.0.0).")
+                messages.error(request, "La nueva IP no puede estar vacía")# y debe tener un formato válido (0.0.0.0).")
                 return redirect('ipconfig')
         
   

@@ -179,7 +179,7 @@ class CCompareFaces(APIView):
 
             # Generar un nombre de archivo único para la imagen
             temp_file_name = f"{uuid4()}.jpg"
-            temp_file_path = os.path.join('staticfiles', 'admin', 'img', temp_file_name)
+            temp_file_path = os.path.join('static', 'admin', 'img', temp_file_name)
 
             # Guardar la imagen en un archivo temporal
             image.save(temp_file_path)

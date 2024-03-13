@@ -17,6 +17,7 @@ BASE_APPS = [
     'sslserver', 
     'widget_tweaks',#python manage.py runsslserver  8080 --settings=config.settings.development
     # 'django.contrib.staticfiles',
+    'corsheaders',
 ]
 
 LOCAL_APPS = [
@@ -42,11 +43,14 @@ THIRD_APPS = [
 
 INSTALLED_APPS = BASE_APPS + LOCAL_APPS + THIRD_APPS
 
+CORS_ALLOW_ALL_ORIGINS = True
+
 
 
 BASE_MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',

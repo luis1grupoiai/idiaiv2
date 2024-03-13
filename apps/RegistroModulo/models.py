@@ -1,10 +1,12 @@
 from django.db import models
 from cryptography.fernet import Fernet
+import os
 
+ENCRYPTION_KEY_DESCRIPCION =os.environ.get('KEY_DESCRIPCION').encode()
+ENCRYPTION_KEY_NOMBRE = os.environ.get('KEY_NOMBRE').encode()
 
-
-ENCRYPTION_KEY_DESCRIPCION = b'VVsQPaM9IhXYrWNwLyKkAnmJdzdFR8R0MwdvZpHGsA8='
-ENCRYPTION_KEY_NOMBRE = b'o2GwoZ4O2UyRvsWTK7owoZKHOBQU2TbmYHUkHI1OWMs='
+#ENCRYPTION_KEY_DESCRIPCION = b'VVsQPaM9IhXYrWNwLyKkAnmJdzdFR8R0MwdvZpHGsA8='
+#ENCRYPTION_KEY_NOMBRE = b'o2GwoZ4O2UyRvsWTK7owoZKHOBQU2TbmYHUkHI1OWMs='
 
 class TRegistroDeModulo(models.Model):
     _nombre = models.TextField()

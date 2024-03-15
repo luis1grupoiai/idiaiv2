@@ -51,7 +51,7 @@ USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-CSRF_TRUSTED_ORIGINS = ['https://localhost:8080', 'https://127.0.0.1:8080']
+CSRF_TRUSTED_ORIGINS= ['https://localhost:8080', 'https://127.0.0.1:8080','https://grupo-iai.com.mx:8080', 'https://www.grupo-iai.com.mx:8080', 'https://iaipc130-pc.grupo-iai.com.mx:8080', 'https://www.iaipc130-pc.grupo-iai.com.mx:8080' ]
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.office365.com'
 EMAIL_PORT = 587

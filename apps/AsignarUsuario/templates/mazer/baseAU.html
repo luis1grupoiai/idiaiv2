@@ -102,7 +102,17 @@
                 <span>Nuevo Personal </span>
             </a>
             
+            
+            </li>
 
+            <li
+            class="sidebar-item {% if active_page == 'ADsolicitud' %}active{% endif %} ">
+            <a href="{% url 'personalNoContratada' %}" class='sidebar-link'>
+                <i class="bi bi-person-circle"></i>
+                <span>Reclutamiento </span>
+            </a>
+            
+            
             </li>
             {% else %}
             <li

@@ -16,6 +16,7 @@ urlpatterns = [
     path('modulo-update/', views.update_usuario, name='modulo-update'),
     path('bitacora/', views.bitacora, name="bitacora" ),
     path('ipconfig/', views.ipconfig, name = "ipconfig"),
+    path('personalNoContratada/', views.personalNoContratada, name='personalNoContratada'),
     path('logout/',views.salir,name = 'salir')
     
     ]

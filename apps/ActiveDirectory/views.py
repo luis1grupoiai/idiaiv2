@@ -9,13 +9,18 @@ from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 import re
 import time
-from apps.AsignarUsuario.models import VallEmpleado, TRegistroAccionesModulo 
+from cryptography.fernet import Fernet
+from apps.AsignarUsuario.models import VallEmpleado, TRegistroAccionesModulo ,VAllReclutamiento
 from .models import TActiveDirectoryIp
 from apps.RegistroModulo.models import TRegistroDeModulo
 from .utils import AtributosDeEmpleado , IPSinBaseDatos
 from django.contrib.auth.models import User
 import json
+import os
+from django.db.models import Q
 
+ENCRYPTION_KEY_DESCRIPCION =os.environ.get('KEY_DESCRIPCION').encode()
+ENCRYPTION_KEY_NOMBRE = os.environ.get('KEY_NOMBRE').encode()
 def es_superusuario(user):
     return user.is_authenticated and user.is_superuser
 
@@ -30,10 +35,10 @@ def asignar_ip():
     
      # Determina el servidor basado en el entorno
     servidor = 'ADVirtual' if settings.DEBUG else 'ADProduccion'
-    print(servidor )
+    imprimir(servidor )
     # Realiza la consulta una sola vez usando la variable `servidor`
     ip = TActiveDirectoryIp.objects.filter(server=servidor).first()
-    print(ip.ip)
+    imprimir(ip.ip)
     return ip #if ip else ip_sin_base_dato  
 
 def asignar_dominio():
@@ -64,13 +69,207 @@ unidadOrganizativa = ('OU=Bajas','OU=Administracion','OU=Ingeniería','OU=DCASS'
 
 
 @login_required
+def personalNoContratada(request):
+   
+    
+    # Aquí la lógica para mostrar la página de inicio
+    if request.method == 'POST':
+        nombre_usuario = request.POST['nombre_usuario'].upper().strip()
+        nombre_pila = request.POST['nombre_pila']
+        apellido = request.POST['apellido']
+        nombre_completo = request.POST['nombre_completo']
+        email = request.POST['email']
+        password = request.POST['password']
+        nombre_inicio_sesion = request.POST['nombre_inicio_sesion']
+        departamento = request.POST['departamento']
+        puesto = request.POST['puestoCT']
+        proyecto =request.POST['nameProyecto']
+        #imprimir( nombre_usuario,nombre_pila,apellido,nombre_completo,email,password,nombre_inicio_sesion,departamento,puesto )
+        dominio_Principal ='@'+'.'.join(part.replace('DC=', '') for part in domino.split(',') if part.startswith('DC=')) 
+        quoted_password = f'"{password}"'.encode('utf-16-le')
+        LugarCreado=" "
+        LugarNoCreado=" "
+        
+        if existeUsuario(nombre_usuario) : #VERIFICA SI EXISTE USUARIO EN ACTIVE DIRECTORY <---AQUÍ ESTUVO SON GOKU XD
+            LugarNoCreado+="Active Directory "
+            messages.error(request,f"Usuario existente en {LugarNoCreado}: {nombre_usuario}")
+            imprimir(f"Usuario existente en {LugarNoCreado}: {nombre_usuario}")
+        else:              
+            try:
+                    #server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
+                with connect_to_ad() as conn:
+                        
+                    #user_dn = f"CN={nombre_usuario},CN=Users,DC=iai,DC=com,DC=mx"
+                    #user_dn = f"CN={nombre_usuario},OU=iaiUsuario,OU=RedGrupoIAI,{domino}"
+                    user_dn = f"CN={nombre_usuario},{unidadOrganizativa[asignar_Departamento(departamento)]},{domino}"
+                    conn.add(user_dn, ['top', 'person', 'organizationalPerson', 'user'], {
+                            'cn': nombre_usuario,
+                            'givenName':nombre_pila,
+                            'sn':apellido,
+                            'mail':email,
+                            'displayName': nombre_completo,
+                            'sAMAccountName':nombre_inicio_sesion,
+                        # 'sAMAccountType':805306368,
+                            'userPrincipalName':nombre_inicio_sesion+dominio_Principal,
+                            'department':departamento,
+                            'title':puesto,
+                            'userPassword': quoted_password,
+                            'unicodePwd':quoted_password, #este linea guarda la contraseña en AD PERO DEBE CUMPLIR CON LAS CODICIONES DE SSL EN EL SERVIDOR WEB Y EL SEVIDOR AD CON EL PUERTO 636
+                            #'userAccountControl':'512', # Habilita la cuenta
+                            'physicalDeliveryOfficeName'  : proyecto,
+                            # ... otros atributos
+                    })
+                        # Verificar el resultado de la creación del usuario
+                    
+                    
+                    
+                    if conn.result['result'] == 0:  # éxito
+                        LugarCreado+="Active Directory, "
+                        messages.success(request, f'Usuario creado correctamente en {LugarCreado}.')
+                        imprimir(f"Usuario creado en {LugarCreado}:{nombre_usuario}")
+                        #codigo para guardar en la bitacora -------
+                        insertar_registro_accion(
+                            empleado.nameUser(request),
+                            'Modulo AD',
+                            'Crear',
+                            f"El usuario '{nombre_usuario}' fue creado en AD",
+                            get_client_ip(request),
+                            request.META.get('HTTP_USER_AGENT'),
+                            'N/A'
+                            )
+                            
+                            #return redirect('usuariosID')
+                            
+                            
+                    else:
+                        messages.error(request, f"Error {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])}")
+                        return redirect('personalNoContratada') 
+                        
+                            #return redirect('usuariosID')
+                            
+            except Exception as e:
+                messages.error(request, f"Error al conectar con AD: {str(e)}")
+                return redirect('personalNoContratada') 
+        
+        
+        
+        
+        user, created = User.objects.get_or_create(username= nombre_usuario, defaults={
+                'email':email,
+                'first_name': nombre_pila,
+                'last_name': apellido,
+                'is_active': True,
+                'is_superuser': False,
+                'is_staff': False,
+                'last_login': None,
+                'date_joined': timezone.now(),
+            })
+        if created:
+            user.set_password(password )  # Asegúrate de que la contraseña esté en texto plano aquí
+            user.save()
+            LugarCreado+=" IDIAI V2 "
+            n = Fernet(ENCRYPTION_KEY_NOMBRE)
+            f = Fernet(ENCRYPTION_KEY_DESCRIPCION)
+            nombre_cifrado = n.encrypt(nombre_usuario.encode().strip()).decode()
+            descripcion_cifrado = f.encrypt(password.encode()).decode()
+            nombreCompleto = nombre_completo
+            messages.success(request,f"Usuario creado en  {LugarCreado} :{nombre_usuario}") # 
+            imprimir(f"Usuario creado en {LugarCreado}:{nombre_usuario}")
+            insertar_registro_accion(
+                            empleado.nameUser(request),
+                            'Modulo AD',
+                            'Crear',
+                            f"El usuario '{nombre_usuario}' fue creado en IDIAI V2",
+                            get_client_ip(request),
+                            request.META.get('HTTP_USER_AGENT'),
+                            'N/A'
+                            )         
+
+            
+            nuevo_usuario, created2 = TRegistroDeModulo.objects.get_or_create(
+                _nombre=nombre_cifrado,
+                defaults={
+                    '_descripcion': descripcion_cifrado, 'nombre_completo':nombreCompleto,
+                    
+                }
+            )
+            if created2:
+                nuevo_usuario.save()
+                LugarCreado+=" y Modulo "
+                messages.success(request,f"Usuario creado en  {LugarCreado} :{nombre_usuario}") # 
+                imprimir(f"Usuario creado en {LugarCreado}:{nombre_usuario}")
+                insertar_registro_accion(
+                            empleado.nameUser(request),
+                            'Modulo AD',
+                            'Crear',
+                            f"El usuario '{nombre_usuario}' fue creado en el modulo",
+                            get_client_ip(request),
+                            request.META.get('HTTP_USER_AGENT'),
+                            'N/A'
+                            )  
+            else:
+                messages.error(request,f"Usuario existente en el Modulo: {nombre_usuario}")
+              # 
+                 
+            
+            
+            
+            
+        else:
+            LugarNoCreado+= ' IDIAI V2 y Modulo '
+            messages.error(request,f"Usuario existente en {LugarNoCreado}: {nombre_usuario}")
+            return redirect('personalNoContratada') 
+        
+    
+        
+    
+    empleados = []
+    empleados = VAllReclutamiento.objects.all()
+    encabezados ={
+        'title' :'Personal en reclutamiento de Grupo IAI',
+        'Encabezado' :'Personal en reclutamiento  de Grupo IAI',
+        'SubEncabezado' :'Plataforma para Agregar  usuarios a  Active Directory',
+        'EncabezadoNav' :'Agregar',
+        'EncabezadoCard' : 'Agregar Usuario    Active Directory',
+        'titulomodal1':'Crear Usuario de Active Directory'
+        
+    }
+   # print(empleados)
+    context = {
+        'empleados' : empleados,
+        'usersAdmin': empleados.filter( nombre_direccion='Administración'),
+        'usersIng': empleados.filter( nombre_direccion='Ingeniería'),
+        'usersDCASS': empleados.filter( nombre_direccion='Calidad, Ambiental, Seguridad y Salud'),
+        'usersPS': empleados.filter( nombre_direccion='Proyectos Especiales'),
+        'active_page': 'ADsolicitud',
+        'nombre_usuario': empleado.nameUser(request),
+        'foto':empleado.photoUser(request),
+        'Categoria': empleado.Categoria(request),
+        'encabezados' :encabezados,
+        'ActiveDirectory' :True
+    }
+    return render(request, 'nuevoPersonal.html',context)
+
+
+
+
+@login_required
 @user_passes_test(es_superusuario) # Solo permitir a superusuarios
 def ipconfig(request): #vista para la gestion de la ip de AD
     ip=None
+    
+    encabezados ={
+        'title' :'IP configuración ',
+        'Encabezado' :'Configuración de la IP de Active Directory',
+        'SubEncabezado' :'XD',
+        'EncabezadoNav' :'IP Configuracion ',
+        'EncabezadoCard' : 'Introduce la nueva IP',
+        
+    }
    
     if request.method == 'POST':
         action = request.POST.get('action')
-        nueva_ip = request.POST['ip']
+        nueva_ip = request.POST['ip'].strip()
         registro_id = request.POST.get('id')
         #imprimir(action)
         if action == 'probar':
@@ -131,14 +330,26 @@ def ipconfig(request): #vista para la gestion de la ip de AD
         'nombre_usuario':empleado.nameUser(request),
         'ip' : ip,
         'foto':empleado.photoUser(request),
+        'encabezados' :encabezados,
         'Categoria': empleado.Categoria(request)
     }
     return render(request,'ipconfig.html',context)
+
+
 
 @login_required
 @user_passes_test(es_superusuario) # Solo permitir a superusuarios  
 def bitacora(request): #LA BITACORA QUE LLEVA EL SISTEMAS DE AD PARA LLEVAR EL HISTORICO DE LOS PROCESOS QUE SE REALIZA EN LA INTERFAZ
     mensaje=None
+    
+    encabezados ={
+        'title' :'Bitácora AD',
+        'Encabezado' :'Bienvenido a la bitácora de  Active Directory:',
+        'SubEncabezado' :'Su plataforma para visualizar las acciones.',
+        'EncabezadoNav' :'Bitácora AD',
+        'EncabezadoCard' : 'Registros de Acciones',
+        
+    }
     #registros= TRegistroAccionesModulo.objects.all()
     registros = TRegistroAccionesModulo.objects.filter(Modulo='Modulo AD').order_by('-FechaHora')[:1000] # solo muestra los ultimos  mil registros 
     context = {
@@ -147,6 +358,7 @@ def bitacora(request): #LA BITACORA QUE LLEVA EL SISTEMAS DE AD PARA LLEVAR EL H
                     'mensaje': mensaje,
                     'registros':registros,
                     'foto':empleado.photoUser(request),
+                    'encabezados' :encabezados,
                     'Categoria': empleado.Categoria(request)
                     }
         
@@ -189,7 +401,7 @@ def consultarUsuariosIDIAI(request):
 
     if request.method == 'POST':
         dominio_Principal ='@'+'.'.join(part.replace('DC=', '') for part in domino.split(',') if part.startswith('DC='))
-        nombre_usuario = request.POST['nombre_usuario']
+        nombre_usuario = request.POST['nombre_usuario'].strip()
         nombre_pila = request.POST['nombre_pila']
         apellido = request.POST['apellido']
         nombre_completo = request.POST['nombre_completo']
@@ -281,7 +493,14 @@ def consultarUsuariosIDIAI(request):
 @login_required
 @user_passes_test(es_superusuario) # Solo permitir a superusuarios
 def consultar_usuarios(request): #Consulta los usuarios de Active Directory 
-    
+    encabezados ={
+        'title' :'Activate Directory',
+        'Encabezado' :'Bienvenido a Active Directory:',
+        'SubEncabezado' :'Su plataforma para visualizar  y editar usuarios.',
+        'EncabezadoNav' :'Consulta',
+        'EncabezadoCard' : 'Usuarios de Activate Directory',
+        
+    }
     usuarios = []
     usuariosAdmin =[]
     usuariosIng = []
@@ -372,6 +591,7 @@ def consultar_usuarios(request): #Consulta los usuarios de Active Directory
         'active_page': 'usuarios',
         'nombre_usuario': empleado.nameUser(request),# Variable adicional
         'foto':empleado.photoUser(request),
+        'encabezados' :encabezados,
         'Categoria': empleado.Categoria(request)
         # Puedes agregar más variables aquí si lo necesitas
     }
@@ -730,7 +950,15 @@ def key_usuario(request):
     # Paso 2: Filtrar programáticamente por 'nombre'
     existe = next((registro for registro in registros_filtrados_por_nombre_completo if registro.nombre == nombre_usuario), None)
     
-          
+    insertar_registro_accion(
+                    empleado.nameUser(request),
+                    'Modulo AD',
+                    'Ver',
+                    f"Se visualizó la contraseña del usuario. '{nombre_usuario}' ",
+                    get_client_ip(request),
+                    request.META.get('HTTP_USER_AGENT'),
+                    'N/A'
+                    )       
     
     #existe = TRegistroDeModulo.objects.filter(nombre_completo=nombre_completo).first()
         
@@ -797,6 +1025,15 @@ def update_usuario (request):
             #imprimir("Se Actualizo la Contraseña en el Modulo : ")
             #imprimir(f'Nombre Completo: {existe.nombre_completo}, Nombre de Usuario: {existe.nombre}: Contraseña : {existe.descripcion}')
             estatusModulo ="Modulo : OK "
+            insertar_registro_accion(
+                    empleado.nameUser(request),
+                    'Modulo AD',
+                    'Crear',
+                    f"Se Actualizó la contraseña del usuario. '{nombre_usuario}' en el Modulo ",
+                    get_client_ip(request),
+                    request.META.get('HTTP_USER_AGENT'),
+                    'N/A'
+                    ) 
         except Exception as e : 
              estatusModulo =f"Modulo : Error {e}"
              imprimir(f"Error al guardar el registro en repositorios de los modulos : {e}")
@@ -813,6 +1050,15 @@ def update_usuario (request):
             #imprimir("Se Actualizo la Contraseña en IDIAI: ")
             #imprimir(f'Nombre Completo: {user.get_username()}, Nombre de Usuario: {user.get_username()}: Contraseña : {keyPass}')
             estatusIDIAI  ="IDIAI V2 : OK "
+            insertar_registro_accion(
+                    empleado.nameUser(request),
+                    'Modulo AD',
+                    'Crear',
+                    f"Se Actualizó la contraseña del usuario. '{nombre_usuario}' en el IDIAI V2 ",
+                    get_client_ip(request),
+                    request.META.get('HTTP_USER_AGENT'),
+                    'N/A'
+                    )
         except Exception as e : 
              estatusIDIAI =f"IDIAI V2  : Error {e}"
              imprimir(f"Error al guardar el registro en repositorios de IDIAI : {e}")
@@ -838,6 +1084,15 @@ def update_usuario (request):
                    imprimir("Se Actualizo la Contraseña en Active Directory: ")
                    imprimir(f'Nombre Completo: { nombre_completo}, Nombre de Usuario: {nombre_usuario}: Contraseña : {keyPass}')
                    estatusAD  ="Active Directory : OK "
+                   insertar_registro_accion(
+                    empleado.nameUser(request),
+                    'Modulo AD',
+                    'Crear',
+                    f"Se Actualizó la contraseña del usuario. '{nombre_usuario}' en el Active Directory ",
+                    get_client_ip(request),
+                    request.META.get('HTTP_USER_AGENT'),
+                    'N/A'
+                    )
                    
                    
                 else:
@@ -1020,9 +1275,13 @@ def obtener_mensaje_error_ad(result_code):
         50: "La contraseña proporcionada no cumple con los requisitos de complejidad.",
         52: "Problema de autenticación.",
         53: "La contraseña proporcionada no cumple con los requisitos de complejidad o no se ha encontrado el objeto especificado  ",
+        68: "No se pudo encontrar la entrada especificada en Active Directory.",
         701: "Se ha excedido el límite de búsquedas en el servidor.",
         773: "El usuario debe cambiar la contraseña antes de iniciar sesión.",
         775: "El usuario ha intentado iniciar sesión demasiadas veces con una contraseña incorrecta.",
+        8381: "El servicio de directorio no está disponible.",
+        8641: "El servidor no es funcional."
+        
         # Añade más códigos de error y mensajes correspondientes según necesites
     }
     

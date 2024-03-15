@@ -134,7 +134,7 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
                 role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title" id="myModalLabel33"> + Crear Usuario de IDIAI </h4>
+                <h4 class="modal-title" id="myModalLabel33"> + {{ encabezados.titulomodal1 }} </h4>
                 <button type="button" class="close" data-bs-dismiss="modal"
                     aria-label="Close">
                     <i data-feather="x"></i>
@@ -159,8 +159,13 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
                             </div>
                     </div>
                     <div class="col-6">
-                        
-                    </div>    
+                                               
+                        <label for="nameProyecto" class="form-label">Proyecto :</label>
+                        <input type="text" class="form-control" name="nameProyecto" id="nameProyecto" required >
+
+                     
+    
+                </div>   
     
                     <div class="col-6">
                         <div class="mb-2">
@@ -183,7 +188,7 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
                     <div class="col-6">
                         <div class="mb-2">
                             <label for="departamento" class="form-label">Dirección:</label>
-                            <select class="form-control " name="departamento" id="departamento" required readonly>
+                            <select class="form-control " name="departamento" id="departamento" required >
 
                             
                                 <option value="Administración">Administración</option>
@@ -232,10 +237,14 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light-secondary"
                         data-bs-dismiss="modal">
-                        <i class="bx bx-x d-block d-sm-none"></i>
+                        <i class="bi bi-x d-block d-sm-none"></i>
                         <span class="d-none d-sm-block">Cerrar</span>
                     </button>
-                    <button type="submit" class="btn btn-primary" id="botonGuardar" >Guardar</button>
+                    <button type="submit" class="btn btn-primary" id="botonGuardar" >
+                        <i class="bi bi-floppy2 d-block d-sm-none"> 
+                                                    
+                        </i><span class="d-none d-sm-block">Guardar</span>
+                    </button>
                 </div>
             </form>
         </div>

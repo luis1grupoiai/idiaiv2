@@ -30,9 +30,13 @@
                     data-email ="{{ user.email }}"
                     data-deparamento="{{ user.nombre_direccion}}"
                     data-distinguishedName="{{ user.username }}"
+                    data-proyecto="{{user.Proyecto}}"
                     onclick="AgregarUsuario(this);"
                     >
-                    Agregar</button>
+                    <i class="bi bi-person-plus d-block d-sm-none"> 
+                                                    
+                    </i><span class="d-none d-sm-block">Agregar</span>
+                    </button>
 
                     {% else%}
 

@@ -52,6 +52,8 @@ import base64
 # stky = b'VVsQPaM9IhXYrWNwLyKkAnmJdzdFR8R0MwdvZpHGsA8='
 stky = force_bytes(os.environ.get('KFNRAPIAUTH'))
 
+# print(stky)
+
 crfr = Fernet(stky)
 # from camera import VideoCamera, IPWebCam
 # import numpy as np

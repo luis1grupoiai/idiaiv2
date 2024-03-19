@@ -2,10 +2,10 @@ from django import forms
 from .models import TRegistroDeModulo
 from cryptography.fernet import Fernet
 from django.core.exceptions import ValidationError
+import os
 
-
-ENCRYPTION_KEY_DESCRIPCION = b'VVsQPaM9IhXYrWNwLyKkAnmJdzdFR8R0MwdvZpHGsA8='
-ENCRYPTION_KEY_NOMBRE = b'o2GwoZ4O2UyRvsWTK7owoZKHOBQU2TbmYHUkHI1OWMs='
+ENCRYPTION_KEY_DESCRIPCION =os.environ.get('KEY_DESCRIPCION').encode()
+ENCRYPTION_KEY_NOMBRE = os.environ.get('KEY_NOMBRE').encode()
 
 
 

@@ -1,7 +1,9 @@
 from django.shortcuts import render
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
-from .models import VallEmpleado 
+from .models import VallEmpleado , VAllReclutamiento
+from apps.AsignarUsuario.models import  TRegistroAccionesModulo 
 from apps.RegistroModulo.models import TRegistroDeModulo 
 from django.db.models import Q
 from django.core.mail import send_mail
@@ -106,7 +108,9 @@ def nuevosIDIAI(request):
         nombre_inicio_sesion = request.POST['nombre_inicio_sesion']
         departamento = request.POST['departamento']
         puesto = request.POST['puestoCT']
-        print( nombre_usuario,nombre_pila,apellido,nombre_completo,email,password,nombre_inicio_sesion,departamento,puesto )
+        #print( nombre_usuario,nombre_pila,apellido,nombre_completo,email,password,nombre_inicio_sesion,departamento,puesto )
+        LugarCreado=" "
+        LugarNoCreado=" "
         user, created = User.objects.get_or_create(username= nombre_usuario, defaults={
                 'email':email,
                 'first_name': nombre_pila,
@@ -118,24 +122,47 @@ def nuevosIDIAI(request):
                 'date_joined': timezone.now(),
             })
         if created:
+            LugarCreado+=" IDIAI V2 "
             user.set_password(password )  # Asegúrate de que la contraseña esté en texto plano aquí
             user.save()
             n = Fernet(ENCRYPTION_KEY_NOMBRE)
             f = Fernet(ENCRYPTION_KEY_DESCRIPCION)
-            nombre_cifrado = n.encrypt(nombre_usuario.encode()).decode()
+            nombre_cifrado = n.encrypt(nombre_usuario.encode().strip()).decode()
             descripcion_cifrado = f.encrypt(password.encode()).decode()
             nombreCompleto = nombre_completo
+            messages.success(request,f"Usuario creado en  {LugarCreado} :{nombre_usuario}") # 
+            imprimir(f"Usuario creado en {LugarCreado}:{nombre_usuario}")
             
+            insertar_registro_accion(
+                            empleado.nameUser(request),
+                            'Modulo AD',
+                            'Crear',
+                            f"El usuario '{nombre_usuario}' fue creado en IDIAI V2",
+                            get_client_ip(request),
+                            request.META.get('HTTP_USER_AGENT'),
+                            'N/A'
+                            )  
             nuevo_usuario, created2 = TRegistroDeModulo.objects.get_or_create(
-                nombre_completo=nombreCompleto,
+                _nombre=nombre_cifrado,
                 defaults={
-                    '_descripcion': descripcion_cifrado, '_nombre':nombre_cifrado,
+                    '_descripcion': descripcion_cifrado, 'nombre_completo':nombreCompleto,
                     
                 }
             )
             if created2:
                 nuevo_usuario.save()
-                messages.success(request,f"Usuario creado:{nombre_usuario}") # 
+                LugarCreado+=" y Modulo "
+                messages.success(request,f"Usuario creado en  {LugarCreado} :{nombre_usuario}") # 
+                imprimir(f"Usuario creado en {LugarCreado}:{nombre_usuario}")
+                insertar_registro_accion(
+                            empleado.nameUser(request),
+                            'Modulo AD',
+                            'Crear',
+                            f"El usuario '{nombre_usuario}' fue creado en el modulo",
+                            get_client_ip(request),
+                            request.META.get('HTTP_USER_AGENT'),
+                            'N/A'
+                            ) 
             else:
                 messages.error(request,f"Usuario existente en el Modulo: {nombre_usuario}")
               # 
@@ -145,7 +172,8 @@ def nuevosIDIAI(request):
             
             return redirect('nuevousuario') 
         else:
-            messages.error(request,f"Usuario existente: {nombre_usuario}")
+            LugarNoCreado+= ' IDIAI V2 y Modulo '
+            messages.error(request,f"Usuario existente en {LugarNoCreado}: {nombre_usuario}")
             return redirect('nuevousuario') 
         
     
@@ -159,6 +187,7 @@ def nuevosIDIAI(request):
         'SubEncabezado' :'Plataforma para Agregar  usuarios a  IDIAI',
         'EncabezadoNav' :'Agregar',
         'EncabezadoCard' : 'Agregar Usuario IDIAI',
+        'titulomodal1':'Crear Usuario de IDIAI'
         
     }
    # print(empleados)
@@ -223,4 +252,51 @@ def enviar_correo(request):
     return render(request, 'CorreoSolicitudAlta.html', context)
 
 
+def imprimir(mensaje): #funcion para imprimir en la consola  en modo desarrollador 
+    if settings.DEBUG:
+        print(mensaje)
+        
+        
+def insertar_registro_accion(nombre_usuario, modulo, nombre_accion, descripcion, ip_usuario, user_agent, browser_id):
+    nuevo_registro = TRegistroAccionesModulo(
+        NombreUsuario=nombre_usuario,
+        Modulo=modulo,
+        NombreAccion=nombre_accion,
+        FechaHora=timezone.now(),  # Asigna la fecha y hora actual
+        Descripcion=descripcion,
+        IpUsuario=ip_usuario,
+        UserAgent=user_agent,
+        BrowserId=browser_id
+    )
     
+    nuevo_registro.save()
+    imprimir(nuevo_registro)
+    
+def get_client_ip(request):
+    """
+    Intenta obtener la dirección IP real del cliente a partir de una solicitud HTTP en Django.
+    Esta función tiene en cuenta cabeceras comunes utilizadas por proxies y balanceadores de carga.
+    """
+    # Lista de posibles cabeceras HTTP que pueden contener la dirección IP real
+    ip_headers = [
+        'HTTP_X_FORWARDED_FOR',  # Usual en configuraciones con proxies
+        'HTTP_X_REAL_IP',        # Usual con ciertos servidores/proxies, como Nginx
+        'HTTP_CLIENT_IP',        # Otra posible cabecera con la IP del cliente
+        'HTTP_X_FORWARDED',      # Otra cabecera de proxy
+        'HTTP_X_CLUSTER_CLIENT_IP',  # Cabecera utilizada por algunos balanceadores de carga
+        'HTTP_FORWARDED_FOR',    # Otra variante de la cabecera FORWARDED_FOR
+        'HTTP_FORWARDED'         # Versión simplificada de la cabecera FORWARDED
+    ]
+
+    # Intentar obtener la IP desde las cabeceras definidas
+    for header in ip_headers:
+        ip = request.META.get(header)
+        if ip:
+            # En algunos casos, la cabecera puede contener múltiples IPs,
+            # entonces se toma la primera que generalmente es la del cliente
+            ip = ip.split(',')[0].strip()
+            if ip:
+                return ip
+
+    # Si no se encuentra en las cabeceras, tomar la dirección del remitente de la solicitud
+    return request.META.get('REMOTE_ADDR')

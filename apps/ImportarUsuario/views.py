@@ -7,9 +7,10 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import VUsuariosModulo, TRegistroDeModulo 
 from cryptography.fernet import Fernet
+import os
 # Asegúrate de definir tus claves aquí o importarlas desde tu configuración
-ENCRYPTION_KEY_DESCRIPCION = b'VVsQPaM9IhXYrWNwLyKkAnmJdzdFR8R0MwdvZpHGsA8='
-ENCRYPTION_KEY_NOMBRE = b'o2GwoZ4O2UyRvsWTK7owoZKHOBQU2TbmYHUkHI1OWMs='
+ENCRYPTION_KEY_DESCRIPCION =os.environ.get('KEY_DESCRIPCION').encode()
+ENCRYPTION_KEY_NOMBRE = os.environ.get('KEY_NOMBRE').encode()
 
 def es_superusuario(user):
     return user.is_authenticated and user.is_superuser

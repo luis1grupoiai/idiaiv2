@@ -59,12 +59,14 @@ function AgregarUsuario(button) {
     var departamento = button.getAttribute('data-deparamento');
     var distinguishedName = button.getAttribute('data-distinguishedName');
     var nombreCompleto = (nombrePila.trim() + ' ' + apellidos.trim()).trim();
+    var nombreProyecto= button.getAttribute('data-proyecto');
 
-    document.getElementById('nombre_usuario').value = "" ;
+    document.getElementById('nombre_usuario').value =nombre ;
     document.getElementById('nombre_pila').value = nombrePila;
     document.getElementById('apellido').value = apellidos;
     document.getElementById('puestoCT').value = puesto;
     document.getElementById('nombre_inicio_sesion').value = nombreSesion;
+    document.getElementById('nameProyecto').value =nombreProyecto ;
 
 
     document.getElementById('nombre_completo').value =nombreCompleto;

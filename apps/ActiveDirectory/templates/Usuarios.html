@@ -2,7 +2,7 @@
 
 
 {% block title%}
-Activate Directory
+{{ encabezados.title }}
 {% endblock title %}
 
 {% block extra_css %}
@@ -16,17 +16,17 @@ Activate Directory
 {% endblock %}
 
 {% block Encabezado %}
-<h3>Bienvenido a Active Directory:</h3>
-<p >Su plataforma para visualizar  y editar usuarios.</p>
+<h3>{{ encabezados.Encabezado }}</h3>
+<p >{{ encabezados.SubEncabezado }}</p>
 {% endblock %}
 
 {% block EncabezadoNav%}
-Consulta
+{{ encabezados.EncabezadoNav }}
 {% endblock EncabezadoNav %}
 
 
 {% block EncabezadoCard%}
-Usuarios de Activate Directory
+{{ encabezados.EncabezadoCard }}
 {% endblock EncabezadoCard %}
 
 {% block contenido %}
@@ -71,6 +71,9 @@ Usuarios de Activate Directory
         </li>
        
     </ul>
+    <div class="m-3">
+        <a href="{% url 'personalNoContratada'%}" class="btn btn-warning"><i class="bi bi-person-plus-fill"> Personal en Reclutamiento </i></a>
+        </div>
     <div class="tab-content" id="myTabContent">
         <div class="tab-pane fade " id="home" role="tabpanel" aria-labelledby="home-tab">
             <p class='my-2'>
@@ -171,7 +174,7 @@ Usuarios de Activate Directory
                                         <div class="modal-footer">
                                            
                                             <button type="button" class="btn btn-primary ms-1" data-bs-dismiss="modal">
-                                                <i class="bx bx-check d-block d-sm-none"></i>
+                                                <i class="bi bi-check d-block d-sm-none"></i>
                                                 <span class="d-none d-sm-block">Aceptar</span>
                                             </button>
                                         </div>
@@ -270,10 +273,15 @@ Usuarios de Activate Directory
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-light-secondary"
                                                 data-bs-dismiss="modal">
-                                                <i class="bx bx-x d-block d-sm-none"></i>
-                                                <span class="d-none d-sm-block">Cerrar</span>
+                                                <i class="bi bi-x d-block d-sm-none ">
+                                                </i><span class="d-none d-sm-block">Cerrar</span>
+                                                
                                             </button>
-                                            <button type="submit" class="btn btn-primary" id="botonGuardar">Guardar</button>
+                                            <button type="submit" class="btn btn-primary" id="botonGuardar">
+                                                <i class="bi bi-floppy2 d-block d-sm-none"> 
+                                                    
+                                                </i><span class="d-none d-sm-block"> Guardar </span>
+                                            </button>
                                         </div>
                                     </form>
                                 </div>

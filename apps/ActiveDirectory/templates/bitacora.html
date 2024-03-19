@@ -1,7 +1,7 @@
 {% extends "mazer/base.html" %}
 
 {% block title%}
-Bitácora AD
+{{ encabezados.title }}
 {% endblock title %}
 
 {% block extra_css %}
@@ -18,17 +18,17 @@ Bitácora AD
 
 
 {% block Encabezado %}
-<h3>Bienvenido a la bitácora de  Active Directory:</h3>
-<p >Su plataforma para visualizar las acciones.</p>
+<h3>{{ encabezados.Encabezado }}</h3>
+<p >{{ encabezados.SubEncabezado }}</p>
 {% endblock %}
 
 {% block EncabezadoNav%}
-Consulta
+{{ encabezados.EncabezadoNav }}
 {% endblock EncabezadoNav %}
 
 
 {% block EncabezadoCard%}
-Registros de Acciones
+{{ encabezados.EncabezadoCard }}
 {% endblock EncabezadoCard %}
 
 {% block contenido %}

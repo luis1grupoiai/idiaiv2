@@ -35,10 +35,10 @@ def asignar_ip():
     
      # Determina el servidor basado en el entorno
     servidor = 'ADVirtual' if settings.DEBUG else 'ADProduccion'
-    imprimir(servidor )
+    # imprimir(servidor )
     # Realiza la consulta una sola vez usando la variable `servidor`
     ip = TActiveDirectoryIp.objects.filter(server=servidor).first()
-    imprimir(ip.ip)
+    #imprimir(ip.ip)
     return ip #if ip else ip_sin_base_dato  
 
 def asignar_dominio():
@@ -66,6 +66,61 @@ def obtener_servidor_ad():
 domino=asignar_dominio()['dominio']
 dominoRaiz=asignar_dominio()['dominioRaiz']
 unidadOrganizativa = ('OU=Bajas','OU=Administracion','OU=Ingeniería','OU=DCASS','OU=Proyectos Especiales') #esta variable esta relacionada con las funciones de   mover_usuario_ou y asignar_Departamento
+
+@login_required
+def actualizarProyectoDireccion(request):
+
+    users = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='')
+    for usuario in users:
+       
+        try:
+            with connect_to_ad() as conn:
+                search_base = domino 
+                search_filter = f'(cn={usuario.username})'  # Filtro para buscar por Common Name
+                conn.search(search_base, search_filter, attributes=['cn'])
+                if (len(conn.entries) > 0):
+                    imprimir(f"Encontro ")
+                    imprimir(f'Nombre de Usuario : {usuario.username} Proyecto : { usuario.Proyecto} Direcion : {usuario.nombre_direccion}')
+                    usuario.modificado=True 
+                
+        except Exception as e:
+                imprimir(f"Error al buscar en Active Directory: {str(e)}")
+        
+        usuario.modificado=False 
+    #cn --------->usuario.username
+    # physicalDeliveryOfficeName  ----> usuario.Proyecto
+    # department --------->  usuario.nombre_direccion
+
+
+    encabezados ={
+        'title' :' Actualizar Proyecto y Dirección del Personal de Grupo IAI',
+        'Encabezado' :'Actualizar Proyecto y Dirección  del Personal de Grupo IAI',
+        'SubEncabezado' :'',
+        'EncabezadoNav' :'Actualizar Proyecto y Dirección ',
+        'EncabezadoCard' : 'Empleados Actualizado del  Proyecto y Dirección ',
+       
+        
+    }
+   # print(empleados)
+    context = {
+        'active_page': 'usuarios',
+        'nombre_usuario': empleado.nameUser(request),
+        'foto':empleado.photoUser(request),
+        'Categoria': empleado.Categoria(request),
+        'encabezados' :encabezados,
+        'users':users
+    }
+
+
+
+
+    return render(request, 'actualizarProyectoDireccion.html',context)
+
+
+
+
+
+
 
 
 @login_required
@@ -261,7 +316,7 @@ def ipconfig(request): #vista para la gestion de la ip de AD
     encabezados ={
         'title' :'IP configuración ',
         'Encabezado' :'Configuración de la IP de Active Directory',
-        'SubEncabezado' :'XD',
+        'SubEncabezado' :'',
         'EncabezadoNav' :'IP Configuracion ',
         'EncabezadoCard' : 'Introduce la nueva IP',
         
@@ -385,7 +440,7 @@ def consultarUsuariosIDIAI(request):
     for conjunto_usuarios in [usuarios,UsuaruisDown]:
         for usuario in conjunto_usuarios:
             # Suponiendo que 'username' es el campo relevante para verificar en AD
-           # usuario.existe_en_ad = existeUsuario(usuario.username)
+            #usuario.existe_en_ad = existeUsuario(usuario.username) # lo quite porque era tardado verificar todos XD
             usuario.existe_en_ad = True
     
     
@@ -821,7 +876,7 @@ def activar_usuario(request, nombre_usuario):
         with connect_to_ad() as conn:
             #user_dn = f"CN={nombre_usuario},OU=iaiUsuario,OU=RedGrupoIAI,{domino}"
             user_dn = nombre_usuario;
-            #imprimir(user_dn)
+            imprimir(user_dn)
             # Establecer userAccountControl a 512 para activar la cuenta
             conn.modify(user_dn, {'userAccountControl': [(MODIFY_REPLACE, [512])]}) # debe activarse con el 512 pero eso lo vamos a dejar al ultimo ajajajajaj #26/02/2024 se logro hacer 
             if conn.result['result'] == 0:

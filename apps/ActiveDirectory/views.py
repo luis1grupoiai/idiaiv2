@@ -65,39 +65,103 @@ def obtener_servidor_ad():
 # crea las variables de domino 
 domino=asignar_dominio()['dominio']
 dominoRaiz=asignar_dominio()['dominioRaiz']
-unidadOrganizativa = ('OU=Bajas','OU=Administracion','OU=Ingeniería','OU=DCASS','OU=Proyectos Especiales') #esta variable esta relacionada con las funciones de   mover_usuario_ou y asignar_Departamento
+
+unidadOrganizativa = ('OU=Bajas','OU=Administracion','OU=Ingeniería','OU=DCASS','OU=Proyectos Especiales','0') #esta variable esta relacionada con las funciones de   mover_usuario_ou y asignar_Departamento
+selectDepartamento= ('Administración','Ingeniería','Calidad, Ambiental, Seguridad y Salud','Proyectos Especiales')
+
+def SelectDepartamento():
+    return selectDepartamento
+
+
+def asignar_Departamento(departamento):
+    
+    if departamento == "Administración":
+        opc = 1
+    elif departamento == "Ingeniería":
+        opc = 2
+    elif departamento == "Calidad, Ambiental, Seguridad y Salud":
+        opc = 3
+    elif departamento == "Proyectos Especiales":
+        opc = 4
+    else:
+        opc = 5 #se le va asignar 
+    return opc
+
+
+
 
 @login_required
+@user_passes_test(es_superusuario) # Solo permitir a superusuarios
 def actualizarProyectoDireccion(request):
 
     users = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='')
+    
+    
+    usuariosmodificados = []  # Lista para almacenar los usuarios modificados
+    noCambios=True
     for usuario in users:
-       
-        try:
-            with connect_to_ad() as conn:
-                search_base = domino 
-                search_filter = f'(cn={usuario.username})'  # Filtro para buscar por Common Name
-                conn.search(search_base, search_filter, attributes=['cn'])
-                if (len(conn.entries) > 0):
-                    imprimir(f"Encontro ")
-                    imprimir(f'Nombre de Usuario : {usuario.username} Proyecto : { usuario.Proyecto} Direcion : {usuario.nombre_direccion}')
-                    usuario.modificado=True 
-                
-        except Exception as e:
-                imprimir(f"Error al buscar en Active Directory: {str(e)}")
+            try:
+                with connect_to_ad() as conn:
+                    search_base = domino
+                    search_filter = f'(sAMAccountName={usuario.username})'  # Asumiendo sAMAccountName como identificador
+                    conn.search(search_base, search_filter, attributes=['sAMAccountName','userAccountControl','physicalDeliveryOfficeName','department'])
+                    if conn.entries:
+                        dn = conn.entries[0].entry_dn
+                        AccountControl_actual = conn.entries[0].userAccountControl.value
+                        physicalDeliveryOfficeName_actual = conn.entries[0].physicalDeliveryOfficeName.value
+                        department_actual = conn.entries[0].department.value
+
+                        imprimir(dn)
+                       
+                        if physicalDeliveryOfficeName_actual.strip().lower() != usuario.Proyecto.strip().lower() or department_actual.strip().lower() != usuario.nombre_direccion.strip().lower() :
+                            imprimir("*****************************************************************************************")
+                            imprimir(dn)
+                            imprimir(physicalDeliveryOfficeName_actual)
+                            imprimir( department_actual)
+                            imprimir("*****************************************************************************************")
+                            
+                            changes = {
+                                'physicalDeliveryOfficeName': [(MODIFY_REPLACE, [usuario.Proyecto])],
+                                'department': [(MODIFY_REPLACE, [usuario.nombre_direccion])]
+                            }
+                            conn.modify(dn, changes)
+                            if conn.result['result'] == 0:  # Si la operación fue exitosa
+                                insertar_registro_accion(
+                                    empleado.nameUser(request), 'Modulo AD',
+                                    'Actualizar',
+                                    f"Se Actualizó  proyecto({physicalDeliveryOfficeName_actual} -> {usuario.Proyecto}) y direccion({department_actual}->{usuario.nombre_direccion}) del '{usuario.username}' en Active Directory ",
+                                    get_client_ip(request),
+                                    request.META.get('HTTP_USER_AGENT'),
+                                    'N/A'
+                                    )
+                                usuariosmodificados.append(usuario)  # Añade el nombre de usuario a la lista                               
+                                if AccountControl_actual !=66050: 
+                                    imprimir(mover_usuario_ou(usuario.username, unidadOrganizativa[asignar_Departamento(usuario.nombre_direccion)],request))  # no comentar esta linea XD
+                                    #imprimir(f" **************numero : {AccountControl_actual}") 
+                                    
+                                messages.success(request, f" {obtener_mensaje_error_ad(conn.result['result'])}")
+                                noCambios=False
+                            else:
+                                messages.error(request,  f"Error al actualizar {usuario.username} en Active Directory.  {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])}")
+                                
+                        else:
+                           if noCambios:
+                              messages.info(request, f"No se realizo ningun cambio necesario .")
+            except Exception as e:
+                messages.error(request,f"Error al actualizar en Active Directory: {str(e)}" )  # Considera usar logging
         
-        usuario.modificado=False 
+       
     #cn --------->usuario.username
     # physicalDeliveryOfficeName  ----> usuario.Proyecto
     # department --------->  usuario.nombre_direccion
 
-
+   
     encabezados ={
         'title' :' Actualizar Proyecto y Dirección del Personal de Grupo IAI',
-        'Encabezado' :'Actualizar Proyecto y Dirección  del Personal de Grupo IAI',
+        'Encabezado' :'Actualización Proyecto y Dirección  del Personal de Grupo IAI',
         'SubEncabezado' :'',
         'EncabezadoNav' :'Actualizar Proyecto y Dirección ',
-        'EncabezadoCard' : 'Empleados Actualizado del  Proyecto y Dirección ',
+        'EncabezadoCard' : 'Empleados Actualizados del atributo Proyecto y Dirección ',
        
         
     }
@@ -108,7 +172,7 @@ def actualizarProyectoDireccion(request):
         'foto':empleado.photoUser(request),
         'Categoria': empleado.Categoria(request),
         'encabezados' :encabezados,
-        'users':users
+        'users':usuariosmodificados
     }
 
 
@@ -124,6 +188,7 @@ def actualizarProyectoDireccion(request):
 
 
 @login_required
+@user_passes_test(es_superusuario) # Solo permitir a superusuarios
 def personalNoContratada(request):
    
     
@@ -301,7 +366,8 @@ def personalNoContratada(request):
         'foto':empleado.photoUser(request),
         'Categoria': empleado.Categoria(request),
         'encabezados' :encabezados,
-        'ActiveDirectory' :True
+        'ActiveDirectory' :True,
+        'selectDepartamento': selectDepartamento
     }
     return render(request, 'nuevoPersonal.html',context)
 
@@ -428,6 +494,7 @@ def consultarUsuariosIDIAI(request):
     mensaje = None
     opc = 0
     
+    #imprimir(obtenerUnidadesOrganizativas())
     
     # Obtiene los usuarios de la base de datos
     usuarios = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='').exclude(is_active=False)
@@ -462,7 +529,7 @@ def consultarUsuariosIDIAI(request):
         nombre_completo = request.POST['nombre_completo']
         email = request.POST['email']
         password = request.POST['password']
-        nombre_inicio_sesion = request.POST['nombre_inicio_sesion']
+        nombre_inicio_sesion = request.POST['nombre_inicio_sesion'].strip()
         departamento = request.POST['departamento']
         puesto = request.POST['puesto']
         proyecto =request.POST['nameProyecto']
@@ -536,7 +603,8 @@ def consultarUsuariosIDIAI(request):
                     'usersPS':UsuariosPS,
                     'mensaje': mensaje,
                     'foto':empleado.photoUser(request),
-                    'Categoria': empleado.Categoria(request)
+                    'Categoria': empleado.Categoria(request),
+                    'selectDepartamento': selectDepartamento
                     }
         
     
@@ -647,7 +715,8 @@ def consultar_usuarios(request): #Consulta los usuarios de Active Directory
         'nombre_usuario': empleado.nameUser(request),# Variable adicional
         'foto':empleado.photoUser(request),
         'encabezados' :encabezados,
-        'Categoria': empleado.Categoria(request)
+        'Categoria': empleado.Categoria(request),
+        'selectDepartamento': selectDepartamento
         # Puedes agregar más variables aquí si lo necesitas
     }
     
@@ -708,6 +777,10 @@ def editar_usuario(request):
                 if conn.result['result'] == 0:  # éxito
                     messages.success(request, 'Usuario editado correctamente.')
                     imprimir('Usuario editado correctamente.')
+                    imprimir(user_dn)
+                    imprimir(UsuarioActivoAD(user_dn))
+                    if UsuarioActivoAD(user_dn) == True:
+                        imprimir(mover_usuario_ou(nombre_inicio_sesion, unidadOrganizativa[asignar_Departamento(departamento)],request))
                 else:
                     messages.error(request, f"Error al editar usuario: {obtener_mensaje_error_ad(conn.result['result'])}")
                     imprimir( f"Error al editar usuario: {obtener_mensaje_error_ad(conn.result['result'])}")
@@ -716,7 +789,7 @@ def editar_usuario(request):
             imprimir(f"Error al conectar con AD: {str(e)}")
     # Redireccionar de vuelta a la lista de usuarios
     
-    imprimir(mover_usuario_ou(nombre_inicio_sesion, unidadOrganizativa[asignar_Departamento(departamento)],request))
+    
     return redirect('usuarios')
 
  
@@ -740,7 +813,8 @@ def salir (request):
 
 
 
-@login_required  
+@login_required
+@user_passes_test(es_superusuario) # Solo permitir a superusuarios
 def agregar_usuario(request): #Esta función o vista fue mantenida con la posibilidad de que se pueda necesitar en el futuro. Por favor, revisen cuidadosamente las variables, ya que el dominio ha sido modificado.
     mensaje=None
     if request.method == 'POST':
@@ -1205,8 +1279,12 @@ def mover_usuario_ou(nombre_usuario, nueva_ou,request):
 
                 # Construir el nuevo DN
                 nuevo_rdn = f"CN={nombre_usuario}"
-                nueva_ou_completa = f"{nueva_ou},{domino}"
-                #imprimir(f"Nuevo DN: {nuevo_rdn}, en OU: {nueva_ou_completa}")
+                if (nueva_ou =='0'):
+                    nueva_ou_completa = f"{domino}"
+                else:    
+                    nueva_ou_completa = f"{nueva_ou},{domino}"
+                
+                imprimir(f"Nuevo DN: {nuevo_rdn}, en OU: {nueva_ou_completa}")
 
                 # Mover el usuario a la nueva OU
                 conn.modify_dn(dn_actual, nuevo_rdn, new_superior=nueva_ou_completa)
@@ -1231,20 +1309,6 @@ def mover_usuario_ou(nombre_usuario, nueva_ou,request):
 
     return mensaje
 
-
-def asignar_Departamento(departamento):
-    
-    if departamento == "Administración":
-        opc = 1
-    elif departamento == "Ingeniería":
-        opc = 2
-    elif departamento == "Calidad, Ambiental, Seguridad y Salud":
-        opc = 3
-    elif departamento == "Proyectos Especiales":
-        opc = 4
-    else:
-        opc = 0
-    return opc
 
 
 
@@ -1321,6 +1385,10 @@ def imprimir(mensaje): #funcion para imprimir en la consola  en modo desarrollad
 
 
 def obtener_mensaje_error_ad(result_code):
+  
+  
+  
+  
     mensajes = {
         0: "La operación se realizó correctamente.",
         1: "Error interno del servidor.",
@@ -1344,11 +1412,77 @@ def obtener_mensaje_error_ad(result_code):
     return mensajes.get(result_code, "Ocurrió un error desconocido.")
 
 
+def UsuarioActivoAD(dn_usuario):
+    """
+    Verifica si un usuario de Active Directory, especificado por su DN, está activo.
+
+    Args:
+        dn_usuario (str): El Distinguished Name (DN) del usuario a verificar.
+
+    Returns:
+        bool: True si el usuario está activo, False si está deshabilitado o no se encontró.
+    """
+    try:
+        # Establecer conexión con Active Directory
+        with connect_to_ad() as conn:
+            # Realizar búsqueda por DN para obtener userAccountControl
+            conn.search(search_base=dn_usuario, search_filter='(objectClass=user)', attributes=['userAccountControl'])
+
+            if conn.entries:
+                # Obtener el valor de userAccountControl
+                user_account_control = conn.entries[0]['userAccountControl'].value
+                # Verificar si el usuario está deshabilitado
+                return not isAccountDisabled(user_account_control)
+            else:
+                print(f"No se encontró el usuario con DN: {dn_usuario}")
+                return False
+    except Exception as e:
+        print(f"Error al verificar el estado del usuario: {e}")
+        return False
+
+def isAccountDisabled(useraccountcontrol_value):
+    """
+    Determina si el usuario está deshabilitado basado en userAccountControl.
+
+    Args:
+        useraccountcontrol_value (int): El valor de userAccountControl de un usuario.
+
+    Returns:
+        bool: True si el usuario está deshabilitado, False en caso contrario.
+    """
+    # Bit que indica si la cuenta está deshabilitada
+    ACCOUNTDISABLE = 0x0002
+    return (useraccountcontrol_value & ACCOUNTDISABLE) != 0
 
 
 
+def obtenerUnidadesOrganizativas():
+    """
+    Busca y devuelve una lista de las Unidades Organizativas en el dominio especificado.
 
+    Returns:
+        list: Una lista de cadenas con los nombres de las Unidades Organizativas.
+    """
+    unidadesOrganizativas = []
 
+    try:
+        # Establecer conexión con Active Directory
+        with connect_to_ad() as conn:
+            # Especifica el dominio a buscar. Ajusta este valor según sea necesario.
+            search_base = domino
+            # Filtro para buscar objetos de tipo Unidad Organizativa (OU)
+            search_filter = "(objectClass=organizationalUnit)"
+            # Realizar la búsqueda
+            conn.search(search_base=search_base, search_filter=search_filter, attributes=['name'])
+
+            # Iterar sobre los resultados y añadir los nombres de las OUs a la lista
+            for entry in conn.entries:
+               unidadesOrganizativas.append('OU='+str(entry.name))
+
+    except Exception as e:
+        imprimir(f"Error al obtener las Unidades Organizativas: {e}")
+
+    return unidadesOrganizativas
 
 
 

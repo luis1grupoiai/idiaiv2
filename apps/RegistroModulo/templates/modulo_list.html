@@ -48,7 +48,7 @@ Nombre de los Modulos
 </div>
 {% endif %} 
             <div class="m-3">
-            <a href="{% url 'modulo_create' %}" class="btn btn-success"> <i class="bi bi-key"></i>  CREAR</a>
+            <a href="{% url 'modulo_create' %}" class="btn btn-success" onclick="mostrarSpinner()" > <i class="bi bi-key"></i>  CREAR</a>
             </div>
             <div class="table-responsive ">
                 
@@ -67,8 +67,8 @@ Nombre de los Modulos
                             <td class="text-center" >{{ modulo_entry.nombre_completo }}</td>
                             <td class="text-center" >{{ modulo_entry.nombre }}</td>
                             <td class="text-center" >
-                                <a href="{% url 'detalle_registro' modulo_entry.id %}" class="btn btn-primary"> <i class="bi bi-eye"></i> Ver</a>
-                                <a href="{% url 'modulo_update' modulo_entry.id %}" class="btn btn-secondary"> <i class="bi bi-pencil"></i> Editar</a>
+                                <a href="{% url 'detalle_registro' modulo_entry.id %}" class="btn btn-primary" onclick="mostrarSpinner()" > <i class="bi bi-eye"></i> Ver</a>
+                                <a href="{% url 'modulo_update' modulo_entry.id %}" class="btn btn-secondary" onclick="mostrarSpinner()" > <i class="bi bi-pencil"></i> Editar</a>
                                <button type="button"  class="btn btn-danger" data-toggle="modal" data-target="#passwordModal" data-url="{% url 'modulo_delete' modulo_entry.id %}" onclick="validacion(this);"> Eliminar</button>
 
 

@@ -5,6 +5,8 @@ from django.contrib.auth import logout
 from .models import VallEmpleado , VAllReclutamiento
 from apps.AsignarUsuario.models import  TRegistroAccionesModulo 
 from apps.RegistroModulo.models import TRegistroDeModulo 
+from apps.ActiveDirectory.views import  SelectDepartamento
+
 from django.db.models import Q
 from django.core.mail import send_mail
 from django.shortcuts import redirect
@@ -22,8 +24,9 @@ from django.contrib.auth.models import User
 from cryptography.fernet import Fernet
 import os
 import base64
-empleado = AtributosDeEmpleado()
 
+empleado = AtributosDeEmpleado()
+selectDepartamento= SelectDepartamento()
 ENCRYPTION_KEY_DESCRIPCION =os.environ.get('KEY_DESCRIPCION').encode()
 ENCRYPTION_KEY_NOMBRE = os.environ.get('KEY_NOMBRE').encode()
 
@@ -202,7 +205,8 @@ def nuevosIDIAI(request):
         'foto':empleado.photoUser(request),
         'Categoria': empleado.Categoria(request),
         'encabezados' :encabezados,
-        'ActiveDirectory' :True
+        'ActiveDirectory' :True,
+        'selectDepartamento': selectDepartamento
     }
     return render(request, 'nuevoPersonal.html',context)
 

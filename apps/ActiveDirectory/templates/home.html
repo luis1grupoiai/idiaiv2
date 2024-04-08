@@ -12,6 +12,22 @@
 
   <link rel="stylesheet" href="/static/assets/compiled/css/app.css">
   <link rel="stylesheet" href="/static/assets/compiled/css/app-dark.css">
+  <style>
+    .spinner {
+        border: 16px solid #f3f3f3; /* Light grey */
+        border-top: 16px solid #3498db; /* Blue */
+        border-radius: 50%;
+        width: 120px;
+        height: 120px;
+        animation: spin 2s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    </style>
+
 </head>
 
 <body>
@@ -31,85 +47,89 @@
 
         <div class="col-4">
             <div class="card" >
-                <a href=" {% url 'solicitud' %}">
+                <a href=" {% url 'solicitud' %}" onclick="mostrarSpinner()" >
                 <img src="/static/img/solicitud.png" class="card-img-top" alt="Descripción de la imagen"  >
             </a>
                 <div class="card-body">
                   <h5 class="card-title">Solicitud de alta de usuario</h5>
                   
-                  <a href=" {% url 'solicitud' %}" class="btn btn-primary">Entrar</a>
+                  <a href=" {% url 'solicitud' %}" class="btn btn-primary" onclick="mostrarSpinner()" >Entrar</a>
                 </div>
               </div>
     </div>
     {% if es_super %}
         <div class="col-4">
             <div class="card" >
-                <a href="admin/">
+                <a href="admin/" onclick="mostrarSpinner()">
                 <img src="/static/img/IDIAI.png" class="card-img-top" alt="Descripción de la imagen" >
                  </a>
                 <div class="card-body">
                   <h5 class="card-title">IDIAI</h5>
                   
-                  <a href="admin/" class="btn btn-primary">Entrar</a>
+                  <a href="admin/" class="btn btn-primary" onclick="mostrarSpinner()">Entrar</a>
                 </div>
               </div>
         </div>
 
         <div class="col-4">
             <div class="card" >
-                <a href=" {% url 'usuarios' %}">
+                <a href=" {% url 'usuarios' %}" onclick="mostrarSpinner()">
                 <img src="/static/img/PHYTONAD.png" class="card-img-top" alt="Descripción de la imagen"  >
             </a>
                 <div class="card-body">
                   <h5 class="card-title">Activate Directory</h5>
                   
-                  <a href=" {% url 'usuarios' %}" class="btn btn-primary">Entrar</a>
+                  <a href=" {% url 'usuarios' %}" class="btn btn-primary" onclick="mostrarSpinner()" >Entrar</a>
                 </div>
               </div>
         </div>
 
         <div class="col-4">
             <div class="card" >
-                <a href=" {% url 'importarusuarios' %}">
+                <a href=" {% url 'importarusuarios' %}" onclick="mostrarSpinner()">
                 <img src="/static/img/importusuario.png" class="card-img-top" alt="Descripción de la imagen"  >
             </a>
                 <div class="card-body">
                   <h5 class="card-title">Importar Usuarios </h5>
                   
-                  <a href=" {% url 'importarusuarios' %}" class="btn btn-primary">Entrar</a>
+                  <a href=" {% url 'importarusuarios' %}" class="btn btn-primary" onclick="mostrarSpinner()">Entrar</a>
                 </div>
               </div>
         </div>
 
         <div class="col-4">
           <div class="card" >
-              <a href=" {% url 'importarmodulos' %}">
+              <a href=" {% url 'importarmodulos' %}" onclick="mostrarSpinner()">
               <img src="/static/img/importmodulo.png" class="card-img-top" alt="Descripción de la imagen"  >
           </a>
               <div class="card-body">
                 <h5 class="card-title">Importar Modulos  </h5>
-                <a href=" {% url 'importarmodulos' %}" class="btn btn-primary">Entrar</a>
+                <a href=" {% url 'importarmodulos' %}" class="btn btn-primary" onclick="mostrarSpinner()">Entrar</a>
               </div>
             </div>
       </div>
 
       <div class="col-4">
         <div class="card" >
-            <a href=" {% url 'modulo_list' %}">
+            <a href=" {% url 'modulo_list' %}" onclick="mostrarSpinner()">
             <img src="/static/img/modulo.png" class="card-img-top" alt="Descripción de la imagen"  >
         </a>
             <div class="card-body">
               <h5 class="card-title"> Modulos  </h5>
-              <a href=" {% url 'modulo_list' %}" class="btn btn-primary">Entrar</a>
+              <a href=" {% url 'modulo_list' %}" class="btn btn-primary" onclick="mostrarSpinner()">Entrar</a>
             </div>
           </div>
     </div>
 {% endif %}
     
     </div>
+    <div id="spinner-overlay" style="display:none; position:fixed; width:100%; height:100%; top:0; left:0; background:rgba(255,255,255,0.7); z-index:9999;">
+      <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
+          <div class="spinner"></div>
+      </div>
+  </div>
 
-
-    
+    <script src="/static/js/base.js"> </script>
     <script src="/static/assets/compiled/js/app.js"></script>
     
 </body>

@@ -107,8 +107,9 @@ def importarmodulo__(request):  # deja de guncionar cuando tiene mulple registro
 @login_required
 @user_passes_test(es_superusuario)
 def importar_usuarios(request):
+    n = Fernet(ENCRYPTION_KEY_NOMBRE)   
+    f = Fernet(ENCRYPTION_KEY_DESCRIPCION)
     
-   
     if request.method == "POST":
        usuarios_vista = VUsuarioDjango.objects.all()  # Obtener todos los registros de la vista
        count=usuarios_vista.count()
@@ -124,22 +125,35 @@ def importar_usuarios(request):
                 'last_login': usuario.last_login,
                 'date_joined': usuario.date_joined,
             })
+           
            if created:
               user.set_password(usuario.password)  # Asegúrate de que la contraseña esté en texto plano aquí
               user.save()
-              print(count,"Usuario creado:", usuario.username)  # Opcional: imprimir/loguear los nombres de los usuarios creados
+              print(count,"Usuario creado:", usuario.username) # Opcional: imprimir/loguear los nombres de los usuarios creados
+              
+              nombre_cifrado = n.encrypt(usuario.username.encode().strip()).decode()
+              descripcion_cifrado = f.encrypt(usuario.password.encode()).decode()
+              nombreCompleto = f"{usuario.first_name} {usuario.last_name}" 
+              nuevo_usuario, created2 = TRegistroDeModulo.objects.get_or_create(
+                _nombre=nombre_cifrado,
+                defaults={
+                    '_descripcion': descripcion_cifrado, 'nombre_completo':nombreCompleto,
+                    
+                }
+                    )
+              if created2:
+                  nuevo_usuario.save()
+                  print(f"Usuario creado en el Modulo: {usuario.username}*****************")
+              else:
+                  print(f"Usuario existente en el Modulo: {usuario.username}xxxxxxxxxxxxxxxxx")
+                  
            else:
-              print(count,"Usuario existente:", usuario.username)
+                print(count,"Usuario existente:", usuario.username)
               
        messages.success(request, "Usuarios importados correctamente.")
        return redirect('importarusuarios')  # Redirige según corresponda
         
-    context = {
-        'active_page': 'importar'
-       # 'nombre_usuario':nameUser(request),
-       # 'foto':photoUser(request),
-       # 'Categoria': Categoria(request)
-    }
-    return render(request,'importar_usuarios.html',context) # Redirige a donde consideres apropiado después de la importación
+   
+    return render(request,'importar_usuarios.html') # Redirige a donde consideres apropiado después de la importación
 
 

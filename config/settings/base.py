@@ -162,7 +162,7 @@ LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
 
 # Tiempo de expiración de la sesión en segundos
-SESSION_COOKIE_AGE = 30000  # 5 minuto * 300 segundos
+SESSION_COOKIE_AGE = 1800  # 30 minuto 
 
 # Asegurar que la sesión expire cuando el usuario cierre el navegador.
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True

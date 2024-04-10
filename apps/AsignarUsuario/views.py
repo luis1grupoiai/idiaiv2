@@ -5,7 +5,7 @@ from django.contrib.auth import logout
 from .models import VallEmpleado , VAllReclutamiento
 from apps.AsignarUsuario.models import  TRegistroAccionesModulo 
 from apps.RegistroModulo.models import TRegistroDeModulo 
-from apps.ActiveDirectory.views import  SelectDepartamento
+from apps.ActiveDirectory.views import  SelectDepartamento , notificacionCorreo
 
 from django.db.models import Q
 from django.core.mail import send_mail
@@ -96,7 +96,32 @@ def solicitudNuevos(request):
 
 @login_required
 def nuevosIDIAI(request):
-   
+    empleados = []
+    empleados = VallEmpleado.objects.filter(Q(username__isnull=True) )
+    encabezados ={
+        'title' :'Empleados de Grupo IAI  - IDIAI-',
+        'Encabezado' :'Nuevo personal de Grupo IAI:',
+        'SubEncabezado' :'Plataforma para Agregar  usuarios a  IDIAI',
+        'EncabezadoNav' :'Agregar',
+        'EncabezadoCard' : 'Agregar Usuario IDIAI',
+        'titulomodal1':'Crear Usuario de IDIAI'
+        
+    }
+   # print(empleados)
+    context = {
+        'empleados' : empleados,
+        'usersAdmin': empleados.filter( nombre_direccion='Administración'),
+        'usersIng': empleados.filter( nombre_direccion='Ingeniería'),
+        'usersDCASS': empleados.filter( nombre_direccion='Calidad, Ambiental, Seguridad y Salud'),
+        'usersPS': empleados.filter( nombre_direccion='Proyectos Especiales'),
+        'active_page': 'Nsolicitud',
+        'nombre_usuario': empleado.nameUser(request),
+        'foto':empleado.photoUser(request),
+        'Categoria': empleado.Categoria(request),
+        'encabezados' :encabezados,
+        'ActiveDirectory' :True,
+        'selectDepartamento': selectDepartamento
+    }
   
   
   
@@ -135,7 +160,7 @@ def nuevosIDIAI(request):
             nombreCompleto = nombre_completo
             messages.success(request,f"Usuario creado en  {LugarCreado} :{nombre_usuario}") # 
             imprimir(f"Usuario creado en {LugarCreado}:{nombre_usuario}")
-            
+            mensajeCont =f"El usuario '{nombre_usuario}' de {nombre_completo} fue creado en IDIAI V2"
             insertar_registro_accion(
                             empleado.nameUser(request),
                             'Modulo AD',
@@ -152,6 +177,7 @@ def nuevosIDIAI(request):
                     
                 }
             )
+            notificacionCorreo(request,f'IDIAI V2 creación del usuario {nombre_usuario}','Creación de usuario',mensajeCont)
             if created2:
                 nuevo_usuario.save()
                 LugarCreado+=" y Modulo "
@@ -173,42 +199,18 @@ def nuevosIDIAI(request):
             
             
             
-            return redirect('nuevousuario') 
+           # return redirect(request, 'nuevoPersonal.html',context) 
         else:
             LugarNoCreado+= ' IDIAI V2 y Modulo '
             messages.error(request,f"Usuario existente en {LugarNoCreado}: {nombre_usuario}")
-            return redirect('nuevousuario') 
+          #  return redirect(request, 'nuevoPersonal.html',context) 
         
     
         
     
-    empleados = []
-    empleados = VallEmpleado.objects.filter(Q(username__isnull=True) )
-    encabezados ={
-        'title' :'Empleados de Grupo IAI  - IDIAI-',
-        'Encabezado' :'Nuevo personal de Grupo IAI:',
-        'SubEncabezado' :'Plataforma para Agregar  usuarios a  IDIAI',
-        'EncabezadoNav' :'Agregar',
-        'EncabezadoCard' : 'Agregar Usuario IDIAI',
-        'titulomodal1':'Crear Usuario de IDIAI'
-        
-    }
-   # print(empleados)
-    context = {
-        'empleados' : empleados,
-        'usersAdmin': empleados.filter( nombre_direccion='Administración'),
-        'usersIng': empleados.filter( nombre_direccion='Ingeniería'),
-        'usersDCASS': empleados.filter( nombre_direccion='Calidad, Ambiental, Seguridad y Salud'),
-        'usersPS': empleados.filter( nombre_direccion='Proyectos Especiales'),
-        'active_page': 'Nsolicitud',
-        'nombre_usuario': empleado.nameUser(request),
-        'foto':empleado.photoUser(request),
-        'Categoria': empleado.Categoria(request),
-        'encabezados' :encabezados,
-        'ActiveDirectory' :True,
-        'selectDepartamento': selectDepartamento
-    }
+  
     return render(request, 'nuevoPersonal.html',context)
+
 
 
 @login_required

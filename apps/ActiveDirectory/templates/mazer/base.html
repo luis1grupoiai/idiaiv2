@@ -173,6 +173,8 @@
                             <span class="navbar-toggler-icon"></span>
                         </button>
                         <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                            {% comment %}   
+
                             <!-- para mas funciones de correo y notificaciones -->
                             <!--<ul class="navbar-nav ms-auto mb-lg-0">
                                 <li class="nav-item dropdown me-1">
@@ -223,7 +225,9 @@
                                         </li>
                                     </ul>
                                 </li>
-                            </ul>-->
+                            </ul>--> 
+
+                            {% endcomment %}   
                             <div class="ms-auto"><!--Etiqueta DIV para posicionar todo a la derecha -->
                             <div class="dropdown">
                                 <a href="#" data-bs-toggle="dropdown" aria-expanded="false">
@@ -247,6 +251,7 @@
                                     </div>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton" style="min-width: 11rem;">
+                                   {% comment %}   
                                     <!-- menu del usuario <li>
                                         <h6 class="dropdown-header">Hello, John!</h6>
                                     </li>
@@ -255,6 +260,7 @@
                                     <li><a class="dropdown-item" href="#"><i class="icon-mid bi bi-gear me-2"></i>
                                             Settings</a></li>
 -->
+{% endcomment %}   
                                     <li><a class="dropdown-item" href="{% url 'ipconfig' %}" onclick="mostrarSpinner()"><i class="icon-mid bi bi-wallet me-2"></i>
                                             Configuración IP</a></li>
                                     <li>

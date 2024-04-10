@@ -18,6 +18,10 @@ from django.contrib.auth.models import User
 import json
 import os
 from django.db.models import Q
+from datetime import datetime
+from django.utils.html import strip_tags
+from django.template.loader import render_to_string
+from django.core.mail import EmailMultiAlternatives
 
 ENCRYPTION_KEY_DESCRIPCION =os.environ.get('KEY_DESCRIPCION').encode()
 ENCRYPTION_KEY_NOMBRE = os.environ.get('KEY_NOMBRE').encode()
@@ -84,7 +88,7 @@ def asignar_Departamento(departamento):
     elif departamento == "Proyectos Especiales":
         opc = 4
     else:
-        opc = 5 #se le va asignar 
+        opc = 5 #se le va asignar  '0'
     return opc
 
 
@@ -111,7 +115,7 @@ def actualizarProyectoDireccion(request):
                         physicalDeliveryOfficeName_actual = conn.entries[0].physicalDeliveryOfficeName.value
                         department_actual = conn.entries[0].department.value
 
-                        imprimir(dn)
+                       # imprimir(dn)
                        
                         if physicalDeliveryOfficeName_actual.strip().lower() != usuario.Proyecto.strip().lower() or department_actual.strip().lower() != usuario.nombre_direccion.strip().lower() :
                             imprimir("*****************************************************************************************")
@@ -248,16 +252,18 @@ def personalNoContratada(request):
                         messages.success(request, f'Usuario creado correctamente en {LugarCreado}.')
                         imprimir(f"Usuario creado en {LugarCreado}:{nombre_usuario}")
                         #codigo para guardar en la bitacora -------
+                        
+                        mensajeCont =f"El usuario '{nombre_usuario}' de {nombre_completo} fue creado en Active Directory"
                         insertar_registro_accion(
                             empleado.nameUser(request),
                             'Modulo AD',
                             'Crear',
-                            f"El usuario '{nombre_usuario}' fue creado en AD",
+                            mensajeCont,
                             get_client_ip(request),
                             request.META.get('HTTP_USER_AGENT'),
                             'N/A'
                             )
-                            
+                        notificacionCorreo(request,f'Active Directory Creación del usuario {nombre_usuario}','Creación de usuario',mensajeCont)    
                             #return redirect('usuariosID')
                             
                             
@@ -295,17 +301,19 @@ def personalNoContratada(request):
             nombreCompleto = nombre_completo
             messages.success(request,f"Usuario creado en  {LugarCreado} :{nombre_usuario}") # 
             imprimir(f"Usuario creado en {LugarCreado}:{nombre_usuario}")
+            
+            mensajeCont =f"El usuario '{nombre_usuario}' de {nombre_completo} fue creado en IDIAI V2"
             insertar_registro_accion(
                             empleado.nameUser(request),
                             'Modulo AD',
                             'Crear',
-                            f"El usuario '{nombre_usuario}' fue creado en IDIAI V2",
+                            mensajeCont,
                             get_client_ip(request),
                             request.META.get('HTTP_USER_AGENT'),
                             'N/A'
                             )         
 
-            
+            notificacionCorreo(request,f'IDIAI V2 creación del usuario {nombre_usuario}','Creación de usuario',mensajeCont)
             nuevo_usuario, created2 = TRegistroDeModulo.objects.get_or_create(
                 _nombre=nombre_cifrado,
                 defaults={
@@ -494,7 +502,7 @@ def consultarUsuariosIDIAI(request):
     mensaje = None
     opc = 0
     
-    #imprimir(obtenerUnidadesOrganizativas())
+    imprimir(f"Unidades Organizativas de AD :  {obtenerUnidadesOrganizativas()}")
     
     # Obtiene los usuarios de la base de datos
     usuarios = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='').exclude(is_active=False)
@@ -568,11 +576,13 @@ def consultarUsuariosIDIAI(request):
                     messages.success(request, 'Usuario creado correctamente.')
                     mensaje = {'titulo': 'Éxito', 'texto': 'Usuario creado correctamente', 'tipo': 'success'}
                     #codigo para guardar en la bitacora -------
+                    
+                    mensajeCont =f"El usuario '{nombre_usuario}' de {nombre_completo} fue creado en Active Directory"
                     insertar_registro_accion(
                     empleado.nameUser(request),
                     'Modulo AD',
                     'Crear',
-                    f"El usuario '{nombre_usuario}' fue creado en AD",
+                     mensajeCont,
                     get_client_ip(request),
                     request.META.get('HTTP_USER_AGENT'),
                     'N/A'
@@ -580,7 +590,7 @@ def consultarUsuariosIDIAI(request):
                     
                     #return redirect('usuariosID')
                     
-                    
+                    notificacionCorreo(request,f'Active Directory Creación del usuario {nombre_usuario}','Creación de usuario',mensajeCont)
                 else:
                     messages.error(request, f"Error {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])}")
                     mensaje = {'titulo': 'Error', 'texto': f"Error {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])}", 'tipo': 'error'}
@@ -1486,6 +1496,38 @@ def obtenerUnidadesOrganizativas():
 
 
 
+
+def notificacionCorreo(request,Asunto,titulo,contenido):
+   
+    current_year = datetime.now().year
+    context = {
+            'year': current_year,
+            'titulo' : "IDIAI-Modulo de Active Directory",
+            'Subtitulo' : titulo,
+            'contenido' :contenido,
+            'Usuario'   : empleado.nameUser(request)
+            }
+            # Renderizar el contenido HTML
+    html_content = render_to_string('NotificacionCorreo.html', context)
+    text_content = strip_tags(html_content)  # Esto crea una versión en texto plano del HTML
+
+        # Crear el correo y añadir tanto el contenido en texto plano como el HTML
+    email = EmailMultiAlternatives(
+            Asunto,  # Asunto
+            text_content,  # Contenido en texto plano
+            'sistemas.iai@grupo-iai.com.mx',  # Email del remitente
+            ['manuel.zarate@grupo-iai.com.mx']  # Lista de destinatarios
+        )
+    email.attach_alternative(html_content, "text/html")
+    try:
+        time.sleep(1) #para evitar que envie un moton de solicitudes 
+        email.send()
+        imprimir("Correo enviado correctamente.")
+    except Exception as e:
+        imprimir(f"Error al enviar correo: {e}")
+        
+   # imprimir("se envio la notificacion por correo de la creacion del correo ")
+   
 
 
 

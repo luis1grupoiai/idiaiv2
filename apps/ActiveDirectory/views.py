@@ -726,7 +726,8 @@ def consultar_usuarios(request): #Consulta los usuarios de Active Directory
         'foto':empleado.photoUser(request),
         'encabezados' :encabezados,
         'Categoria': empleado.Categoria(request),
-        'selectDepartamento': selectDepartamento
+        'selectDepartamento': selectDepartamento,
+        'tabUsuario':1 #talvez esto no funciones
         # Puedes agregar más variables aquí si lo necesitas
     }
     
@@ -1444,10 +1445,10 @@ def UsuarioActivoAD(dn_usuario):
                 # Verificar si el usuario está deshabilitado
                 return not isAccountDisabled(user_account_control)
             else:
-                print(f"No se encontró el usuario con DN: {dn_usuario}")
+                imprimir(f"No se encontró el usuario con DN: {dn_usuario}")
                 return False
     except Exception as e:
-        print(f"Error al verificar el estado del usuario: {e}")
+        imprimir(f"Error al verificar el estado del usuario: {e}")
         return False
 
 def isAccountDisabled(useraccountcontrol_value):

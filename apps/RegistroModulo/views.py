@@ -13,6 +13,10 @@ from django.utils import timezone
 from django.urls import reverse_lazy
 from django.contrib import messages
 from .mixins import SuperuserRequiredMixin , SuperuserRedirectMixin
+from django.contrib.auth.models import User
+from django.conf import settings
+
+
 
 ModuloEntrada ="12345" # la contraseña del modal ----
 def es_superusuario(user):
@@ -121,12 +125,35 @@ class ModuloUpdateView(LoginRequiredMixin,NombreUsuarioMixin,SuperuserRequiredMi
             nombreUsuario,
             'Modulo',
             'Editar',
-            f"Se actualizó el módulo {self.object.nombre}",
+            f"Se Modifico  el módulo {self.object.nombre}",
             get_client_ip(self.request),
             self.request.META.get('HTTP_USER_AGENT'),
             'N/A'
         )
-
+        #actualiza la contraseña 
+                 #Inicio ---- codigo para cambiar la contraseña en el repositorio del IDIAI : 
+        try:
+            user = User.objects.get(username=self.object.nombre)
+            user.set_password(self.object.descripcion)# Asegúrate de que la contraseña esté en texto plano aquí
+            
+            user.save()
+            #imprimir("Se Actualizo la Contraseña en IDIAI: ")
+            #imprimir(f'Nombre Completo: {user.get_username()}, Nombre de Usuario: {user.get_username()}: Contraseña : {keyPass}')
+           
+            insertar_registro_accion(
+                    nombreUsuario,
+                    'Modulo',
+                    'Actualizó',
+                    f"Se Actualizó la contraseña del usuario. '{self.object.nombre}' en el IDIAI V2 ",
+                    get_client_ip(self.request),
+                    self.request.META.get('HTTP_USER_AGENT'),
+                    'N/A'
+                    )
+            imprimir(f"Se actualizo la contraseña de IDIAI V2  {self.object.nombre} ")
+        except Exception as e : 
+             imprimir(f"Error al guardar el registro en repositorios de IDIAI {self.object.nombre} : {e}")
+          
+         #FIN ---- codigo para cambiar la contraseña en el repositorio del IDIAI : 
         return response
     
     
@@ -333,3 +360,8 @@ confirmación antes de proceder a la eliminación del objeto de la base de datos
 Estas vistas genéricas son parte del patrón de diseño MVC (Modelo-Vista-Controlador) 
 que Django implementa y ayudan a reducir la cantidad de código que necesitas escribir para realizar operaciones comunes en aplicaciones web. Cada una de estas clases está diseñada para manejar una operación específica de CRUD (Crear, Leer, Actualizar, Eliminar) y se integra estrechamente con el sistema de modelos y plantillas de Django.
     """
+
+
+def imprimir(mensaje): #funcion para imprimir en la consola  en modo desarrollador 
+    if settings.DEBUG:
+        print(mensaje)

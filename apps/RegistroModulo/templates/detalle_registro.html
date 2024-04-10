@@ -57,7 +57,7 @@ Detalles :
     <div class="col-12 justify-content-center text-center">
         <button onclick="copiarAlPortapapeles()" type="button" class="btn btn-secondary">Copiar y Redirigir</button>
       
-    <a href="{% url 'modulo_list' %}" class="btn btn-danger"> <i class="bi bi-x-circle"></i>  Cancelar</a>
+    <a href="{% url 'modulo_list' %}" class="btn btn-danger" onclick="mostrarSpinner()"> <i class="bi bi-x-circle"></i>  Cancelar</a>
     </div>
 
 </div>
@@ -151,7 +151,7 @@ Detalles :
                 campo.disabled = true;
                 // Opcional: muestra un mensaje indicando que el texto fue copiado
                //alert("Contraseña copiada al portapapeles");
-
+                mostrarSpinner()
                 window.location.href = "{% url 'modulo_list' %}";
             }
             

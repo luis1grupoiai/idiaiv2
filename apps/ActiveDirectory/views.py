@@ -71,7 +71,7 @@ domino=asignar_dominio()['dominio']
 dominoRaiz=asignar_dominio()['dominioRaiz']
 
 unidadOrganizativa = ('OU=Bajas','OU=Administracion','OU=Ingeniería','OU=DCASS','OU=Proyectos Especiales','0') #esta variable esta relacionada con las funciones de   mover_usuario_ou y asignar_Departamento
-selectDepartamento= ('Administración','Ingeniería','Calidad, Ambiental, Seguridad y Salud','Proyectos Especiales')
+selectDepartamento= ('Administración','Ingeniería','Calidad, Ambiental, Seguridad y Salud','Proyectos Especiales','Tecnatom','Presidencia Grupo IAI')
 
 def SelectDepartamento():
     return selectDepartamento
@@ -92,6 +92,121 @@ def asignar_Departamento(departamento):
     return opc
 
 
+def actualizar_empleados():
+    users = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='')
+    usuarios_modificados = []
+    no_cambios = True
+
+    for usuario in users:
+        try:
+            with connect_to_ad() as conn:
+                search_base = domino
+                search_filter = f'(sAMAccountName={usuario.username})'
+                conn.search(search_base, search_filter, attributes=['sAMAccountName', 'userAccountControl', 'physicalDeliveryOfficeName', 'department','title'])
+                if conn.entries:
+                    dn = conn.entries[0].entry_dn
+                    AccountControl_actual = conn.entries[0].userAccountControl.value
+                    physicalDeliveryOfficeName_actual = conn.entries[0].physicalDeliveryOfficeName.value
+                    department_actual = conn.entries[0].department.value
+                    puesto_actual = conn.entries[0].title.value
+                    imprimir(dn)
+                    if (physicalDeliveryOfficeName_actual.strip().lower() != usuario.Proyecto.strip().lower() or
+                            department_actual.strip().lower() != usuario.nombre_direccion.strip().lower() or puesto_actual.strip().lower() != usuario.Nombre_ct.strip().lower()):
+                        imprimir("")
+                        imprimir("*****************************************************************************************")
+                        imprimir(dn)
+                        imprimir(physicalDeliveryOfficeName_actual)
+                        imprimir( department_actual)
+                        imprimir( puesto_actual)
+                        imprimir("*****************************************************************************************")
+                        imprimir("")
+                        
+                        
+                        
+                        
+                        
+                        changes = {
+                            'physicalDeliveryOfficeName': [(MODIFY_REPLACE, [usuario.Proyecto])],
+                            'department': [(MODIFY_REPLACE, [usuario.nombre_direccion])],
+                            'title': [(MODIFY_REPLACE, [usuario.Nombre_ct])]
+                        }
+                        conn.modify(dn, changes)
+                        imprimir("****************if conn.result['result'] == 0:*************************************************************************")
+                        if conn.result['result'] == 0:
+                            usuarios_modificados.append(usuario)
+                            insertar_registro_accion(
+                                "DJANGO",
+                                'Modulo AD',
+                                'Actualizo',
+                                f"Se Actualizó  proyecto({physicalDeliveryOfficeName_actual} -> {usuario.Proyecto}) y direccion({department_actual}->{usuario.nombre_direccion}) del '{usuario.username}' en Active Directory ",
+                                '0.0.0.0',
+                                "LOCALHOST",
+                                'N/A'
+                                )
+                            if AccountControl_actual != 66050:
+                                imprimir(mover_usuario_ou_sys(usuario.username, unidadOrganizativa[asignar_Departamento(usuario.nombre_direccion)]))
+                            
+                            no_cambios = False
+        except Exception as e:
+            imprimir(f"Error al actualizar en Active Directory: {str(e)}")
+
+    if no_cambios:
+        imprimir("No se realizó ningún cambio necesario.")
+        
+    return usuarios_modificados
+
+
+
+def mover_usuario_ou_sys(nombre_usuario, nueva_ou):
+    mensaje = None
+    try:
+        with connect_to_ad() as conn:
+            # Buscar el Distinguished Name (DN) actual del usuario
+            search_filter = f'(sAMAccountName={nombre_usuario})'
+            conn.search(search_base=domino, search_filter=search_filter, attributes=['distinguishedName'])
+
+            if conn.entries:
+                dn_actual = conn.entries[0].distinguishedName.value
+                #imprimir(f"DN actual: {dn_actual}")
+
+                # Construir el nuevo DN
+                nuevo_rdn = f"CN={nombre_usuario}"
+                if (nueva_ou =='0'):
+                    nueva_ou_completa = f"{domino}"
+                else:    
+                    nueva_ou_completa = f"{nueva_ou},{domino}"
+                
+                imprimir(f"Nuevo DN: {nuevo_rdn}, en OU: {nueva_ou_completa}")
+
+                # Mover el usuario a la nueva OU
+                conn.modify_dn(dn_actual, nuevo_rdn, new_superior=nueva_ou_completa)
+                
+                if conn.result['result'] == 0:
+                    mensaje = 'Usuario movido correctamente.'
+                    insertar_registro_accion(
+                    "DJANGO",
+                    'Modulo AD',
+                    'Mover',
+                    f"El usuario  '{nombre_usuario}' ha sido trasladado  a la nueva ubicación : {extraer_unidad_organizativa(nueva_ou_completa)[0]}",
+                    '0.0.0.0',
+                    "LOCALHOST",
+                    'N/A'
+                    )
+                else:
+                    mensaje = f"Error al mover usuario {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])}"
+            else:
+                mensaje = "Usuario no encontrado en AD."
+    except Exception as e:
+        mensaje = f"Error al conectar con AD o al realizar la operación: {e}"
+
+    return mensaje
+
+
+
+
+
+
+
 
 
 @login_required
@@ -100,33 +215,39 @@ def actualizarProyectoDireccion(request):
 
     users = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='')
     
-    
+    #actualizar_empleados()
     usuariosmodificados = []  # Lista para almacenar los usuarios modificados
+    usuariosmodificados = actualizar_empleados()
+    """
     noCambios=True
     for usuario in users:
             try:
                 with connect_to_ad() as conn:
                     search_base = domino
                     search_filter = f'(sAMAccountName={usuario.username})'  # Asumiendo sAMAccountName como identificador
-                    conn.search(search_base, search_filter, attributes=['sAMAccountName','userAccountControl','physicalDeliveryOfficeName','department'])
+                    conn.search(search_base, search_filter, attributes=['sAMAccountName','userAccountControl','physicalDeliveryOfficeName','department','title'])
                     if conn.entries:
                         dn = conn.entries[0].entry_dn
                         AccountControl_actual = conn.entries[0].userAccountControl.value
                         physicalDeliveryOfficeName_actual = conn.entries[0].physicalDeliveryOfficeName.value
                         department_actual = conn.entries[0].department.value
+                        puesto_actual = conn.entries[0].title.value
 
-                       # imprimir(dn)
+                        imprimir(dn)
                        
-                        if physicalDeliveryOfficeName_actual.strip().lower() != usuario.Proyecto.strip().lower() or department_actual.strip().lower() != usuario.nombre_direccion.strip().lower() :
+                        if physicalDeliveryOfficeName_actual.strip().lower() != usuario.Proyecto.strip().lower() or department_actual.strip().lower() != usuario.nombre_direccion.strip().lower() or puesto_actual.strip().lower() != usuario.Nombre_ct.strip().lower() :
+                            imprimir("")
                             imprimir("*****************************************************************************************")
                             imprimir(dn)
                             imprimir(physicalDeliveryOfficeName_actual)
                             imprimir( department_actual)
+                            imprimir( puesto_actual)
                             imprimir("*****************************************************************************************")
-                            
+                            imprimir("")
                             changes = {
                                 'physicalDeliveryOfficeName': [(MODIFY_REPLACE, [usuario.Proyecto])],
-                                'department': [(MODIFY_REPLACE, [usuario.nombre_direccion])]
+                                'department': [(MODIFY_REPLACE, [usuario.nombre_direccion])],
+                                'title': [(MODIFY_REPLACE, [usuario.Nombre_ct])],
                             }
                             conn.modify(dn, changes)
                             if conn.result['result'] == 0:  # Si la operación fue exitosa
@@ -153,7 +274,7 @@ def actualizarProyectoDireccion(request):
                               messages.info(request, f"No se realizo ningun cambio necesario .")
             except Exception as e:
                 messages.error(request,f"Error al actualizar en Active Directory: {str(e)}" )  # Considera usar logging
-        
+        """
        
     #cn --------->usuario.username
     # physicalDeliveryOfficeName  ----> usuario.Proyecto
@@ -177,6 +298,7 @@ def actualizarProyectoDireccion(request):
         'Categoria': empleado.Categoria(request),
         'encabezados' :encabezados,
         'users':usuariosmodificados
+        
     }
 
 
@@ -195,29 +317,39 @@ def actualizarProyectoDireccion(request):
 @user_passes_test(es_superusuario) # Solo permitir a superusuarios
 def personalNoContratada(request):
    
-    
+    #upper() para mayuscula 
+    #strip() para quitar los espacios en blanco que se encuentra al principio o al final de la cadena 
+    #lower(): Convierte todos los caracteres de la cadena a minúsculas.
+    #title(): Convierte la primera letra de cada palabra en una cadena a mayúscula.
+    #capitalize(): Convierte la primera letra de la cadena a mayúscula y el resto a minúsculas
     # Aquí la lógica para mostrar la página de inicio
     if request.method == 'POST':
-        nombre_usuario = request.POST['nombre_usuario'].upper().strip()
-        nombre_pila = request.POST['nombre_pila']
-        apellido = request.POST['apellido']
-        nombre_completo = request.POST['nombre_completo']
-        email = request.POST['email']
-        password = request.POST['password']
-        nombre_inicio_sesion = request.POST['nombre_inicio_sesion']
-        departamento = request.POST['departamento']
-        puesto = request.POST['puestoCT']
-        proyecto =request.POST['nameProyecto']
+        nombre_usuario = request.POST['nombre_usuario'].lower().strip()
+        nombre_pila = request.POST['nombre_pila'].strip().title()
+        apellido = request.POST['apellido'].strip().title()
+        nombre_completo = request.POST['nombre_completo'].strip().title()
+        email = request.POST['email'].lower().strip()
+        password = request.POST['password'].strip()
+        nombre_inicio_sesion = request.POST['nombre_inicio_sesion'].lower().strip()
+        departamento = request.POST['departamento'].strip()
+        puesto = request.POST['puestoCT'].strip()
+        proyecto =request.POST['nameProyecto'].strip()
         #imprimir( nombre_usuario,nombre_pila,apellido,nombre_completo,email,password,nombre_inicio_sesion,departamento,puesto )
         dominio_Principal ='@'+'.'.join(part.replace('DC=', '') for part in domino.split(',') if part.startswith('DC=')) 
         quoted_password = f'"{password}"'.encode('utf-16-le')
         LugarCreado=" "
         LugarNoCreado=" "
         
-        if existeUsuario(nombre_usuario) : #VERIFICA SI EXISTE USUARIO EN ACTIVE DIRECTORY <---AQUÍ ESTUVO SON GOKU XD
+        
+        
+        
+        #if usuarioexisteIDIAI(nombre_usuario): 
+      #  if existeUsuario(nombre_usuario) : #VERIFICA SI EXISTE USUARIO EN ACTIVE DIRECTORY <---AQUÍ ESTUVO SON GOKU XD
+        if existeUsuario(nombre_usuario) :
             LugarNoCreado+="Active Directory "
             messages.error(request,f"Usuario existente en {LugarNoCreado}: {nombre_usuario}")
             imprimir(f"Usuario existente en {LugarNoCreado}: {nombre_usuario}")
+            
         else:              
             try:
                     #server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
@@ -339,7 +471,7 @@ def personalNoContratada(request):
                 messages.error(request,f"Usuario existente en el Modulo: {nombre_usuario}")
               # 
                  
-            
+            return redirect('personalNoContratada') 
             
             
             
@@ -531,16 +663,16 @@ def consultarUsuariosIDIAI(request):
 
     if request.method == 'POST':
         dominio_Principal ='@'+'.'.join(part.replace('DC=', '') for part in domino.split(',') if part.startswith('DC='))
-        nombre_usuario = request.POST['nombre_usuario'].strip()
-        nombre_pila = request.POST['nombre_pila']
-        apellido = request.POST['apellido']
-        nombre_completo = request.POST['nombre_completo']
-        email = request.POST['email']
+        nombre_usuario = request.POST['nombre_usuario'].lower().strip()
+        nombre_pila = request.POST['nombre_pila'].strip().title()
+        apellido = request.POST['apellido'].strip().title()
+        nombre_completo = request.POST['nombre_completo'].strip().title()
+        email = request.POST['email'].lower().strip()
         password = request.POST['password']
-        nombre_inicio_sesion = request.POST['nombre_inicio_sesion'].strip()
-        departamento = request.POST['departamento']
-        puesto = request.POST['puesto']
-        proyecto =request.POST['nameProyecto']
+        nombre_inicio_sesion = request.POST['nombre_inicio_sesion'].lower().strip()
+        departamento = request.POST['departamento'].strip()
+        puesto = request.POST['puesto'].strip()
+        proyecto =request.POST['nameProyecto'].strip()
         # ... otros campos
         #imprimir(password)
         # Preparar la contraseña en formato adecuado para AD
@@ -743,16 +875,16 @@ def editar_usuario(request):
     #imprimir("Vista de editar Usuario ")
     if request.method == 'POST':
          # Captura los datos enviados desde el formulario
-        nombre_usuario = request.POST.get('nombre_usuario')
-        nombre_pila = request.POST.get('nombre_pila')
-        apellido = request.POST.get('apellido')
-        nombre_completo = request.POST.get('nombre_completo')
-        email = request.POST.get('email')
-        departamento = request.POST.get('departamento')
-        puesto = request.POST.get('puesto')
-        nombre_inicio_sesion = request.POST.get('nombre_inicio_sesion')
-        user_dn = request.POST.get('distinguished_name')
-        proyecto =request.POST['nameProyecto']
+        nombre_usuario = request.POST.get('nombre_usuario').lower().strip()
+        nombre_pila = request.POST.get('nombre_pila').strip().title()
+        apellido = request.POST.get('apellido').strip().title()
+        nombre_completo = request.POST.get('nombre_completo').strip().title()
+        email = request.POST.get('email').lower().strip()
+        departamento = request.POST.get('departamento').strip()
+        puesto = request.POST.get('puesto').strip()
+        nombre_inicio_sesion = request.POST.get('nombre_inicio_sesion').lower().strip()
+        user_dn = request.POST.get('distinguished_name').strip()
+        proyecto =request.POST['nameProyecto'].strip()
         # ... otros campos ....
         #imprimir(nombre_usuario)
         #imprimir(user_dn)
@@ -1072,7 +1204,9 @@ def connect_to_ad():
 
 def verificar_usuario(request, nombre_usuario):
     existe = existeUsuario(nombre_usuario)
-    return JsonResponse({'existe': existe}) 
+    existeIDIAI = usuarioexisteIDIAI(nombre_usuario)
+    imprimir(f'active directory : {existe} IDIAI V2: {existeIDIAI}')
+    return JsonResponse({'existe': existe , 'existeIDIAI':existeIDIAI}) 
 
 @login_required  
 @require_http_methods(["POST"])  # Asegurar que esta vista solo acepte solicitudes POST
@@ -1530,7 +1664,8 @@ def notificacionCorreo(request,Asunto,titulo,contenido):
    # imprimir("se envio la notificacion por correo de la creacion del correo ")
    
 
-
+def usuarioexisteIDIAI(nombre_de_usuario):
+    return User.objects.filter(username=nombre_de_usuario).exists()
 
 
 

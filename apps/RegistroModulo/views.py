@@ -45,7 +45,7 @@ class ModuloListView(LoginRequiredMixin,NombreUsuarioMixin,SuperuserRedirectMixi
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['verificar'] = ModuloEntrada
-        
+        context['desarrollo']=settings.DEBUG   #LINEA PARA QUE APAREZCA EL BOTON DE ELIMINAR 
         return context
 
 class ModuloCreateView(LoginRequiredMixin,NombreUsuarioMixin,SuperuserRedirectMixin,CreateView):

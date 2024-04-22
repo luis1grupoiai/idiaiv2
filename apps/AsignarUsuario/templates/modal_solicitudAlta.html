@@ -193,7 +193,7 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
                             
                                 
                                 {% for departamento in selectDepartamento %}
-                                <option value="{{ departamento }}">{{ departamento }}</option>
+                                <option value="{{ departamento }}">{{ departamento.upper }}</option>
                                 {% endfor %}
                             </select>
                         </div>

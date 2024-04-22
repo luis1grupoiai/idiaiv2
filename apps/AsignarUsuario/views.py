@@ -127,13 +127,13 @@ def nuevosIDIAI(request):
   
     # Aquí la lógica para mostrar la página de inicio
     if request.method == 'POST':
-        nombre_usuario = request.POST['nombre_usuario'].upper()
-        nombre_pila = request.POST['nombre_pila']
-        apellido = request.POST['apellido']
-        nombre_completo = request.POST['nombre_completo']
-        email = request.POST['email']
+        nombre_usuario = request.POST['nombre_usuario'].lower().strip()
+        nombre_pila = request.POST['nombre_pila'].strip().title()
+        apellido = request.POST['apellido'].strip().title()
+        nombre_completo = request.POST['nombre_completo'].strip().title()
+        email = request.POST['email'].lower().strip()
         password = request.POST['password']
-        nombre_inicio_sesion = request.POST['nombre_inicio_sesion']
+        nombre_inicio_sesion = request.POST['nombre_inicio_sesion'].lower().strip()
         departamento = request.POST['departamento']
         puesto = request.POST['puestoCT']
         #print( nombre_usuario,nombre_pila,apellido,nombre_completo,email,password,nombre_inicio_sesion,departamento,puesto )

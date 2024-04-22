@@ -91,7 +91,7 @@ def asignar_Departamento(departamento):
         opc = 5 #se le va asignar  '0'
     return opc
 
-
+#Funcion para acciones asíncronas
 def actualizar_empleados():
     users = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='')
     usuarios_modificados = []
@@ -131,7 +131,7 @@ def actualizar_empleados():
                             'title': [(MODIFY_REPLACE, [usuario.Nombre_ct])]
                         }
                         conn.modify(dn, changes)
-                        imprimir("****************if conn.result['result'] == 0:*************************************************************************")
+                     #   imprimir("****************if conn.result['result'] == 0:*************************************************************************")
                         if conn.result['result'] == 0:
                             usuarios_modificados.append(usuario)
                             insertar_registro_accion(
@@ -156,7 +156,7 @@ def actualizar_empleados():
     return usuarios_modificados
 
 
-
+#Funcion para acciones asíncronas
 def mover_usuario_ou_sys(nombre_usuario, nueva_ou):
     mensaje = None
     try:
@@ -215,10 +215,10 @@ def actualizarProyectoDireccion(request):
 
     users = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='')
     
-    #actualizar_empleados()
+    
     usuariosmodificados = []  # Lista para almacenar los usuarios modificados
-    usuariosmodificados = actualizar_empleados()
-    """
+    #usuariosmodificados = actualizar_empleados() #linea para provobar la funcionde actualizar los atributos 
+    
     noCambios=True
     for usuario in users:
             try:
@@ -274,7 +274,7 @@ def actualizarProyectoDireccion(request):
                               messages.info(request, f"No se realizo ningun cambio necesario .")
             except Exception as e:
                 messages.error(request,f"Error al actualizar en Active Directory: {str(e)}" )  # Considera usar logging
-        """
+    
        
     #cn --------->usuario.username
     # physicalDeliveryOfficeName  ----> usuario.Proyecto

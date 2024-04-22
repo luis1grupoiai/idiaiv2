@@ -71,6 +71,7 @@ class CAutenticacion(APIView):
     oExecSP = CEjecutarSP()
     sNombreSistema = ""
     oUser = ""
+    dGruposAsigUsuario = {}
 
     # @staticmethod
     def obtenerPermisos(self, p_nIdSistema, p_nIdUsuario):
@@ -130,6 +131,7 @@ class CAutenticacion(APIView):
     def obtenerGrupos(self, p_nIdSistema, p_nIdUsuario):
         dGrupos = {}
         dGruposUsuario = {}
+        dNombreGrupo = {}
         print("Accede a metodo obtenerGrupos.")
         try:
             # dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema, permiso_id__isnull=False).values())
@@ -145,8 +147,11 @@ class CAutenticacion(APIView):
                 # print(dPermisos[0][12])
                 # self.sNombreSistema = dGrupos[0][16]
                 for dGrupo in dGrupos:
-                    # sNombreGrupo = dGrupo[9]
+                    dNombreGrupo[dGrupo[9]] = dGrupo[9]
                     dGruposUsuario[dGrupo[15]] = dGrupo[13]
+
+
+                
                     
 
                     #Método encargado de ordenar los permisos por grupos en su correspondiente bloque
@@ -154,7 +159,9 @@ class CAutenticacion(APIView):
                     #en la respuesta JSON de la api - 15/12/2023
                     # dGruposUsuario = self.ordenarGrupos(sNombreGrupo,dGrupos)
 
-                # print(dGruposUsuario)
+                # print("Nombre de grupos: ")
+                # print(dNombreGrupo)
+                self.dGruposAsigUsuario = dNombreGrupo
 
             
         except ValueError as error:
@@ -259,6 +266,7 @@ class CAutenticacion(APIView):
         dSistGrupoUser = []
 
         print("Accede a metodo obtenerSistemasUsuario.")
+        print("El id de usuario es: "+str(p_nIdUsuario))
         try:
             # dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema, permiso_id__isnull=False).values())
             self.oExecSP.registrarParametros("idUser",p_nIdUsuario)
@@ -545,7 +553,7 @@ class CAutenticacion(APIView):
                             dUsuario = self.consultarUsuarioActivo(jd['user']);
                             
                             if len(dUsuario):
-                                password = dUsuario[0]['password']
+                                # password = dUsuario[0]['password']
                                 idUsuario = dUsuario[0]['id']
                                 print("paso 2")
 
@@ -574,8 +582,13 @@ class CAutenticacion(APIView):
                                     dPermisos = self.obtenerPermisos(sistema,idUsuario)
                                     dGrupos = self.obtenerGrupos(sistema,idUsuario)
 
+                                    # print("Nombre de grupos a los que pertenece el usuario: ")
+                                    # print(self.dGruposAsigUsuario)
+
                                     #El listado de permisos de grupos se unen al bloque permisos, todo junto.
                                     dPermisos.update(dGrupos)
+
+                                    
                                     # resultados = vUsuarioPermiso.objects.all()
 
                                     # if len(dPermisos)>0:
@@ -634,7 +647,7 @@ class CAutenticacion(APIView):
                                         
                                         
 
-
+                                        
                                         #Si el consumo de la Api tiene el key para generar Token Global
                                         #paso 1) Se consulta en Base de datos si el usuario cuenta con TKG activo
                                         #paso 2) En caso de que el usuario no cuente con TKG activo, entonces se inserta uno
@@ -643,7 +656,7 @@ class CAutenticacion(APIView):
                         
                                     # is_token_valid = default_token_generator.check_token(jd['user'], tokenApi)
                                     
-                                    datos = {'message': 'Success','idPersonal':idPersonal,'usuario': jd['user'], 'password': password,'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg}
+                                    datos = {'message': 'Success','idPersonal':idPersonal,'usuario': jd['user'], 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg}
                                 else:
                                     datos = {'message': 'Sin datos', 'error':'¡Ups! Al parecer no existen registros de este usuario, por favor de verificar los datos proporcionados. '}
 
@@ -662,7 +675,7 @@ class CAutenticacion(APIView):
                                     print(dDatosPersonales[0][1])
                                     idUsuario = dDatosPersonales[0][0]
                                     sNombreCompleto = dDatosPersonales[0][9]
-                                    password = dDatosPersonales[0][4]
+                                    # password = dDatosPersonales[0][4]
                                     sUserName = dDatosPersonales[0][3]
 
                                     dPermisos = self.obtenerPermisos(sistema,idUsuario)
@@ -679,8 +692,8 @@ class CAutenticacion(APIView):
                                         print("El tiempo de expiración no es igual 0, por lo tanto por default el token durara "+str(jd['timeExp'])+" horas.")
                                         tokenApi = self.get_custom_auth_token(sUserName,jd['timeExp'])
 
-                                    datos = {'message': 'Success','idPersonal':idPersonal,'usuario': sUserName, 'password': password,'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'permisos': dPermisos}                        
-                        else:
+                                    datos = {'message': 'Success','idPersonal':idPersonal,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos}                        
+                            else:
                                 datos = {'message': 'Sin datos', 'error':'¡Ups! Al parecer no existen registros de este usuario, por favor de verificar los datos proporcionados. '}                        
                     else:
                         datos = {'message': 'Dato Invalidos', 'error':'Id de sistema invalido'}                   

@@ -12,6 +12,9 @@
 
 
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.7.1/css/buttons.dataTables.min.css">
+
+
+
 <!-- Espacio para CSS adicional de plantillas hijas -->
 {% endblock %}
 
@@ -30,6 +33,12 @@
 {% endblock EncabezadoCard %}
 
 {% block contenido %}
+
+
+
+
+
+
 {% if messages %}
 <div>
     {% for message in messages %}
@@ -72,8 +81,9 @@
        
     </ul>
     <div class="m-3">
-        <a href="{% url 'personalNoContratada'%}" class="btn btn-warning"><i class="bi bi-person-plus-fill"> Personal en Reclutamiento </i></a>
-        </div>
+        <a href="{% url 'personalNoContratada'%}" class="btn btn-warning me-3" onclick="mostrarSpinner()"><i class="bi bi-person-plus-fill"> Personal en Reclutamiento </i></a>
+        <a href="{% url 'ActProyectoDireccion'%}" class="btn btn-info "  onclick="mostrarSpinner()"> <i class="bi bi-pencil-square"> Actualizar Proyecto y Dirección </i></a>
+    </div>
     <div class="tab-content" id="myTabContent">
         <div class="tab-pane fade " id="home" role="tabpanel" aria-labelledby="home-tab">
             <p class='my-2'>
@@ -241,11 +251,11 @@
                                                 <div class="mb-2">Dirección:</label>
                                                     <select class="form-control select2" name="departamento" id="departamento" required>
         
-                                                        <option value="None">Seleccione una Opción </option>
-                                                        <option value="Administración">Administración</option>
-                                                        <option value="Calidad, Ambiental, Seguridad y Salud">Calidad, Ambiental, Seguridad y Salud</option>
-                                                        <option value="Proyectos Especiales">Proyectos Especiales</option>
-                                                        <option value="Ingeniería">Ingeniería</option>
+                                                        
+                                                       
+                                                        {% for departamento in selectDepartamento %}
+                                                        <option value="{{ departamento }}">{{ departamento }}</option>
+                                                        {% endfor %}
                                                         
                                                     </select>
                                                 </div>
@@ -274,13 +284,13 @@
                                             <button type="button" class="btn btn-light-secondary"
                                                 data-bs-dismiss="modal">
                                                 <i class="bi bi-x d-block d-sm-none ">
-                                                </i><span class="d-none d-sm-block">Cerrar</span>
+                                                </i><span class="d-none d-sm-block"  >Cerrar</span>
                                                 
                                             </button>
                                             <button type="submit" class="btn btn-primary" id="botonGuardar">
                                                 <i class="bi bi-floppy2 d-block d-sm-none"> 
                                                     
-                                                </i><span class="d-none d-sm-block"> Guardar </span>
+                                                </i><span class="d-none d-sm-block" onclick="mostrarSpinner()"> Guardar </span>
                                             </button>
                                         </div>
                                     </form>
@@ -400,8 +410,8 @@
                     document.getElementById('distinguished_name').value =distinguishedName;
                     document.getElementById('nameProyecto').value = nombreProyecto ;
                     // Abre el modal
-                    var modal = new bootstrap.Modal(document.getElementById('editUserModal'));
-                    modal.show();
+                  //  var modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+                    //modal.show();
             }
               
             $('#userModal').on('hidden.bs.modal', function () {
@@ -419,7 +429,7 @@
                 // Listener para el evento 'hidden.bs.modal', que se dispara después de que el modal se ha cerrado
                userModal.addEventListener('hidden.bs.modal', function () {
                     // Refrescar la página
-                   location.reload();
+                   //location.reload();
                });
             });
           
@@ -437,9 +447,10 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
 
-
+                        mostrarSpinner(); // Muestra el spinner justo después de confirmar
                 //inicio sin alerta sweetAlert
                             $.ajax({
+                                
                                 url: 'activar_usuario/' + nombreUsuario + '/',
                                 method: 'POST',
                                 data: {
@@ -447,7 +458,7 @@
                                 },
                                 success: function(response) {
                                  //   alert("Usuario  activado correctamente.");
-                                    
+                                 ocultarSpinner(); // Oculta el spinner independientemente del resultado
                                     Swal.fire({
                                         position: "top-center",
                                         icon: "success",
@@ -459,7 +470,7 @@
                                     // Aquí puedes agregar código para actualizar la UI según sea necesario
                                 },
                                 error: function(error) {
-                                 //   alert("Error al activar el usuario.");
+                                ocultarSpinner(); // Oculta el spinner independientemente del resultado//   alert("Error al activar el usuario.");
                                  Swal.fire({
                                     position: "top-center",
                                     icon: "error",
@@ -490,7 +501,7 @@
 
                
                
-               
+                        mostrarSpinner(); // Muestra el spinner justo después de confirmar
                 $.ajax({
                     url: 'desactivar_usuario/' + nombreUsuario + '/',
                     method: 'POST',
@@ -498,7 +509,7 @@
                         'csrfmiddlewaretoken': getCSRFToken() // Asegúrate de obtener el token CSRF
                     },
                     success: function(response) {
-                        //alert("Usuario desactivado correctamente.");
+                        ocultarSpinner(); //alert("Usuario desactivado correctamente.");
                         Swal.fire({
                             position: "top-center",
                             icon: "success",
@@ -511,7 +522,7 @@
                     },
                     error: function(error) {
                        // alert("Error al desactivar el usuario.");
-                        
+                       ocultarSpinner();
                         Swal.fire({
                             position: "top-center",
                             icon: "error",
@@ -539,9 +550,14 @@
                     var botonGuardar = document.getElementById('botonGuardar');
                     botonGuardar.disabled = true; // Deshabilita el botón para prevenir múltiples envíos
                     botonGuardar.textContent = 'Guardando...'; // Opcional: Cambia el texto para indicar que se está procesando
-            
+                    mostrarSpinner()
                     // Aquí tu lógica para enviar el formulario, si haces algo más allá del envío normal
                 });
             });
         </script>
+
+
+
+
+
     {% endblock%}

@@ -22,6 +22,20 @@
     .modal-backdrop.show {
         opacity: 1.0 !important; /* Aumenta la opacidad para oscurecer */
     }
+
+    .spinner {
+        border: 16px solid #f3f3f3; /* Light grey */
+        border-top: 16px solid #3498db; /* Blue */
+        border-radius: 50%;
+        width: 120px;
+        height: 120px;
+        animation: spin 2s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
   </style>
 
 </head>
@@ -91,7 +105,7 @@
 
             <li
             class="sidebar-item ">
-            <a href="{% url 'usuariosID' %}" class='sidebar-link'>
+            <a href="{% url 'usuariosID' %}" class='sidebar-link' onclick="mostrarSpinner()">
                 <i class="bi bi-shield-fill"></i>
                 <span>Active Directory</span>
             </a>
@@ -101,7 +115,7 @@
             </li>
 
             <li
-            class="sidebar-item {% if active_page == 'modulos' %}active{% endif %}">
+            class="sidebar-item {% if active_page == 'modulos' %}active{% endif %}" onclick="mostrarSpinner()">
             <a href="{% url 'modulo_list' %}" class='sidebar-link'>
                 <i class="bi bi-key"></i>
                 <span>Modulos</span>
@@ -112,7 +126,7 @@
             </li>
 
             <li
-            class="sidebar-item {% if active_page == 'bitacoraModulo' %}active{% endif %} ">
+            class="sidebar-item {% if active_page == 'bitacoraModulo' %}active{% endif %} " onclick="mostrarSpinner()">
             <a href="{% url 'bitacoraModulo' %}" class='sidebar-link'>
                 <i class="bi bi-book"></i>
                 <span>Bitácora</span>
@@ -269,7 +283,11 @@
             </div>
             <div class="card-body">
                
-
+                <div id="spinner-overlay" style="display:none; position:fixed; width:100%; height:100%; top:0; left:0; background:rgba(255,255,255,0.7); z-index:9999;">
+                    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
 
                 
                             {% block contenido %} 

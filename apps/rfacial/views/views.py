@@ -49,8 +49,8 @@ import os
 import base64
 
 # stky = Fernet.generate_key()
-# stky = b'VVsQPaM9IhXYrWNwLyKkAnmJdzdFR8R0MwdvZpHGsA8='
-stky = force_bytes(os.environ.get('KFNRAPIAUTH'))
+stky = b'VVsQPaM9IhXYrWNwLyKkAnmJdzdFR8R0MwdvZpHGsA8='
+#stky = force_bytes(os.environ.get('KFNRAPIAUTH'))
 
 # print(stky)
 

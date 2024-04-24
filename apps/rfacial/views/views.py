@@ -492,6 +492,7 @@ class CAutenticacion(APIView):
             bParametroCorrecto = False
             sListSistemasPermitidos = {}
             gtkg = ""
+            nStatus = 0
 
             #Valida que el numero de claves del JSON enviado a la API
             #coincida con el numero de claves declaras en el diccioario dCamposJson
@@ -541,6 +542,7 @@ class CAutenticacion(APIView):
                     bKeyTkG = True
                 else:
                     sTexto += 'El key del sistema es incorrecto.'
+                    nStatus = 404
                     bValido = False
                     
                
@@ -590,6 +592,7 @@ class CAutenticacion(APIView):
                                 idPersonal = int(jd['user'])   
                             except ValueError:
                                 bValido = False
+                                nStatus = 404
                                 sTexto += "Ingreso un Id de personal invalido, debe ser un numero entero."                       
                             else:
                                 # if idPersonal <= 0:
@@ -692,12 +695,14 @@ class CAutenticacion(APIView):
                                         #paso 4) En caso de que exista un TKG en BD, y si aun esta activo, entonces permanecer con dicho TKG.
                         
                                     # is_token_valid = default_token_generator.check_token(jd['user'], tokenApi)
-                                    
+                                    nStatus = 200
                                     datos = {'message': 'Success','idPersonal':idPersonal,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg}
                                 else:
+                                    nStatus = 404
                                     datos = {'message': 'Sin datos', 'error':'¡Ups! Al parecer no existen registros de este usuario, por favor de verificar los datos proporcionados. '}
 
                         else:
+                            nStatus = 404
                             datos = {'message': 'Dato Invalidos', 'error':sTexto}
 
                         # elif  sistema==4 and keySis==os.environ.get('KEY_RF'):
@@ -733,20 +738,24 @@ class CAutenticacion(APIView):
                         #     else:
                         #         datos = {'message': 'Sin datos', 'error':'¡Ups! Al parecer no existen registros de este usuario, por favor de verificar los datos proporcionados. '}                        
                     else:
+                        nStatus = 404
                         datos = {'message': 'Dato Invalidos', 'error':'Id de sistema invalido'}                   
                 else:
                     # datos = {'message': 'Dato invalido.', 'error': 'El key del sistema es incorrecto.'}
+                    nStatus = 404
                     datos = {'message': 'Dato invalido.', 'error': sTexto}
             else:
+                nStatus = 404
                 datos = {'message': 'JSON invalido.', 'error': sTexto}
             
         except ValueError as error:
+            nStatus = 404
             sTexto = "%s" % error
             datos = {'message': 'JSON invalido. ', "error": sTexto}
             # return False
         
 
-        return JsonResponse(datos)
+        return JsonResponse(datos,status= nStatus)
     
     
     # def put(self,request):

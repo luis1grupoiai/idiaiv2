@@ -354,6 +354,26 @@ class CAutenticacion(APIView):
     
         return dSistema
 
+    def consultarExisteUsuario(self, nameUser):
+        print("Accede a metodo  consultarExisteUsuario:")
+        print(nameUser)
+        sTexto = ""
+        datos = {}
+        oUser = {}
+        try:
+           oUser = User.objects.filter(username=nameUser)
+        #    dUsuario = list(User.objects.filter(username=nameUser, is_active=1).values())
+           dUsuario = list(oUser.values())
+           print(dUsuario)
+
+        except ValueError as error:
+            sTexto = "%s" % error
+            datos = {'message': 'El usuario buscado no existe. ', "error": sTexto}
+
+            print(datos)
+
+    
+        return dUsuario
 
     def consultarUsuarioActivo(self, nameUser):
         print("Accede a metodo  consultarUsuarioActivo:")
@@ -364,8 +384,7 @@ class CAutenticacion(APIView):
            self.oUser = User.objects.filter(username=nameUser, is_active=1)
         #    dUsuario = list(User.objects.filter(username=nameUser, is_active=1).values())
            dUsuario = list(self.oUser.values())
-
-          
+           print(dUsuario)
 
         except ValueError as error:
             sTexto = "%s" % error
@@ -476,6 +495,7 @@ class CAutenticacion(APIView):
             sTexto = ""
             pwdD64 = ""
             dUsuario = ""
+            existeUsuario = ""
             dSistema = ""
             dDatosPersonales = {}
             dPermisos = {}
@@ -579,21 +599,27 @@ class CAutenticacion(APIView):
                         
                             #Obtiene el registro del usuario mediante el userName.
                             # dUsuario = list(User.objects.filter(username=jd['user'], is_active=1).values())
+                            existeUsuario = self.consultarExisteUsuario(jd['user'])
                             dUsuario = self.consultarUsuarioActivo(jd['user'])
-                            
-                            if len(dUsuario):
-                                # password = dUsuario[0]['password']
-                                idUsuario = dUsuario[0]['id']
-                                print("paso 2")
 
-                                bPasswordCorrecta = self.verificarPswd(pwdD64)
 
-                                if not bPasswordCorrecta:
+                            if len(existeUsuario)>0:
+                                if len(dUsuario):
+                                    # password = dUsuario[0]['password']
+                                    idUsuario = dUsuario[0]['id']
+                                    print("paso 2")
+
+                                    bPasswordCorrecta = self.verificarPswd(pwdD64)
+
+                                    if not bPasswordCorrecta:
+                                        bValido = False
+                                        sTexto += "¡Ups! la contraseña es incorrecta."
+                                else:
                                     bValido = False
-                                    sTexto += "¡Ups! la contraseña es incorrecta."
+                                    sTexto += "Usuario inactivo"
                             else:
                                 bValido = False
-                                sTexto += "Usuario inactivo"
+                                sTexto += "No existe el usuario proporcionado."
                         else:
                             try:
                                 idPersonal = int(jd['user'])   
@@ -624,6 +650,7 @@ class CAutenticacion(APIView):
                                     idUsuario = dDatosPersonales[0][0]                               
                                     sUserName = dDatosPersonales[0][3]
 
+                                    
                                     dUsuario = self.consultarUsuarioActivo(sUserName)
 
                                     if len(dUsuario):
@@ -712,7 +739,7 @@ class CAutenticacion(APIView):
                                         datos = {'message': 'Sin datos', 'error':'Usuario inactivo'}
                                 else:
                                     nStatus = 404
-                                    datos = {'message': 'Sin datos', 'error':'¡Ups! Al parecer no existen registros de este usuario, por favor de verificar los datos proporcionados. '}
+                                    datos = {'message': 'Sin datos', 'error':'¡Ups! Al parecer no existen registros de este empleado, por favor de verificar los datos proporcionados. '}
                         else:
                             nStatus = 404
                             datos = {'message': 'Dato Invalidos', 'error':sTexto}

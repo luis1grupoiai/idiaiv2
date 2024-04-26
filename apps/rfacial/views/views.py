@@ -371,7 +371,7 @@ class CAutenticacion(APIView):
             sTexto = "%s" % error
             datos = {'message': 'Error al ejecutar query de consultarUsuarioActivo. ', "error": sTexto}
 
-            print(dUsuario)
+            print(datos)
 
     
         return dUsuario
@@ -390,6 +390,10 @@ class CAutenticacion(APIView):
                 if user_obj.check_password(sPsw):
                     print("password correcta.")
                     bCorrecto = True
+                else:
+                    print("password incorrecta.")
+            else:
+                print("El usuario no existe.")
           
 
         except ValueError as error:
@@ -459,7 +463,7 @@ class CAutenticacion(APIView):
         try:
             #1. Carga los valores del json obtenido por el metodo post.
             jd = json.loads(request.body)
-          
+            datos = {}
             
             #Declaración y asignación de variables
             bValido = True
@@ -587,6 +591,9 @@ class CAutenticacion(APIView):
                                 if not bPasswordCorrecta:
                                     bValido = False
                                     sTexto += "¡Ups! la contraseña es incorrecta."
+                            else:
+                                bValido = False
+                                sTexto += "Usuario inactivo"
                         else:
                             try:
                                 idPersonal = int(jd['user'])   
@@ -617,90 +624,95 @@ class CAutenticacion(APIView):
                                     idUsuario = dDatosPersonales[0][0]                               
                                     sUserName = dDatosPersonales[0][3]
 
-                                    dPermisos = self.obtenerPermisos(sistema,idUsuario)
-                                    dGrupos = self.obtenerGrupos(sistema,idUsuario)
+                                    dUsuario = self.consultarUsuarioActivo(sUserName)
 
-                                    # print("Nombre de grupos a los que pertenece el usuario: ")
-                                    # print(self.dGruposAsigUsuario)
+                                    if len(dUsuario):
+                                        dPermisos = self.obtenerPermisos(sistema,idUsuario)
+                                        dGrupos = self.obtenerGrupos(sistema,idUsuario)
 
-                                    #El listado de permisos de grupos se unen al bloque permisos, todo junto.
-                                    dPermisos.update(dGrupos)
+                                        # print("Nombre de grupos a los que pertenece el usuario: ")
+                                        # print(self.dGruposAsigUsuario)
+
+                                        #El listado de permisos de grupos se unen al bloque permisos, todo junto.
+                                        dPermisos.update(dGrupos)
 
                                     
-                                    # resultados = vUsuarioPermiso.objects.all()
+                                        # resultados = vUsuarioPermiso.objects.all()
 
-                                    # if len(dPermisos)>0:
-                                    #     print("resultados :) ")  
+                                        # if len(dPermisos)>0:
+                                        #     print("resultados :) ")  
+                                            
+                                        # else:
                                         
-                                    # else:
-                                    
-                                    #     sTexto += "Este sistema no tiene permisos"
+                                        #     sTexto += "Este sistema no tiene permisos"
 
-                                    
-                                    # datos = {'message': 'Success', 'datos': dUsuario}
-                                    # datos = {'message': 'Success', 'sistema':self.sNombreSistema,'permisos': dPermisos, 'grupos':dGrupos}
-                                    # token, created = Token.objects.get_or_create(username=jd['user'])
-                                    if jd['timeExp'] == 0:
-                                        print("El tiempo de expiración es 0, por lo tanto por default el token durara 3 horas.")
-                                        # tokenApi = self.get_custom_auth_token(jd['user'])
-                                        tokenApi = self.get_custom_auth_token(sUserName)
-                                    else:
-                                        print("El tiempo de expiración no es igual 0, por lo tanto por default el token durara "+str(jd['timeExp'])+" horas.")
-                                        # tokenApi = self.get_custom_auth_token(jd['user'],jd['timeExp'])
-                                        tokenApi = self.get_custom_auth_token(sUserName,jd['timeExp'])
-
-                                    # print(tokenApi)
-
-                                    # Cuando el sistema sea el sistema intranet de la empresa entonces...
-                                    # Obtener listado de sistemas a los que tiene acceso el usuario, dado que
-                                    # en intranet esta el listado completo de los sistemas.
-
-                                    # print(type(os.environ.get('ID_INTRANET')))
-                                    # print(type(sistema))
-                                    if(sistema == int(os.environ.get('ID_INTRANET'))):
-                                        print("El sistema de intranet es el mismo...")
-                                        sListSistemasPermitidos = self.obtenerSistemasUsuario(idUsuario)
-
-
-                                    #Generar el tokenGlobal :) 
-                                    if keySis == os.environ.get('KEY_GTKG'):
-                                        print("Se solicita generar TKG.")
-
-                                        #Se consulta que exista token global asignado al usuario
-                                        dUsTk = list(TokenGlobal.objects.filter(username=jd['user'], caduco=0).values())
-                                                    
-                                        if len(dUsTk) == 0:
-                                            # insertar TKG en BD 05/03/2024
-                                            # sTimeExp = 0
-                                            if jd['timeExp'] == 0:
-                                                sTimeExp = 3
-                                            else:
-                                                sTimeExp = jd['timeExp']
-
-                                            gtkg = self.generarTKGlobal(jd['user'],sTimeExp,sistema)
-                                            insertTkG = TokenGlobal(username=jd['user'], token=gtkg,sistemaOrigen=sistema, caduco=0)
-                                            insertTkG.save()
+                                        
+                                        # datos = {'message': 'Success', 'datos': dUsuario}
+                                        # datos = {'message': 'Success', 'sistema':self.sNombreSistema,'permisos': dPermisos, 'grupos':dGrupos}
+                                        # token, created = Token.objects.get_or_create(username=jd['user'])
+                                        if jd['timeExp'] == 0:
+                                            print("El tiempo de expiración es 0, por lo tanto por default el token durara 3 horas.")
+                                            # tokenApi = self.get_custom_auth_token(jd['user'])
+                                            tokenApi = self.get_custom_auth_token(sUserName)
                                         else:
-                                            gtkg = dUsTk[0]['token']
-                                        
-                                                                                
-                                        
-                                        
+                                            print("El tiempo de expiración no es igual 0, por lo tanto por default el token durara "+str(jd['timeExp'])+" horas.")
+                                            # tokenApi = self.get_custom_auth_token(jd['user'],jd['timeExp'])
+                                            tokenApi = self.get_custom_auth_token(sUserName,jd['timeExp'])
 
-                                        
-                                        #Si el consumo de la Api tiene el key para generar Token Global
-                                        #paso 1) Se consulta en Base de datos si el usuario cuenta con TKG activo
-                                        #paso 2) En caso de que el usuario no cuente con TKG activo, entonces se inserta uno
-                                        #paso 3) En caso de que exista un TKG en base de datos, se verifica que este aun activo, si no lo esta, entonces borrar.
-                                        #paso 4) En caso de que exista un TKG en BD, y si aun esta activo, entonces permanecer con dicho TKG.
-                        
-                                    # is_token_valid = default_token_generator.check_token(jd['user'], tokenApi)
-                                    nStatus = 200
-                                    datos = {'message': 'Success','idPersonal':idPersonal,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg}
+                                        # print(tokenApi)
+
+                                        # Cuando el sistema sea el sistema intranet de la empresa entonces...
+                                        # Obtener listado de sistemas a los que tiene acceso el usuario, dado que
+                                        # en intranet esta el listado completo de los sistemas.
+
+                                        # print(type(os.environ.get('ID_INTRANET')))
+                                        # print(type(sistema))
+                                        if(sistema == int(os.environ.get('ID_INTRANET'))):
+                                            print("El sistema de intranet es el mismo...")
+                                            sListSistemasPermitidos = self.obtenerSistemasUsuario(idUsuario)
+
+
+                                        #Generar el tokenGlobal :) 
+                                        if keySis == os.environ.get('KEY_GTKG'):
+                                            print("Se solicita generar TKG.")
+
+                                            #Se consulta que exista token global asignado al usuario
+                                            dUsTk = list(TokenGlobal.objects.filter(username=jd['user'], caduco=0).values())
+                                                        
+                                            if len(dUsTk) == 0:
+                                                # insertar TKG en BD 05/03/2024
+                                                # sTimeExp = 0
+                                                if jd['timeExp'] == 0:
+                                                    sTimeExp = 3
+                                                else:
+                                                    sTimeExp = jd['timeExp']
+
+                                                gtkg = self.generarTKGlobal(jd['user'],sTimeExp,sistema)
+                                                insertTkG = TokenGlobal(username=jd['user'], token=gtkg,sistemaOrigen=sistema, caduco=0)
+                                                insertTkG.save()
+                                            else:
+                                                gtkg = dUsTk[0]['token']
+                                            
+                                                                                    
+                                            
+                                            
+
+                                            
+                                            #Si el consumo de la Api tiene el key para generar Token Global
+                                            #paso 1) Se consulta en Base de datos si el usuario cuenta con TKG activo
+                                            #paso 2) En caso de que el usuario no cuente con TKG activo, entonces se inserta uno
+                                            #paso 3) En caso de que exista un TKG en base de datos, se verifica que este aun activo, si no lo esta, entonces borrar.
+                                            #paso 4) En caso de que exista un TKG en BD, y si aun esta activo, entonces permanecer con dicho TKG.
+                            
+                                            # is_token_valid = default_token_generator.check_token(jd['user'], tokenApi)
+                                        nStatus = 200
+                                        datos = {'message': 'Success','idPersonal':idPersonal,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg}
+                                    else:
+                                        nStatus = 404
+                                        datos = {'message': 'Sin datos', 'error':'Usuario inactivo'}
                                 else:
                                     nStatus = 404
                                     datos = {'message': 'Sin datos', 'error':'¡Ups! Al parecer no existen registros de este usuario, por favor de verificar los datos proporcionados. '}
-
                         else:
                             nStatus = 404
                             datos = {'message': 'Dato Invalidos', 'error':sTexto}
@@ -754,6 +766,8 @@ class CAutenticacion(APIView):
             datos = {'message': 'JSON invalido. ', "error": sTexto}
             # return False
         
+
+        print(datos)
 
         return JsonResponse(datos,status= nStatus)
     

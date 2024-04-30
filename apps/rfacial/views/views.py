@@ -915,7 +915,7 @@ class CVerificaToken(APIView):
             },
             required=['token', 'user']
         ),
-        responses={200: 'Token Validado'},
+        responses={200: 'Token Validado', 500: 'Json invalido o problemas internos en el server.', 404:'Datos invalidos'},
     ) 
     def post(self,request):
         """
@@ -955,6 +955,18 @@ class CVerificaToken(APIView):
                     sTexto += " El campo faltante es: "+item+". "
                     bValido = False
                     break
+
+
+            if (jd['token'].isspace() or len(jd['token']) <= 1):
+                sTexto += "El item token es muy corto o viene vacio. "
+                nStatus = 404
+                bValido = False
+
+            if (jd['user'].isspace() or len(jd['user']) <= 1):
+                sTexto += "El item de usuario es muy corto o viene vacio. "
+                nStatus = 404
+                bValido = False
+
 
             if bValido:
                 print("Verificar token ...")
@@ -1025,6 +1037,13 @@ class CVerificaToken(APIView):
             sTexto = "%s" % error
             datos = {'message': 'JSON invalido. ', "error": sTexto}
             # return False
+        except KeyError as error:
+            nStatus = 500
+            sTexto = "%s" % error
+            datos = {'message': 'JSON invalido. ', "error": sTexto}
+
+       
+       
 
         return JsonResponse(datos,status=nStatus)  
     

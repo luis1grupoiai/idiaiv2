@@ -934,6 +934,7 @@ class CVerificaToken(APIView):
             sTexto = ""
             nLenDef = 0
             nItemJson = 0
+            nStatus = 0
 
             dCamposJson = ['token', 'user']
             
@@ -988,7 +989,7 @@ class CVerificaToken(APIView):
                 print(timezone.now().timestamp())
 
                 if expiration_time > timezone.now().timestamp():
-                    # print("Aun no expira el token")
+                    print("Aun no expira el token")
                     is_token_expired = False
                 # else:
                 #     print("El token ya expiro...")
@@ -1002,12 +1003,14 @@ class CVerificaToken(APIView):
                     print("El token es válido y no ha expirado para este usuario...")
                     # is_token_expired = self.is_token_expired(tk)
                     # print(type(is_token_expired))
-
+                    nStatus = 200
                     datos = {'message': 'Success', "descripcion":'El token es válido y no ha expirado.'}
                 else:
+                    nStatus = 404
                     datos = {'message': 'Error', "descripcion":'El token ya no es válido y posiblemente ya expiro'}
                     print("El token no es válido.")
             else:
+                nStatus = 404
                 datos = {'message': 'Datos Invalidos ', 'Error': sTexto}
 
 
@@ -1018,11 +1021,12 @@ class CVerificaToken(APIView):
             
 
         except ValueError as error:
+            nStatus = 404
             sTexto = "%s" % error
             datos = {'message': 'JSON invalido. ', "error": sTexto}
             # return False
 
-        return JsonResponse(datos)  
+        return JsonResponse(datos,status=nStatus)  
     
 
     

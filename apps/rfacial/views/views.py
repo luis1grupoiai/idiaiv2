@@ -564,6 +564,8 @@ class CAutenticacion(APIView):
                     bKeyRF = True
                 elif keySis == str(os.environ.get('KEY_GTKG')):
                     bKeyTkG = True
+                elif keySis == str(os.environ.get('KEYVALIDADJG')):
+                    bKeyTkG = True
                 else:
                     sTexto += 'El key del sistema es incorrecto.'
                     nStatus = 404
@@ -589,13 +591,8 @@ class CAutenticacion(APIView):
                         print("3 ) Id de sistema valido. ")
 
                         if keySis!=os.environ.get('KEY_RF'):
-                            print("4.1 ) En caso de que el Key sea básico o el key sea de Token Global se debe validar la contraseña y el usuario.")
-                            #3. Decodifica el password en base64
-                            # pwdD64 = base64.b64decode(jd['password'])
-                            #decodificarB64
-                            sPwd = str(jd['password'])
-                            # pwdD64 = self.decodificarB64(jd['password'])
-                            pwdD64 = self.decodificarB64(sPwd)
+                            print("4.1 ) En caso de que el Key sea básico, Token Global o llave de credenciales validadas por django se debe validar la contraseña y el usuario.")
+                           
                         
                             #Obtiene el registro del usuario mediante el userName.
                             # dUsuario = list(User.objects.filter(username=jd['user'], is_active=1).values())
@@ -607,9 +604,21 @@ class CAutenticacion(APIView):
                                 if len(dUsuario):
                                     # password = dUsuario[0]['password']
                                     idUsuario = dUsuario[0]['id']
+                                    
                                     print("paso 2")
 
-                                    bPasswordCorrecta = self.verificarPswd(pwdD64)
+                                    # Si la clave obtenida NO es la llave de validado por django, entonces verifica la password.
+                                    if keySis!=os.environ.get('KEYVALIDADJG'):
+                                        #3. Decodifica el password en base64
+                                        # pwdD64 = base64.b64decode(jd['password'])
+                                        #decodificarB64
+                                        sPwd = str(jd['password'])
+                                        # pwdD64 = self.decodificarB64(jd['password'])
+                                        pwdD64 = self.decodificarB64(sPwd)
+
+                                        bPasswordCorrecta = self.verificarPswd(pwdD64)
+                                    else:
+                                        bPasswordCorrecta = True
 
                                     if not bPasswordCorrecta:
                                         bValido = False
@@ -699,8 +708,8 @@ class CAutenticacion(APIView):
                                             sListSistemasPermitidos = self.obtenerSistemasUsuario(idUsuario)
 
 
-                                        #Generar el tokenGlobal :) 
-                                        if keySis == os.environ.get('KEY_GTKG'):
+                                        #Generar el tokenGlobal :) si la key es de token global o si el sistema es intranet se crea el Token global.
+                                        if (keySis == os.environ.get('KEY_GTKG')) | (sistema == int(os.environ.get('ID_INTRANET'))):
                                             print("Se solicita generar TKG.")
 
                                             #Se consulta que exista token global asignado al usuario

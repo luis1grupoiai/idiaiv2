@@ -162,10 +162,17 @@ LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
 
 # Tiempo de expiración de la sesión en segundos
-SESSION_COOKIE_AGE = 30000  # 5 minuto * 300 segundos
+SESSION_COOKIE_AGE = 5000  # 30 minuto 
 
 # Asegurar que la sesión expire cuando el usuario cierre el navegador.
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # Asegurar que la sesión se actualice con cada solicitud, restableciendo el temporizador de expiración.
 SESSION_SAVE_EVERY_REQUEST = True
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.office365.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'sistemas.iai@grupo-iai.com.mx'
+EMAIL_HOST_PASSWORD = 'hLW*t37l_'

@@ -18,7 +18,21 @@
   {% block extra_css %}
   <!-- Espacio para CSS adicional de plantillas hijas -->
   {% endblock %}
-
+  <style>
+    .spinner {
+        border: 16px solid #f3f3f3; /* Light grey */
+        border-top: 16px solid #3498db; /* Blue */
+        border-radius: 50%;
+        width: 120px;
+        height: 120px;
+        animation: spin 2s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    </style>
 
 </head>
 
@@ -31,7 +45,7 @@
             <div class="sidebar-wrapper active">
                 <!--Logo de la empresa -->
                 <div style="text-align: center;">
-                    <a href="{% url 'home' %}">
+                    <a href="{% url 'home' %}" onclick="mostrarSpinner()">
                         <br>
                         <img src="/static/img/logo.jpg" alt="Logo" srcset="" width="250" style="border-radius: 15px;">
                     </a>
@@ -85,7 +99,7 @@
 
             <li
             class="sidebar-item ">
-            <a href="{% url 'modulo_list' %}" class='sidebar-link'>
+            <a href="{% url 'modulo_list' %}" class='sidebar-link' onclick="mostrarSpinner()">
                 <i class="bi bi-key"></i>
                 <span>Modulos</span>
             </a>
@@ -97,7 +111,7 @@
            
             
             <li
-            class="sidebar-item {% if active_page == 'usuariosID' %}active{% endif %} ">
+            class="sidebar-item {% if active_page == 'usuariosID' %}active{% endif %} "  onclick="mostrarSpinner()" > 
             <a href="{% url 'usuariosID' %}" class='sidebar-link'>
                 <i class="bi bi-person-circle"></i>
                 <span>Usuarios de IDIAI</span>
@@ -108,7 +122,7 @@
             </li>
 
             <li
-            class="sidebar-item {% if active_page == 'usuarios' %}active{% endif %} ">
+            class="sidebar-item {% if active_page == 'usuarios' %}active{% endif %} "  onclick="mostrarSpinner()" >
             <a href="{% url 'usuarios' %}" class='sidebar-link'>
                 <i class="bi bi-shield-fill"></i>
                 <span>Usuarios Active Directory</span>
@@ -128,7 +142,7 @@
             </li>
 {% endcomment %}
             <li
-            class="sidebar-item {% if active_page == 'bitacora' %}active{% endif %} ">
+            class="sidebar-item {% if active_page == 'bitacora' %}active{% endif %} "  onclick="mostrarSpinner()">
             <a href="{% url 'bitacora' %}" class='sidebar-link'>
                 <i class="bi bi-book"></i>
                 <span>Bitácora</span>
@@ -159,6 +173,8 @@
                             <span class="navbar-toggler-icon"></span>
                         </button>
                         <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                            {% comment %}   
+
                             <!-- para mas funciones de correo y notificaciones -->
                             <!--<ul class="navbar-nav ms-auto mb-lg-0">
                                 <li class="nav-item dropdown me-1">
@@ -209,7 +225,9 @@
                                         </li>
                                     </ul>
                                 </li>
-                            </ul>-->
+                            </ul>--> 
+
+                            {% endcomment %}   
                             <div class="ms-auto"><!--Etiqueta DIV para posicionar todo a la derecha -->
                             <div class="dropdown">
                                 <a href="#" data-bs-toggle="dropdown" aria-expanded="false">
@@ -233,6 +251,7 @@
                                     </div>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton" style="min-width: 11rem;">
+                                   {% comment %}   
                                     <!-- menu del usuario <li>
                                         <h6 class="dropdown-header">Hello, John!</h6>
                                     </li>
@@ -241,7 +260,8 @@
                                     <li><a class="dropdown-item" href="#"><i class="icon-mid bi bi-gear me-2"></i>
                                             Settings</a></li>
 -->
-                                    <li><a class="dropdown-item" href="{% url 'ipconfig' %}"><i class="icon-mid bi bi-wallet me-2"></i>
+{% endcomment %}   
+                                    <li><a class="dropdown-item" href="{% url 'ipconfig' %}" onclick="mostrarSpinner()"><i class="icon-mid bi bi-wallet me-2"></i>
                                             Configuración IP</a></li>
                                     <li>
                                         <hr class="dropdown-divider">
@@ -282,8 +302,15 @@
                 <h4 class="card-title">{% block EncabezadoCard%}{% endblock EncabezadoCard %} </h4>
             </div>
             <div class="card-body">
-               
+
+                <div id="spinner-overlay" style="display:none; position:fixed; width:100%; height:100%; top:0; left:0; background:rgba(255,255,255,0.7); z-index:9999;">
+                    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+
                 {% block contenido %} 
+                
                 <!-- Aquí va el contenido específico de cada página -->
                 {% endblock %}
 
@@ -336,8 +363,7 @@
     <!-- Scripts específicos de cada página -->
     {% endblock %}
 
-    
-
+   
 </body>
 
 </html>

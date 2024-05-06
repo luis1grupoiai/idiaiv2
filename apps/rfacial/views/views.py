@@ -49,8 +49,10 @@ import os
 import base64
 
 # stky = Fernet.generate_key()
-# stky = b'VVsQPaM9IhXYrWNwLyKkAnmJdzdFR8R0MwdvZpHGsA8='
-stky = force_bytes(os.environ.get('KFNRAPIAUTH'))
+stky = b'VVsQPaM9IhXYrWNwLyKkAnmJdzdFR8R0MwdvZpHGsA8='
+#stky = force_bytes(os.environ.get('KFNRAPIAUTH'))
+
+# print(stky)
 
 crfr = Fernet(stky)
 # from camera import VideoCamera, IPWebCam
@@ -69,6 +71,7 @@ class CAutenticacion(APIView):
     oExecSP = CEjecutarSP()
     sNombreSistema = ""
     oUser = ""
+    dGruposAsigUsuario = {}
 
     # @staticmethod
     def obtenerPermisos(self, p_nIdSistema, p_nIdUsuario):
@@ -104,7 +107,7 @@ class CAutenticacion(APIView):
     def obtenerDatosPersonales(self, p_nIdUsuario=0, p_nIdPersonal=0):
         dDatos = {}
         # dDatosUsuario = {}
-        print("Accede a metodo obtenerDatosPersonales.")
+        print("Accede a metodo obtenerDatosPersonales, solo devuelve datos si el usuario esta activo.")
         try:
             
             if p_nIdUsuario>0:
@@ -128,6 +131,7 @@ class CAutenticacion(APIView):
     def obtenerGrupos(self, p_nIdSistema, p_nIdUsuario):
         dGrupos = {}
         dGruposUsuario = {}
+        dNombreGrupo = {}
         print("Accede a metodo obtenerGrupos.")
         try:
             # dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema, permiso_id__isnull=False).values())
@@ -143,8 +147,11 @@ class CAutenticacion(APIView):
                 # print(dPermisos[0][12])
                 # self.sNombreSistema = dGrupos[0][16]
                 for dGrupo in dGrupos:
-                    # sNombreGrupo = dGrupo[9]
+                    dNombreGrupo[dGrupo[9]] = dGrupo[9]
                     dGruposUsuario[dGrupo[15]] = dGrupo[13]
+
+
+                
                     
 
                     #Método encargado de ordenar los permisos por grupos en su correspondiente bloque
@@ -152,7 +159,9 @@ class CAutenticacion(APIView):
                     #en la respuesta JSON de la api - 15/12/2023
                     # dGruposUsuario = self.ordenarGrupos(sNombreGrupo,dGrupos)
 
-                # print(dGruposUsuario)
+                # print("Nombre de grupos: ")
+                # print(dNombreGrupo)
+                self.dGruposAsigUsuario = dNombreGrupo
 
             
         except ValueError as error:
@@ -257,6 +266,7 @@ class CAutenticacion(APIView):
         dSistGrupoUser = []
 
         print("Accede a metodo obtenerSistemasUsuario.")
+        print("El id de usuario es: "+str(p_nIdUsuario))
         try:
             # dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema, permiso_id__isnull=False).values())
             self.oExecSP.registrarParametros("idUser",p_nIdUsuario)
@@ -344,6 +354,26 @@ class CAutenticacion(APIView):
     
         return dSistema
 
+    def consultarExisteUsuario(self, nameUser):
+        print("Accede a metodo  consultarExisteUsuario:")
+        print(nameUser)
+        sTexto = ""
+        datos = {}
+        oUser = {}
+        try:
+           oUser = User.objects.filter(username=nameUser)
+        #    dUsuario = list(User.objects.filter(username=nameUser, is_active=1).values())
+           dUsuario = list(oUser.values())
+           print(dUsuario)
+
+        except ValueError as error:
+            sTexto = "%s" % error
+            datos = {'message': 'El usuario buscado no existe. ', "error": sTexto}
+
+            print(datos)
+
+    
+        return dUsuario
 
     def consultarUsuarioActivo(self, nameUser):
         print("Accede a metodo  consultarUsuarioActivo:")
@@ -354,14 +384,13 @@ class CAutenticacion(APIView):
            self.oUser = User.objects.filter(username=nameUser, is_active=1)
         #    dUsuario = list(User.objects.filter(username=nameUser, is_active=1).values())
            dUsuario = list(self.oUser.values())
-
-          
+           print(dUsuario)
 
         except ValueError as error:
             sTexto = "%s" % error
             datos = {'message': 'Error al ejecutar query de consultarUsuarioActivo. ', "error": sTexto}
 
-            print(dUsuario)
+            print(datos)
 
     
         return dUsuario
@@ -380,6 +409,10 @@ class CAutenticacion(APIView):
                 if user_obj.check_password(sPsw):
                     print("password correcta.")
                     bCorrecto = True
+                else:
+                    print("password incorrecta.")
+            else:
+                print("El usuario no existe.")
           
 
         except ValueError as error:
@@ -449,14 +482,20 @@ class CAutenticacion(APIView):
         try:
             #1. Carga los valores del json obtenido por el metodo post.
             jd = json.loads(request.body)
-          
+            datos = {}
             
             #Declaración y asignación de variables
             bValido = True
+            
+            bKey = False
+            bKeyTkG = False
+            bKeyRF = False
+            
             dCamposJson = ['token', 'user', 'password','idSistema', 'timeExp']
             sTexto = ""
             pwdD64 = ""
             dUsuario = ""
+            existeUsuario = ""
             dSistema = ""
             dDatosPersonales = {}
             dPermisos = {}
@@ -474,8 +513,10 @@ class CAutenticacion(APIView):
             #Variable que almacenara el numero de items del json recibido por la API.
             numero_de_items = 0 
             bPasswordCorrecta = False
+            bParametroCorrecto = False
             sListSistemasPermitidos = {}
             gtkg = ""
+            nStatus = 0
 
             #Valida que el numero de claves del JSON enviado a la API
             #coincida con el numero de claves declaras en el diccioario dCamposJson
@@ -501,6 +542,7 @@ class CAutenticacion(APIView):
             #si las claves estan correctas, continuara realizando el resto del proceso
             # de autenticación
             if bValido:
+                print("1 ) Tamaño y nombre de claves de JSON obtenido, validos.")
                 # IMPORTANTE!
                 # Intranet tiene el id de sistema 3, Reconocimiento facial tiene el id de sistema 4.
 
@@ -515,10 +557,27 @@ class CAutenticacion(APIView):
 
                 # print(keySis)
                 # print(os.environ.get('KEY_RF'))
+
+                if keySis == str(os.environ.get('SECRET_KEY')):
+                    bKey = True
+                elif keySis == str(os.environ.get('KEY_RF')):
+                    bKeyRF = True
+                elif keySis == str(os.environ.get('KEY_GTKG')):
+                    bKeyTkG = True
+                elif keySis == str(os.environ.get('KEYVALIDADJG')):
+                    bKeyTkG = True
+                else:
+                    sTexto += 'El key del sistema es incorrecto.'
+                    nStatus = 404
+                    bValido = False
+                    
                
-                 #20/02/2024 valida llaves: Llave que permite consumir api, llave para reconocimiento facial y la llave para Token Global
-                if((keySis == str(os.environ.get('SECRET_KEY'))) or (keySis == str(os.environ.get('KEY_RF'))) or (keySis == str(os.environ.get('KEY_GTKG')))):
-                    print("Secret key valida")
+                 #ARSI 20/02/2024 valida llaves: Llave que permite consumir api, llave para reconocimiento facial y la llave para Token Global
+                #  ARSI 22/04/2024 Reutilizar variable bValido, si bValido hasta aqui es correcto, entonces quiere decir que paso los filtros de tamaño de json y que la secret key es correcta
+                # if((keySis == str(os.environ.get('SECRET_KEY'))) or (keySis == str(os.environ.get('KEY_RF'))) or (keySis == str(os.environ.get('KEY_GTKG')))):
+                if bValido:
+                    
+                    print("2 ) Secret key valida.")
                     #Valida si el sistema existe en el catalogo de sistemas.
                     # consultarSistema
                     # dSistema = list(Sistemas.objects.filter(id=jd['idSistema']).values())
@@ -529,171 +588,224 @@ class CAutenticacion(APIView):
                     
                     #Si el sistema obtenido se encuentra en el catalogo de sistemas...
                     if sistema>0:
+                        print("3 ) Id de sistema valido. ")
+
                         if keySis!=os.environ.get('KEY_RF'):
-                            print("paso 1")
-                            #3. Decodifica el password en base64
-                            # pwdD64 = base64.b64decode(jd['password'])
-                            #decodificarB64
-                            sPwd = str(jd['password'])
-                            # pwdD64 = self.decodificarB64(jd['password'])
-                            pwdD64 = self.decodificarB64(sPwd)
+                            print("4.1 ) En caso de que el Key sea básico, Token Global o llave de credenciales validadas por django se debe validar la contraseña y el usuario.")
+                           
                         
                             #Obtiene el registro del usuario mediante el userName.
                             # dUsuario = list(User.objects.filter(username=jd['user'], is_active=1).values())
-                            dUsuario = self.consultarUsuarioActivo(jd['user']);
-                            
-                            if len(dUsuario):
-                                password = dUsuario[0]['password']
-                                idUsuario = dUsuario[0]['id']
-                                print("paso 2")
+                            existeUsuario = self.consultarExisteUsuario(jd['user'])
+                            dUsuario = self.consultarUsuarioActivo(jd['user'])
 
-                                bPasswordCorrecta = self.verificarPswd(pwdD64)
-                                # if self.oUser.exists():
-                                #    user_obj = self.oUser.first()
 
-                                #    if user_obj.check_password(pwdD64):
-                                #         print("password correcta.")
-                                #         bPasswordCorrecta = True
-                                
-                            #4. Verifica que la contraseña en base64 coincida con la password encriptada de BD.
-                            #En caso de coincidir es como devuelve los permisos y grupos del usuario.
-                            # if  handler.verify(pwdD64,password):
-                            if  bPasswordCorrecta:
+                            if len(existeUsuario)>0:
+                                if len(dUsuario):
+                                    # password = dUsuario[0]['password']
+                                    idUsuario = dUsuario[0]['id']
+                                    
+                                    print("paso 2")
+
+                                    # Si la clave obtenida NO es la llave de validado por django, entonces verifica la password.
+                                    if keySis!=os.environ.get('KEYVALIDADJG'):
+                                        #3. Decodifica el password en base64
+                                        # pwdD64 = base64.b64decode(jd['password'])
+                                        #decodificarB64
+                                        sPwd = str(jd['password'])
+                                        # pwdD64 = self.decodificarB64(jd['password'])
+                                        pwdD64 = self.decodificarB64(sPwd)
+
+                                        bPasswordCorrecta = self.verificarPswd(pwdD64)
+                                    else:
+                                        bPasswordCorrecta = True
+
+                                    if not bPasswordCorrecta:
+                                        bValido = False
+                                        sTexto += "¡Ups! la contraseña es incorrecta."
+                                else:
+                                    bValido = False
+                                    sTexto += "Usuario inactivo"
+                            else:
+                                bValido = False
+                                sTexto += "No existe el usuario proporcionado."
+                        else:
+                            try:
+                                idPersonal = int(jd['user'])   
+                            except ValueError:
+                                bValido = False
+                                nStatus = 404
+                                sTexto += "Ingreso un Id de personal invalido, debe ser un numero entero."                       
+                            else:
+                                # if idPersonal <= 0:
+                                bParametroCorrecto = True
+                                                      
+                        if  bValido:
                                 # print("Las contraseñas son iguales")
                                 
                                 #Listado de permisos
                                 # dPermisos = list(SistemaPermiso.objects.filter(sistema_id=sistema).values())
-                                dDatosPersonales = self.obtenerDatosPersonales(idUsuario,0)
+                                if bPasswordCorrecta: 
+                                    dDatosPersonales = self.obtenerDatosPersonales(idUsuario,0)
+                                elif bParametroCorrecto:
+                                    dDatosPersonales = self.obtenerDatosPersonales(0,idPersonal)
+                                else:
+                                    print("No se recuperaron datos del usuario.")
+                                
                                 if len(dDatosPersonales)>0:
                                     print(dDatosPersonales[0][1])
                                     idPersonal = dDatosPersonales[0][1]
                                     sNombreCompleto = dDatosPersonales[0][9]
-
-                                    dPermisos = self.obtenerPermisos(sistema,idUsuario)
-                                    dGrupos = self.obtenerGrupos(sistema,idUsuario)
-
-                                    #El listado de permisos de grupos se unen al bloque permisos, todo junto.
-                                    dPermisos.update(dGrupos)
-                                    # resultados = vUsuarioPermiso.objects.all()
-
-                                    # if len(dPermisos)>0:
-                                    #     print("resultados :) ")  
-                                        
-                                    # else:
-                                    
-                                    #     sTexto += "Este sistema no tiene permisos"
-
-                                    
-                                    # datos = {'message': 'Success', 'datos': dUsuario}
-                                    # datos = {'message': 'Success', 'sistema':self.sNombreSistema,'permisos': dPermisos, 'grupos':dGrupos}
-                                    # token, created = Token.objects.get_or_create(username=jd['user'])
-                                    if jd['timeExp'] == 0:
-                                        print("El tiempo de expiración es 0, por lo tanto por default el token durara 3 horas.")
-                                        tokenApi = self.get_custom_auth_token(jd['user'])
-                                    else:
-                                        print("El tiempo de expiración no es igual 0, por lo tanto por default el token durara "+str(jd['timeExp'])+" horas.")
-                                        tokenApi = self.get_custom_auth_token(jd['user'],jd['timeExp'])
-
-                                    # print(tokenApi)
-
-                                    # Cuando el sistema sea el sistema intranet de la empresa entonces...
-                                    # Obtener listado de sistemas a los que tiene acceso el usuario, dado que
-                                    # en intranet esta el listado completo de los sistemas.
-
-                                    # print(type(os.environ.get('ID_INTRANET')))
-                                    # print(type(sistema))
-                                    if(sistema == int(os.environ.get('ID_INTRANET'))):
-                                        print("El sistema de intranet es el mismo...")
-                                        sListSistemasPermitidos = self.obtenerSistemasUsuario(idUsuario)
-
-
-                                    #Generar el tokenGlobal :) 
-                                    if keySis == os.environ.get('KEY_GTKG'):
-                                        print("Se solicita generar TKG.")
-
-                                        #Se consulta que exista token global asignado al usuario
-                                        dUsTk = list(TokenGlobal.objects.filter(username=jd['user'], caduco=0).values())
-                                                    
-                                        if len(dUsTk) == 0:
-                                            # insertar TKG en BD 05/03/2024
-                                            # sTimeExp = 0
-                                            if jd['timeExp'] == 0:
-                                                sTimeExp = 3
-                                            else:
-                                                sTimeExp = jd['timeExp']
-
-                                            gtkg = self.generarTKGlobal(jd['user'],sTimeExp,sistema)
-                                            insertTkG = TokenGlobal(username=jd['user'], token=gtkg,sistemaOrigen=sistema, caduco=0)
-                                            insertTkG.save()
-                                        else:
-                                            gtkg = dUsTk[0]['token']
-                                        
-                                                                                
-                                        
-                                        
-
-
-                                        #Si el consumo de la Api tiene el key para generar Token Global
-                                        #paso 1) Se consulta en Base de datos si el usuario cuenta con TKG activo
-                                        #paso 2) En caso de que el usuario no cuente con TKG activo, entonces se inserta uno
-                                        #paso 3) En caso de que exista un TKG en base de datos, se verifica que este aun activo, si no lo esta, entonces borrar.
-                                        #paso 4) En caso de que exista un TKG en BD, y si aun esta activo, entonces permanecer con dicho TKG.
-                        
-                                    # is_token_valid = default_token_generator.check_token(jd['user'], tokenApi)
-                                    
-                                    datos = {'message': 'Success','idPersonal':idPersonal,'usuario': jd['user'], 'password': password,'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg}
-                                else:
-                                    datos = {'message': 'Sin datos', 'error':'¡Ups! Al parecer no existen registros de este usuario, por favor de verificar los datos proporcionados. '}
-
-                            else:
-                                datos = {'message': 'Dato Invalidos', 'error':'¡Ups! la contraseña es incorrecta.'}
-
-                        # elif  sistema==4 and keySis==os.environ.get('KEY_RF'):
-                        elif  keySis==os.environ.get('KEY_RF'):
-
-                            print("Petición recibida por parte del API de reconocimiento facial.")
-
-                            idPersonal = int(jd['user'])
-                            dDatosPersonales = self.obtenerDatosPersonales(0,idPersonal)
-
-                            if len(dDatosPersonales)>0:
-                                    print(dDatosPersonales[0][1])
-                                    idUsuario = dDatosPersonales[0][0]
-                                    sNombreCompleto = dDatosPersonales[0][9]
-                                    password = dDatosPersonales[0][4]
+                                    idUsuario = dDatosPersonales[0][0]                               
                                     sUserName = dDatosPersonales[0][3]
 
-                                    dPermisos = self.obtenerPermisos(sistema,idUsuario)
-                                    dGrupos = self.obtenerGrupos(sistema,idUsuario)
+                                    
+                                    dUsuario = self.consultarUsuarioActivo(sUserName)
 
-                                    dPermisos.update(dGrupos)
+                                    if len(dUsuario):
+                                        dPermisos = self.obtenerPermisos(sistema,idUsuario)
+                                        dGrupos = self.obtenerGrupos(sistema,idUsuario)
 
-                                    # tokenApi = self.get_custom_auth_token(sUserName)
+                                        # print("Nombre de grupos a los que pertenece el usuario: ")
+                                        # print(self.dGruposAsigUsuario)
 
-                                    if jd['timeExp'] == 0:
-                                        print("El tiempo de expiración es 0, por lo tanto por default el token durara 3 horas.")
-                                        tokenApi = self.get_custom_auth_token(sUserName)
+                                        #El listado de permisos de grupos se unen al bloque permisos, todo junto.
+                                        dPermisos.update(dGrupos)
+
+                                    
+                                        # resultados = vUsuarioPermiso.objects.all()
+
+                                        # if len(dPermisos)>0:
+                                        #     print("resultados :) ")  
+                                            
+                                        # else:
+                                        
+                                        #     sTexto += "Este sistema no tiene permisos"
+
+                                        
+                                        # datos = {'message': 'Success', 'datos': dUsuario}
+                                        # datos = {'message': 'Success', 'sistema':self.sNombreSistema,'permisos': dPermisos, 'grupos':dGrupos}
+                                        # token, created = Token.objects.get_or_create(username=jd['user'])
+                                        if jd['timeExp'] == 0:
+                                            print("El tiempo de expiración es 0, por lo tanto por default el token durara 3 horas.")
+                                            # tokenApi = self.get_custom_auth_token(jd['user'])
+                                            tokenApi = self.get_custom_auth_token(sUserName)
+                                        else:
+                                            print("El tiempo de expiración no es igual 0, por lo tanto por default el token durara "+str(jd['timeExp'])+" horas.")
+                                            # tokenApi = self.get_custom_auth_token(jd['user'],jd['timeExp'])
+                                            tokenApi = self.get_custom_auth_token(sUserName,jd['timeExp'])
+
+                                        # print(tokenApi)
+
+                                        # Cuando el sistema sea el sistema intranet de la empresa entonces...
+                                        # Obtener listado de sistemas a los que tiene acceso el usuario, dado que
+                                        # en intranet esta el listado completo de los sistemas.
+
+                                        # print(type(os.environ.get('ID_INTRANET')))
+                                        # print(type(sistema))
+                                        if(sistema == int(os.environ.get('ID_INTRANET'))):
+                                            print("El sistema de intranet es el mismo...")
+                                            sListSistemasPermitidos = self.obtenerSistemasUsuario(idUsuario)
+
+
+                                        #Generar el tokenGlobal :) si la key es de token global o si el sistema es intranet se crea el Token global.
+                                        if (keySis == os.environ.get('KEY_GTKG')) | (sistema == int(os.environ.get('ID_INTRANET'))):
+                                            print("Se solicita generar TKG.")
+
+                                            #Se consulta que exista token global asignado al usuario
+                                            dUsTk = list(TokenGlobal.objects.filter(username=jd['user'], caduco=0).values())
+                                                        
+                                            if len(dUsTk) == 0:
+                                                # insertar TKG en BD 05/03/2024
+                                                # sTimeExp = 0
+                                                if jd['timeExp'] == 0:
+                                                    sTimeExp = 3
+                                                else:
+                                                    sTimeExp = jd['timeExp']
+
+                                                gtkg = self.generarTKGlobal(jd['user'],sTimeExp,sistema)
+                                                insertTkG = TokenGlobal(username=jd['user'], token=gtkg,sistemaOrigen=sistema, caduco=0)
+                                                insertTkG.save()
+                                            else:
+                                                gtkg = dUsTk[0]['token']
+                                            
+                                                                                    
+                                            
+                                            
+
+                                            
+                                            #Si el consumo de la Api tiene el key para generar Token Global
+                                            #paso 1) Se consulta en Base de datos si el usuario cuenta con TKG activo
+                                            #paso 2) En caso de que el usuario no cuente con TKG activo, entonces se inserta uno
+                                            #paso 3) En caso de que exista un TKG en base de datos, se verifica que este aun activo, si no lo esta, entonces borrar.
+                                            #paso 4) En caso de que exista un TKG en BD, y si aun esta activo, entonces permanecer con dicho TKG.
+                            
+                                            # is_token_valid = default_token_generator.check_token(jd['user'], tokenApi)
+                                        nStatus = 200
+                                        datos = {'message': 'Success','idPersonal':idPersonal,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg}
                                     else:
-                                        print("El tiempo de expiración no es igual 0, por lo tanto por default el token durara "+str(jd['timeExp'])+" horas.")
-                                        tokenApi = self.get_custom_auth_token(sUserName,jd['timeExp'])
-
-                                    datos = {'message': 'Success','idPersonal':idPersonal,'usuario': sUserName, 'password': password,'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'permisos': dPermisos}                        
+                                        nStatus = 404
+                                        datos = {'message': 'Sin datos', 'error':'Usuario inactivo'}
+                                else:
+                                    nStatus = 404
+                                    datos = {'message': 'Sin datos', 'error':'¡Ups! Al parecer no existen registros de este empleado, por favor de verificar los datos proporcionados. '}
                         else:
-                                datos = {'message': 'Sin datos', 'error':'¡Ups! Al parecer no existen registros de este usuario, por favor de verificar los datos proporcionados. '}                        
+                            nStatus = 404
+                            datos = {'message': 'Dato Invalidos', 'error':sTexto}
+
+                        # elif  sistema==4 and keySis==os.environ.get('KEY_RF'):
+                        #TODO de aqui hacia abajo se comento la 2da opcion de validaciones para toke de Reconocimiento facial...
+                        # elif  keySis==os.environ.get('KEY_RF'):
+
+                        #     print("Petición recibida por parte del API de reconocimiento facial.")
+
+                        #     idPersonal = int(jd['user'])
+                        #     dDatosPersonales = self.obtenerDatosPersonales(0,idPersonal)
+
+                        #     if len(dDatosPersonales)>0:
+                        #             print(dDatosPersonales[0][1])
+                        #             idUsuario = dDatosPersonales[0][0]
+                        #             sNombreCompleto = dDatosPersonales[0][9]                                   
+                        #             sUserName = dDatosPersonales[0][3]
+
+                        #             dPermisos = self.obtenerPermisos(sistema,idUsuario)
+                        #             dGrupos = self.obtenerGrupos(sistema,idUsuario)
+
+                        #             dPermisos.update(dGrupos)
+
+                         
+
+                        #             if jd['timeExp'] == 0:
+                        #                 print("El tiempo de expiración es 0, por lo tanto por default el token durara 3 horas.")
+                        #                 tokenApi = self.get_custom_auth_token(sUserName)
+                        #             else:
+                        #                 print("El tiempo de expiración no es igual 0, por lo tanto por default el token durara "+str(jd['timeExp'])+" horas.")
+                        #                 tokenApi = self.get_custom_auth_token(sUserName,jd['timeExp'])
+
+                        #             datos = {'message': 'Success','idPersonal':idPersonal,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos}                        
+                        #     else:
+                        #         datos = {'message': 'Sin datos', 'error':'¡Ups! Al parecer no existen registros de este usuario, por favor de verificar los datos proporcionados. '}                        
                     else:
+                        nStatus = 404
                         datos = {'message': 'Dato Invalidos', 'error':'Id de sistema invalido'}                   
                 else:
-                    datos = {'message': 'Dato invalido.', 'error': 'El key del sistema es incorrecto.'}
+                    # datos = {'message': 'Dato invalido.', 'error': 'El key del sistema es incorrecto.'}
+                    nStatus = 404
+                    datos = {'message': 'Dato invalido.', 'error': sTexto}
             else:
+                nStatus = 404
                 datos = {'message': 'JSON invalido.', 'error': sTexto}
             
         except ValueError as error:
+            nStatus = 404
             sTexto = "%s" % error
             datos = {'message': 'JSON invalido. ', "error": sTexto}
             # return False
         
 
-        return JsonResponse(datos)
+        print(datos)
+
+        return JsonResponse(datos,status= nStatus)
     
     
     # def put(self,request):
@@ -803,7 +915,7 @@ class CVerificaToken(APIView):
             },
             required=['token', 'user']
         ),
-        responses={200: 'Token Validado'},
+        responses={200: 'Token Validado', 500: 'Json invalido o problemas internos en el server.', 404:'Datos invalidos'},
     ) 
     def post(self,request):
         """
@@ -822,6 +934,7 @@ class CVerificaToken(APIView):
             sTexto = ""
             nLenDef = 0
             nItemJson = 0
+            nStatus = 0
 
             dCamposJson = ['token', 'user']
             
@@ -842,6 +955,18 @@ class CVerificaToken(APIView):
                     sTexto += " El campo faltante es: "+item+". "
                     bValido = False
                     break
+
+
+            if (jd['token'].isspace() or len(jd['token']) <= 1):
+                sTexto += "El item token es muy corto o viene vacio. "
+                nStatus = 404
+                bValido = False
+
+            if (jd['user'].isspace() or len(jd['user']) <= 1):
+                sTexto += "El item de usuario es muy corto o viene vacio. "
+                nStatus = 404
+                bValido = False
+
 
             if bValido:
                 print("Verificar token ...")
@@ -876,7 +1001,7 @@ class CVerificaToken(APIView):
                 print(timezone.now().timestamp())
 
                 if expiration_time > timezone.now().timestamp():
-                    # print("Aun no expira el token")
+                    print("Aun no expira el token")
                     is_token_expired = False
                 # else:
                 #     print("El token ya expiro...")
@@ -890,12 +1015,14 @@ class CVerificaToken(APIView):
                     print("El token es válido y no ha expirado para este usuario...")
                     # is_token_expired = self.is_token_expired(tk)
                     # print(type(is_token_expired))
-
+                    nStatus = 200
                     datos = {'message': 'Success', "descripcion":'El token es válido y no ha expirado.'}
                 else:
+                    nStatus = 404
                     datos = {'message': 'Error', "descripcion":'El token ya no es válido y posiblemente ya expiro'}
                     print("El token no es válido.")
             else:
+                nStatus = 404
                 datos = {'message': 'Datos Invalidos ', 'Error': sTexto}
 
 
@@ -906,11 +1033,19 @@ class CVerificaToken(APIView):
             
 
         except ValueError as error:
+            nStatus = 404
             sTexto = "%s" % error
             datos = {'message': 'JSON invalido. ', "error": sTexto}
             # return False
+        except KeyError as error:
+            nStatus = 500
+            sTexto = "%s" % error
+            datos = {'message': 'JSON invalido. ', "error": sTexto}
 
-        return JsonResponse(datos)  
+       
+       
+
+        return JsonResponse(datos,status=nStatus)  
     
 
     

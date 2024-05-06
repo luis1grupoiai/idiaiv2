@@ -13,7 +13,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['grupo-iai.com.mx', 'www.grupo-iai.com.mx', 'iaipc130-pc.grupo-iai.com.mx', 'www.iaipc130-pc.grupo-iai.com.mx', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['grupo-iai.com.mx', 'www.grupo-iai.com.mx', 'iaipc130-pc.grupo-iai.com.mx', 'www.iaipc130-pc.grupo-iai.com.mx', '127.0.0.1', 'iaipc125-pc.grupo-iai.com.mx','localhost']
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -51,10 +51,4 @@ USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-CSRF_TRUSTED_ORIGINS = ['https://localhost:8080', 'https://127.0.0.1:8080']
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.office365.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'sistemas.iai@grupo-iai.com.mx'
-EMAIL_HOST_PASSWORD = 'hLW*t37l_'
+CSRF_TRUSTED_ORIGINS= ['https://localhost:8080', 'https://127.0.0.1:8080','https://grupo-iai.com.mx:8080', 'https://www.grupo-iai.com.mx:8080', 'https://iaipc130-pc.grupo-iai.com.mx:8080', 'https://www.iaipc130-pc.grupo-iai.com.mx:8080' ]

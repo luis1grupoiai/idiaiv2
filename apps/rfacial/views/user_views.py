@@ -191,7 +191,7 @@ class CCompareFaces(APIView):
                 # Extraer encodings de las caras en la imagen
                 face_encodings = self.extract_face_encodings(image_np)
 
-                db_encodings = [(rasgo.id_personal, rasgo.rasgos_faciales) for rasgo in RasgosFaciales.objects.all()]
+                db_encodings = [(rasgo.id_personal, rasgo.rasgos_faciales) for rasgo in RasgosFaciales.objects.all()] # para hacer 1 a 1, modificar objects.all || where id_personal = id login
                 if not db_encodings:
                     return JsonResponse({'status': 'Database is empty'})
 

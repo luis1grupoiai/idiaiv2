@@ -140,7 +140,7 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
                     <i data-feather="x"></i>
                 </button>
             </div>
-            <form  method="post" id="miFormulario">
+            <form  method="post" id="miFormulario2">
                 {% csrf_token %}
                 <div class="modal-body">
                    
@@ -188,14 +188,13 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
                     <div class="col-6">
                         <div class="mb-2">
                             <label for="departamento" class="form-label">Dirección:</label>
-                            <select class="form-control " name="departamento" id="departamento" required >
+                            <select class="form-control " name="departamento" id="departamento" >
 
                             
-                                <option value="Administración">Administración</option>
-                                <option value="Calidad, Ambiental, Seguridad y Salud">Calidad, Ambiental, Seguridad y Salud</option>
-                                <option value="Proyectos Especiales">Proyectos Especiales</option>
-                                <option value="Ingeniería">Ingeniería</option>
                                 
+                                {% for departamento in selectDepartamento %}
+                                <option value="{{ departamento }}">{{ departamento.upper }}</option>
+                                {% endfor %}
                             </select>
                         </div>
                     </div>
@@ -240,10 +239,11 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
                         <i class="bi bi-x d-block d-sm-none"></i>
                         <span class="d-none d-sm-block">Cerrar</span>
                     </button>
+                    <button type="button" id="botonOculto" class="btn btn-secondary " onclick="validarnuevoUsuario()" >Validar</button>
                     <button type="submit" class="btn btn-primary" id="botonGuardar" >
                         <i class="bi bi-floppy2 d-block d-sm-none"> 
                                                     
-                        </i><span class="d-none d-sm-block">Guardar</span>
+                        </i><span class="d-none d-sm-block" >Guardar</span>
                     </button>
                 </div>
             </form>

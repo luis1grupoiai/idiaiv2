@@ -18,6 +18,27 @@
   {% block extra_css %}
   <!-- Espacio para CSS adicional de plantillas hijas -->
   {% endblock %}
+  <style>
+    .spinner {
+        border: 16px solid #f3f3f3; /* Light grey */
+        border-top: 16px solid #3498db; /* Blue */
+        border-radius: 50%;
+        width: 120px;
+        height: 120px;
+        animation: spin 2s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    </style>
+
+
+
+
+
+
 </head>
 
 <body>
@@ -28,7 +49,7 @@
             <div class="sidebar-wrapper active">
                 <!--Logo de la empresa -->
                 <div style="text-align: center;">
-                    <a href="{% url 'home' %}">
+                    <a href="{% url 'home' %}" onclick="mostrarSpinner()">
                         <br>
                         <img src="/static/img/logo.jpg" alt="Logo" srcset="" width="250" style="border-radius: 15px;">
                     </a>
@@ -85,7 +106,7 @@
             
             <li
             class="sidebar-item ">
-            <a href="{% url 'usuariosID' %}" class='sidebar-link'>
+            <a href="{% url 'usuariosID' %}" class='sidebar-link' onclick="mostrarSpinner()">
                 <i class="bi bi-shield-fill"></i>
                 <span>Active Directory</span>
             </a>
@@ -97,9 +118,9 @@
 
             <li
             class="sidebar-item {% if active_page == 'Nsolicitud' %}active{% endif %} ">
-            <a href="{% url 'nuevousuario' %}" class='sidebar-link'>
+            <a href="{% url 'nuevousuario' %}" class='sidebar-link'onclick="mostrarSpinner()">
                 <i class="bi bi-person-circle"></i>
-                <span>Nuevo Personal </span>
+                <span>Nuevo Personal AD </span>
             </a>
             
             
@@ -107,9 +128,9 @@
 
             <li
             class="sidebar-item {% if active_page == 'ADsolicitud' %}active{% endif %} ">
-            <a href="{% url 'personalNoContratada' %}" class='sidebar-link'>
+            <a href="{% url 'personalNoContratada' %}" class='sidebar-link' onclick="mostrarSpinner()">
                 <i class="bi bi-person-circle"></i>
-                <span>Reclutamiento </span>
+                <span>Reclutamiento AD </span>
             </a>
             
             
@@ -117,7 +138,7 @@
             {% else %}
             <li
             class="sidebar-item {% if active_page == 'solicitud' %}active{% endif %} ">
-            <a href="{% url 'solicitud' %}" class='sidebar-link'>
+            <a href="{% url 'solicitud' %}" class='sidebar-link' onclick="mostrarSpinner()">
                 <i class="bi bi-person-circle"></i>
                 <span>Personal</span>
             </a>
@@ -126,8 +147,8 @@
             </li>
             
             <li
-            class="sidebar-item {% if active_page == 'Nsolicitud' %}active{% endif %} ">
-            <a href="{% url 'solicitudNuevos' %}" class='sidebar-link'>
+            class="sidebar-item {% if active_page == 'Nsolicitud' %}active{% endif %} " >
+            <a href="{% url 'solicitudNuevos' %}" class='sidebar-link' onclick="mostrarSpinner()" >
                 <i class="bi bi-person-circle"></i>
                 <span>Nuevo Personal</span>
             </a>
@@ -288,6 +309,13 @@
                     {% endfor %}
                 </div>
                 {% endif %} 
+
+
+                <div id="spinner-overlay" style="display:none; position:fixed; width:100%; height:100%; top:0; left:0; background:rgba(255,255,255,0.7); z-index:9999;">
+                    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
                 {% block contenido %} 
                 <!-- Aquí va el contenido específico de cada página -->
                 {% endblock %}
@@ -316,6 +344,7 @@
     <script src="/static/assets/extensions/perfect-scrollbar/perfect-scrollbar.min.js"></script>
     <script src="/static/assets/compiled/js/app.js"></script>
     <script src="/static/js/base.js"> </script>
+    
     <script>
         function confirmarSalida() {
             Swal.fire({

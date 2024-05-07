@@ -11,7 +11,7 @@ SECRET_KEY = 'miproyecto'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['grupo-iai.com.mx', 'www.grupo-iai.com.mx', 'iaipc130-pc.grupo-iai.com.mx', 'www.iaipc130-pc.grupo-iai.com.mx', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['grupo-iai.com.mx', 'www.grupo-iai.com.mx', 'iaipc130-pc.grupo-iai.com.mx', 'www.iaipc130-pc.grupo-iai.com.mx', '127.0.0.1', 'localhost','intranet.grupo-iai.com.mx']
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -62,13 +62,6 @@ STATICFILES_DIRS = [
 
 # variable de Active Directory NO BORRAR!!!!!!!!!
 
-
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.office365.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'sistemas.iai@grupo-iai.com.mx'
-EMAIL_HOST_PASSWORD = 'hLW*t37l_'
 #python manage.py runsslserver  333 --settings=config.settings.development
 AD_SERVER = 'ldaps://'  # Cambia esto según el protocolo tu servidor (ldap o ldaps)
 AD_PORT = 636  # El puerto por defecto es 389 # El puerto por defecto es 389 normalmente 389 para conexiones no seguras o 636 para conexiones seguras con SSL

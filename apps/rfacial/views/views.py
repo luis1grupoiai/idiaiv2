@@ -207,11 +207,11 @@ class CAutenticacion(APIView):
         try:
             user = User.objects.get(username=p_sUsuario) 
             timestamp = int(timezone.now().timestamp())
-
+            print(timezone.now())
             # Calcular la fecha de expiración del token
             expiration_time = timestamp + (expiration_hours * 3600)  # 3600 segundos en una hora
             # expiration_time = timestamp + (expiration_hours * 60)  # 60 segundos en un minuto, solo para terminos de prueba ...
-            
+            # print(expiration_time)
             token = default_token_generator.make_token(user)+ ',' + str(expiration_time)
    
             # sToken_encoded = urlsafe_base64_encode(force_bytes(token))
@@ -364,7 +364,7 @@ class CAutenticacion(APIView):
            oUser = User.objects.filter(username=nameUser)
         #    dUsuario = list(User.objects.filter(username=nameUser, is_active=1).values())
            dUsuario = list(oUser.values())
-           print(dUsuario)
+        #    print(dUsuario)
 
         except ValueError as error:
             sTexto = "%s" % error
@@ -384,7 +384,7 @@ class CAutenticacion(APIView):
            self.oUser = User.objects.filter(username=nameUser, is_active=1)
         #    dUsuario = list(User.objects.filter(username=nameUser, is_active=1).values())
            dUsuario = list(self.oUser.values())
-           print(dUsuario)
+        #    print(dUsuario)
 
         except ValueError as error:
             sTexto = "%s" % error

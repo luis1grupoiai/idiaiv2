@@ -26,8 +26,9 @@ def connect_ldap(port, server_address):
         return
     
     server = Server(f'{protocol}{server_address}:{port}', get_info=ALL, use_ssl=(port == 636))
-    conn = Connection(server, user='iai\\desarrollo', password='D3sarrollo', authentication=NTLM)
-    
+    print(server)
+   # conn = Connection(server, user='iai\\desarrollo', password='D3sarrollo', authentication=NTLM) #
+    conn = Connection(server, user='GRUPO-IAI\\IDIAI', password='S0p0rt3i@i2024', authentication=NTLM) #ldaps://DC:636
     try:
         conn.bind()
         if conn.bound:

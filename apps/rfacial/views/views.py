@@ -92,7 +92,8 @@ class CAutenticacion(APIView):
                 # print(dPermisos[0][12])
                 # self.sNombreSistema = dPermisos[0][13]
                 for dPermiso in dPermisos:
-                    dPermisosUsuario[dPermiso[6]] = dPermiso[7]
+                    # dPermisosUsuario[dPermiso[6]] = dPermiso[7]
+                    dPermisosUsuario[dPermiso[6]] = dPermiso[17]
 
                 # print(dPermisosUsuario)
 

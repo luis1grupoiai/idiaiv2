@@ -36,7 +36,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
-
+from datetime import datetime,timedelta
 from apps.mycore.views.ejecutarsp import CEjecutarSP
 
 from cryptography.fernet import Fernet
@@ -421,9 +421,69 @@ class CAutenticacion(APIView):
             datos = {'message': 'Error al ejecutar query de consultarUsuarioActivo. ', "error": sTexto}
 
             print(datos)
-
     
         return bCorrecto
+    
+
+
+    def registrarAcceso(self, username, idSistema, observaciones, opc):
+            print("----- Accede a metodo registrar accesos -----")
+            bExisteRegAccess = True
+            idReg = 0
+            NumIntentos = 0
+
+            # zona_horaria = timezone()
+            # print("zona_horaria")
+            # print(zona_horaria)
+            
+            try:
+                idReg = intentos.objects.get(username=username,activo=1, idSistema=idSistema).id
+                NumIntentos = intentos.objects.get(username=username,activo=1, idSistema=idSistema).numintentos
+            except intentos.DoesNotExist:
+                bExisteRegAccess = False
+                                  
+            if bExisteRegAccess:
+                print("Si existe registro de historial de acceso en los sistemas para el usuario : "+username)
+
+                if opc == 1:
+                    print("caso exitoso, el usuario se loggeo sin problemas : "+username)
+
+                    
+                elif opc == 2:
+                    print("Error en la password del usuario")
+                else:
+                    print("Errores generales")
+            else:
+                print("No existe registro de historial de acceso en los sistemas para el usuario : "+username)
+
+                if opc == 1:
+                    print("caso exitoso, el usuario se loggeo sin problemas : "+username)
+
+                    regAcceso = intentos(
+                        username= username,
+                        numintentos = 0,
+                        idSistema = idSistema,
+                        activo = 0,
+                        observaciones = observaciones
+                    )
+
+                    regAcceso.save()
+
+                elif opc == 2:
+                    print("Error en la password del usuario")
+                    fecha_con_zona_horaria = timezone.now() 
+                    print(fecha_con_zona_horaria)
+
+                    fecha_modificada = fecha_con_zona_horaria + timedelta(minutes=5)
+
+                    print(fecha_modificada)
+                    
+
+                else:
+                    print("Errores generales")
+                    
+                                
+            
        
         # instancia.registrarParametros("idUsuario",2)
         # sSP = "obtenerPermisosUsuario"
@@ -624,6 +684,7 @@ class CAutenticacion(APIView):
                                     if not bPasswordCorrecta:
                                         bValido = False
                                         sTexto += "¡Ups! la contraseña es incorrecta."
+                                        self.registrarAcceso(sUserName,sistema,sTexto+" Desde el sistema "+self.sNombreSistema,2)
                                 else:
                                     bValido = False
                                     sTexto += "Usuario inactivo"
@@ -747,6 +808,7 @@ class CAutenticacion(APIView):
                                                 #paso 4) En caso de que exista un TKG en BD, y si aun esta activo, entonces permanecer con dicho TKG.
                                 
                                                 # is_token_valid = default_token_generator.check_token(jd['user'], tokenApi)
+                                            self.registrarAcceso(sUserName,sistema,"Inicio de sesión exitoso al sistema "+self.sNombreSistema,1)
                                             nStatus = 200
                                             datos = {'message': 'Success','idPersonal':idPersonal,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg}
                                         else:
@@ -754,12 +816,14 @@ class CAutenticacion(APIView):
                                             datos = {'message': 'Acceso denegado', 'error':sTexto}
                                     else:
                                         nStatus = 404
-                                        datos = {'message': 'Sin datos', 'error':'Usuario inactivo'}
+                                        sTexto = 'Usuario inactivo'
+                                        datos = {'message': 'Sin datos', 'error':sTexto}
                                 else:
                                     nStatus = 404
-                                    datos = {'message': 'Sin datos', 'error':'¡Ups! Al parecer no existen registros de este empleado, por favor de verificar los datos proporcionados. '}
+                                    sTexto = '¡Ups! Al parecer no existen registros de este empleado, por favor de verificar los datos proporcionados. '
+                                    datos = {'message': 'Sin datos', 'error': sTexto}
                         else:
-                            nStatus = 404
+                            nStatus = 404                            
                             datos = {'message': 'Dato Invalidos', 'error':sTexto}
 
                         # elif  sistema==4 and keySis==os.environ.get('KEY_RF'):
@@ -796,7 +860,8 @@ class CAutenticacion(APIView):
                         #         datos = {'message': 'Sin datos', 'error':'¡Ups! Al parecer no existen registros de este usuario, por favor de verificar los datos proporcionados. '}                        
                     else:
                         nStatus = 404
-                        datos = {'message': 'Dato Invalidos', 'error':'Id de sistema invalido'}                   
+                        sTexto = 'Id de sistema invalido'
+                        datos = {'message': 'Dato Invalidos', 'error': sTexto}                   
                 else:
                     # datos = {'message': 'Dato invalido.', 'error': 'El key del sistema es incorrecto.'}
                     nStatus = 404

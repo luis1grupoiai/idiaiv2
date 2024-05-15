@@ -428,10 +428,21 @@ class CAutenticacion(APIView):
 
     def registrarAcceso(self, username, idSistema, observaciones, opc):
             print("----- Accede a metodo registrar accesos -----")
+
+            #Se declara e Inicializa variables
             bExisteRegAccess = True
             idReg = 0
             NumIntentos = 0
+            regAcceso = False
+            nTotIntentos = 0
+            fechaCad = None
+            fecha_con_zona_horaria = False
+            fecha_modificada = False
+            intFechaCad = 0 #Fecha/hora de caducidad del intento registrado
+            timestamp = 0 #Fecha/hora actual  
 
+
+            # print(username)
             # zona_horaria = timezone()
             # print("zona_horaria")
             # print(zona_horaria)
@@ -439,6 +450,8 @@ class CAutenticacion(APIView):
             try:
                 idReg = intentos.objects.get(username=username,activo=1, idSistema=idSistema).id
                 NumIntentos = intentos.objects.get(username=username,activo=1, idSistema=idSistema).numintentos
+                fechaCad = intentos.objects.get(username=username,activo=1, idSistema=idSistema).fechaCadReg
+
             except intentos.DoesNotExist:
                 bExisteRegAccess = False
                                   
@@ -450,9 +463,29 @@ class CAutenticacion(APIView):
 
                     
                 elif opc == 2:
-                    print("Error en la password del usuario")
+                    print("Error en la password del usuario, existe registro activo de intento de inicio de sesión :O")
+
+                    #Calculo entre intentos de inicio de sesión:
+                    #Realizar calculo si el registro de inicio de sesión aun no caduca.
+                    intFechaCad = int(fechaCad.timestamp()) #Fecha/hora de caducidad del intento registrado
+                    timestamp = int(timezone.now().timestamp()) #Fecha/hora actual
+                    print(intFechaCad)
+                    print(timestamp)
+
+                    if intFechaCad > timestamp:
+                        print("El registro de intento aun no caduca, por lo que el num. de intento debe iterar +1.")
+                    else:
+                        print("El registro de intento ya caduco, por lo que se actualiza el registro a inactivo.")
+                        # actualizaRegReac = Reacciones.objects.using('intranet').filter(id=idRegReaccion).update(reaccion=reaccionActualUsuario,activo=activo)
+                        actualizaReg = intentos.objects.filter(id=idReg).update(activo=0,updated_at=timezone.now())
+
+                    
+                    
+
                 else:
                     print("Errores generales")
+
+
             else:
                 print("No existe registro de historial de acceso en los sistemas para el usuario : "+username)
 
@@ -471,13 +504,40 @@ class CAutenticacion(APIView):
 
                 elif opc == 2:
                     print("Error en la password del usuario")
+                    
                     fecha_con_zona_horaria = timezone.now() 
                     print(fecha_con_zona_horaria)
 
+                    # fecha_modificada = fecha_con_zona_horaria + timedelta(minutes=10)
                     fecha_modificada = fecha_con_zona_horaria + timedelta(minutes=5)
-
                     print(fecha_modificada)
                     
+                    # pruebaFecha = intentos.objects.get(id=1).created_at
+                    # pruebaFecha = intentos.objects.get(username=username).created_at
+
+                    # print("pruebaFecha")
+                    # print(pruebaFecha)
+
+                    # Solo son pruebas
+                    # testDate1 = pruebaFecha + timedelta(minutes=10)
+                    # testDate2 = pruebaFecha - timedelta(minutes=10)
+                    # print(testDate1)
+                    # print(testDate2)
+
+                    regAcceso = intentos(
+                        username= username,
+                        numintentos = 1,
+                        idSistema = idSistema,
+                        fechaCadReg = fecha_modificada,
+                        activo = 1,
+                        observaciones = observaciones
+                    )
+
+                    regAcceso.save()
+
+                    nTotIntentos = 3 - 1
+
+                    print("Le queda(n) "+str(nTotIntentos)+" intento(s) para volver a iniciar sesión.")
 
                 else:
                     print("Errores generales")
@@ -684,7 +744,7 @@ class CAutenticacion(APIView):
                                     if not bPasswordCorrecta:
                                         bValido = False
                                         sTexto += "¡Ups! la contraseña es incorrecta."
-                                        self.registrarAcceso(sUserName,sistema,sTexto+" Desde el sistema "+self.sNombreSistema,2)
+                                        self.registrarAcceso(jd['user'],sistema,sTexto+" Desde el sistema "+self.sNombreSistema,2)
                                 else:
                                     bValido = False
                                     sTexto += "Usuario inactivo"

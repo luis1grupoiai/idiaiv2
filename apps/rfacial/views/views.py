@@ -426,7 +426,7 @@ class CAutenticacion(APIView):
     
 
 
-    def registrarAcceso(self, username, idSistema, observaciones, opc):
+    def registrarAcceso(self, username, idSistema, observaciones, opc, bConsultaBloqueo = False):
             print("----- Accede a metodo registrar accesos -----")
 
             #Se declaran e Inicializan variables
@@ -444,7 +444,9 @@ class CAutenticacion(APIView):
             bValido = True
             fechaUpd = False
 
-
+            sTexto = ""
+            message = ""
+            datos = {}            
             # print(username)
             # zona_horaria = timezone()
             # print("zona_horaria")
@@ -472,25 +474,54 @@ class CAutenticacion(APIView):
                         if timestamp  > intFechaCad: 
                             bExisteRegAccess = False
                             actualizaReg = intentos.objects.filter(id=idReg).update(activo=0,updated_at=timezone.now())
+
+                            if bConsultaBloqueo:
+                                message = "libre"
+                                sTexto = "El usuario puede loggearse" 
                         else:
                             bValido = False
-                            # print("El usuario alcanzo un limite de 3 intentos de inicio de sesión, por lo que esta bloqueado por 10 min.")
-                            print("¡Uy no! bloqueado porque olvidaste tus credenciales manito.")
-
+                            print("El usuario alcanzo un limite de 3 intentos de inicio de sesión, por lo que esta bloqueado por 10 min.")
+                            
+                            message = "bloqueado"
+                            sTexto = "El usuario alcanzo un limite de 3 intentos de inicio de sesión, por lo que esta bloqueado por 10 min."                            
                     else:
-                        pass
+                        # fecha_con_zona_horaria = timezone.now() 
+                        # print(fecha_con_zona_horaria)
+                        print("Al parecer no se guardo la fecha/hora de caducidad del registro. Se calculara el tiempo de caducidad del registro por medio de la fecha update.")
+                                    
+                        fechaCad = fechaUpd + timedelta(minutes=10)
 
-            if bValido:                       
+                        intFechaCad = int(fechaCad.timestamp()) #Fecha/hora de caducidad del intento registrado
+                        timestamp = int(timezone.now().timestamp()) #Fecha/hora actual
+
+                        if timestamp  > intFechaCad: 
+                            bExisteRegAccess = False
+                            actualizaReg = intentos.objects.filter(id=idReg).update(activo=0,updated_at=timezone.now(),fechaCadReg=fechaCad)
+
+                            if bConsultaBloqueo:
+                                message = "libre"
+                                sTexto = "El usuario puede loggearse"
+                        else:
+                            bValido = False
+                            print("El usuario alcanzo un limite de 3 intentos de inicio de sesión, por lo que esta bloqueado por 10 min.")
+                            
+                            message = "bloqueado"
+                            sTexto = "El usuario alcanzo un limite de 3 intentos de inicio de sesión, por lo que esta bloqueado por 10 min."
+
+
+            if bValido and not bConsultaBloqueo:                       
                 if bExisteRegAccess:
                     print("Si existe registro de historial de acceso en los sistemas para el usuario : "+username)
 
                     if opc == 1:
                         print("caso exitoso, el usuario se loggeo sin problemas : "+username)
+                        message = "Success"
+                        sTexto = "Caso exitoso, el usuario se loggeo sin problemas : "+username
                         actualizaReg = intentos.objects.filter(id=idReg).update(activo=0,updated_at=timezone.now())
 
                         
                     elif opc == 2:
-                        print("Error en la password del usuario, existe registro activo de intento de inicio de sesión :O")
+                        print("Error en el password o usuario dado, existe registro activo de intento de inicio de sesión :O")
                         
                         #Calculo entre intentos de inicio de sesión:
                         #Realizar calculo si el registro de inicio de sesión aun no caduca.
@@ -521,15 +552,20 @@ class CAutenticacion(APIView):
                             
                                 nTotIntentos = 3 - NumIntentos;
                                 print("Le queda(n) "+str(nTotIntentos)+" intento(s) para volver a iniciar sesión.")
+                                message = "error"
+                                sTexto = "Usuario o contraseña incorrectos, le queda(n) "+str(nTotIntentos)+" intento(s) para volver a iniciar sesión."
                             else:
                                 print("Alcanzo el limite de intentos de iniciar sesión...")
 
-                                fecha_con_zona_horaria = timezone.now() 
-                                print(fecha_con_zona_horaria)
-                                    
-                                fecha_modificada = fecha_con_zona_horaria + timedelta(minutes=10)
+                                message = "bloqueado"
+                                sTexto = "El usuario alcanzo un limite de 3 intentos de inicio de sesión, por lo que esta bloqueado por 10 min." 
 
-                                actualizaReg = intentos.objects.filter(id=idReg).update(activo=1,updated_at=timezone.now(),fechaCadReg=fecha_modificada)
+                                # fecha_con_zona_horaria = timezone.now() 
+                                # print(fecha_con_zona_horaria)
+                                    
+                                # fecha_modificada = fecha_con_zona_horaria + timedelta(minutes=10)
+
+                                # actualizaReg = intentos.objects.filter(id=idReg).update(activo=1,updated_at=timezone.now(),fechaCadReg=fecha_modificada)
 
 
                         else:
@@ -557,12 +593,25 @@ class CAutenticacion(APIView):
 
                             print("Le queda(n) "+str(nTotIntentos)+" intento(s) para volver a iniciar sesión.")
 
-                        
+                            message = "error"
+                            sTexto = "Le queda(n) "+str(nTotIntentos)+" intento(s) para volver a iniciar sesión." 
                         
 
                     else:
                         print("Errores generales")
 
+                        regAcceso = intentos(
+                            username= username,
+                            numintentos = 0,
+                            idSistema = idSistema,
+                            activo = 0,
+                            observaciones = observaciones
+                        )
+
+                        regAcceso.save()
+
+                        message = "Alert"
+                        sTexto = "Se inserto un error generico de inicio de sesión. "
 
                 else:
                     print("No existe registro de historial de acceso en los sistemas para el usuario : "+username)
@@ -580,8 +629,11 @@ class CAutenticacion(APIView):
 
                         regAcceso.save()
 
+                        message = "Success"
+                        sTexto = "Caso exitoso, el usuario se loggeo sin problemas : "+username
+
                     elif opc == 2:
-                        print("Error en la password del usuario")
+                        print("Error en las credenciales del usuario")
                         
                         fecha_con_zona_horaria = timezone.now() 
                         print(fecha_con_zona_horaria)
@@ -617,11 +669,29 @@ class CAutenticacion(APIView):
 
                         print("Le queda(n) "+str(nTotIntentos)+" intento(s) para volver a iniciar sesión.")
 
+                        message = "error"
+                        sTexto = "Le queda(n) "+str(nTotIntentos)+" intento(s) para volver a iniciar sesión." 
+
                     else:
                         print("Errores generales")
+
+                        regAcceso = intentos(
+                            username= username,
+                            numintentos = 0,
+                            idSistema = idSistema,
+                            activo = 0,
+                            observaciones = observaciones
+                        )
+
+                        regAcceso.save()
+
+                        message = "Alert"
+                        sTexto = "Se inserto un error generico de inicio de sesión. "
                     
                                 
-            
+            datos = {'message':message, 'texto':sTexto}
+
+            return datos
        
         # instancia.registrarParametros("idUsuario",2)
         # sSP = "obtenerPermisosUsuario"
@@ -682,6 +752,7 @@ class CAutenticacion(APIView):
             #1. Carga los valores del json obtenido por el metodo post.
             jd = json.loads(request.body)
             datos = {}
+            info = {}
             
             #Declaración y asignación de variables
             bValido = True
@@ -716,6 +787,7 @@ class CAutenticacion(APIView):
             sListSistemasPermitidos = {}
             gtkg = ""
             nStatus = 0
+            opc = 3
 
             #Valida que el numero de claves del JSON enviado a la API
             #coincida con el numero de claves declaras en el diccioario dCamposJson
@@ -789,180 +861,197 @@ class CAutenticacion(APIView):
                     if sistema>0:
                         print("3 ) Id de sistema valido. ")
 
-                        if keySis!=os.environ.get('KEY_RF'):
-                            print("4.1 ) En caso de que el Key sea básico, Token Global o llave de credenciales validadas por django se debe validar la contraseña y el usuario.")
-                           
+                        #Anter de continuar con las validaciones del usuario, verificamos que el usuario no este bloqueado 
+                        #por intentos de sesión fallidos.
+                        info = self.registrarAcceso(jd['user'],jd['idSistema'],"","",True)
+
                         
-                            #Obtiene el registro del usuario mediante el userName.
-                            # dUsuario = list(User.objects.filter(username=jd['user'], is_active=1).values())
-                            existeUsuario = self.consultarExisteUsuario(jd['user'])
-                            dUsuario = self.consultarUsuarioActivo(jd['user'])
+                        if info['message'] == "bloqueado":
+                            nStatus = 404
+                            sTexto = info['texto']
+                            datos = {'message': info['message'], 'error': sTexto} 
+                        else:
+                            # pass
+                            if keySis!=os.environ.get('KEY_RF'):
+                                print("4.1 ) En caso de que el Key sea básico, Token Global o llave de credenciales validadas por django se debe validar la contraseña y el usuario.")
+                            
+                            
+                                #Obtiene el registro del usuario mediante el userName.
+                                # dUsuario = list(User.objects.filter(username=jd['user'], is_active=1).values())
+                                existeUsuario = self.consultarExisteUsuario(jd['user'])
+                                dUsuario = self.consultarUsuarioActivo(jd['user'])
 
 
-                            if len(existeUsuario)>0:
-                                if len(dUsuario):
-                                    # password = dUsuario[0]['password']
-                                    idUsuario = dUsuario[0]['id']
-                                    
-                                    print("paso 2")
+                                if len(existeUsuario)>0:
+                                    if len(dUsuario):
+                                        # password = dUsuario[0]['password']
+                                        idUsuario = dUsuario[0]['id']
+                                        
+                                        print("paso 2")
 
-                                    # Si la clave obtenida NO es la llave de validado por django, entonces verifica la password.
-                                    if keySis!=os.environ.get('KEYVALIDADJG'):
-                                        #3. Decodifica el password en base64
-                                        # pwdD64 = base64.b64decode(jd['password'])
-                                        #decodificarB64
-                                        sPwd = str(jd['password'])
-                                        # pwdD64 = self.decodificarB64(jd['password'])
-                                        pwdD64 = self.decodificarB64(sPwd)
+                                        # Si la clave obtenida NO es la llave de validado por django, entonces verifica la password.
+                                        if keySis!=os.environ.get('KEYVALIDADJG'):
+                                            #3. Decodifica el password en base64
+                                            # pwdD64 = base64.b64decode(jd['password'])
+                                            #decodificarB64
+                                            sPwd = str(jd['password'])
+                                            # pwdD64 = self.decodificarB64(jd['password'])
+                                            pwdD64 = self.decodificarB64(sPwd)
 
-                                        bPasswordCorrecta = self.verificarPswd(pwdD64)
+                                            bPasswordCorrecta = self.verificarPswd(pwdD64)
+                                        else:
+                                            bPasswordCorrecta = True
+
+                                        if not bPasswordCorrecta:
+                                            opc = 2
+                                            sTexto += "¡Ups! la contraseña es incorrecta."
+                                            info = self.registrarAcceso(jd['user'],sistema,sTexto+" Desde el sistema "+self.sNombreSistema,opc)
+                                            bValido = False
+                                            sTexto += " "+info['texto']
+                                            
+                                            
                                     else:
-                                        bPasswordCorrecta = True
-
-                                    if not bPasswordCorrecta:
                                         bValido = False
-                                        sTexto += "¡Ups! la contraseña es incorrecta."
-                                        self.registrarAcceso(jd['user'],sistema,sTexto+" Desde el sistema "+self.sNombreSistema,2)
+                                        sTexto += "Usuario inactivo"
                                 else:
                                     bValido = False
-                                    sTexto += "Usuario inactivo"
+                                    sTexto += "No existe el usuario proporcionado."
                             else:
-                                bValido = False
-                                sTexto += "No existe el usuario proporcionado."
-                        else:
-                            try:
-                                idPersonal = int(jd['user'])   
-                            except ValueError:
-                                bValido = False
-                                nStatus = 404
-                                sTexto += "Ingreso un Id de personal invalido, debe ser un numero entero."                       
-                            else:
-                                # if idPersonal <= 0:
-                                bParametroCorrecto = True
-                                                      
-                        if  bValido:
-                                # print("Las contraseñas son iguales")
-                                
-                                #Listado de permisos
-                                # dPermisos = list(SistemaPermiso.objects.filter(sistema_id=sistema).values())
-                                if bPasswordCorrecta: 
-                                    dDatosPersonales = self.obtenerDatosPersonales(idUsuario,0)
-                                elif bParametroCorrecto:
-                                    dDatosPersonales = self.obtenerDatosPersonales(0,idPersonal)
+                                try:
+                                    idPersonal = int(jd['user'])   
+                                except ValueError:
+                                    bValido = False
+                                    nStatus = 404
+                                    sTexto += "Ingreso un Id de personal invalido, debe ser un numero entero."                       
                                 else:
-                                    print("No se recuperaron datos del usuario.")
-                                
-                                if len(dDatosPersonales)>0:
-                                    print(dDatosPersonales[0][1])
-                                    idPersonal = dDatosPersonales[0][1]
-                                    sNombreCompleto = dDatosPersonales[0][9]
-                                    idUsuario = dDatosPersonales[0][0]                               
-                                    sUserName = dDatosPersonales[0][3]
-
+                                    # if idPersonal <= 0:
+                                    bParametroCorrecto = True
+                                                        
+                            if  bValido:
+                                    # print("Las contraseñas son iguales")
                                     
-                                    dUsuario = self.consultarUsuarioActivo(sUserName)
-
-                                    if len(dUsuario):
-                                        dPermisos = self.obtenerPermisos(sistema,idUsuario)
-                                        dGrupos = self.obtenerGrupos(sistema,idUsuario)
-
-                                        if len(dPermisos)==0 & len(dGrupos)==0:
-                                            bValido = False
-                                            sTexto += "El usuario no cuenta con permisos para acceder a este sistema."
-
-                                        if bValido:
-                                            # print("Nombre de grupos a los que pertenece el usuario: ")
-                                            # print(self.dGruposAsigUsuario)
-
-                                            #El listado de permisos de grupos se unen al bloque permisos, todo junto.
-                                            dPermisos.update(dGrupos)
+                                    #Listado de permisos
+                                    # dPermisos = list(SistemaPermiso.objects.filter(sistema_id=sistema).values())
+                                    if bPasswordCorrecta: 
+                                        dDatosPersonales = self.obtenerDatosPersonales(idUsuario,0)
+                                    elif bParametroCorrecto:
+                                        dDatosPersonales = self.obtenerDatosPersonales(0,idPersonal)
+                                    else:
+                                        print("No se recuperaron datos del usuario.")
+                                    
+                                    if len(dDatosPersonales)>0:
+                                        print(dDatosPersonales[0][1])
+                                        idPersonal = dDatosPersonales[0][1]
+                                        sNombreCompleto = dDatosPersonales[0][9]
+                                        idUsuario = dDatosPersonales[0][0]                               
+                                        sUserName = dDatosPersonales[0][3]
 
                                         
-                                            # resultados = vUsuarioPermiso.objects.all()
+                                        dUsuario = self.consultarUsuarioActivo(sUserName)
 
-                                            # if len(dPermisos)>0:
-                                            #     print("resultados :) ")  
+                                        if len(dUsuario):
+                                            dPermisos = self.obtenerPermisos(sistema,idUsuario)
+                                            dGrupos = self.obtenerGrupos(sistema,idUsuario)
+
+                                            if len(dPermisos)==0 & len(dGrupos)==0:
+                                                bValido = False
+                                                sTexto += "El usuario no cuenta con permisos para acceder a este sistema."
+
+                                            if bValido:
+                                                # print("Nombre de grupos a los que pertenece el usuario: ")
+                                                # print(self.dGruposAsigUsuario)
+
+                                                #El listado de permisos de grupos se unen al bloque permisos, todo junto.
+                                                dPermisos.update(dGrupos)
+
+                                            
+                                                # resultados = vUsuarioPermiso.objects.all()
+
+                                                # if len(dPermisos)>0:
+                                                #     print("resultados :) ")  
+                                                    
+                                                # else:
                                                 
-                                            # else:
-                                            
-                                            #     sTexto += "Este sistema no tiene permisos"
+                                                #     sTexto += "Este sistema no tiene permisos"
 
-                                            
-                                            # datos = {'message': 'Success', 'datos': dUsuario}
-                                            # datos = {'message': 'Success', 'sistema':self.sNombreSistema,'permisos': dPermisos, 'grupos':dGrupos}
-                                            # token, created = Token.objects.get_or_create(username=jd['user'])
-                                            if jd['timeExp'] == 0:
-                                                print("El tiempo de expiración es 0, por lo tanto por default el token durara 3 horas.")
-                                                # tokenApi = self.get_custom_auth_token(jd['user'])
-                                                tokenApi = self.get_custom_auth_token(sUserName)
-                                            else:
-                                                print("El tiempo de expiración no es igual 0, por lo tanto por default el token durara "+str(jd['timeExp'])+" horas.")
-                                                # tokenApi = self.get_custom_auth_token(jd['user'],jd['timeExp'])
-                                                tokenApi = self.get_custom_auth_token(sUserName,jd['timeExp'])
-
-                                            # print(tokenApi)
-
-                                            # Cuando el sistema sea el sistema intranet de la empresa entonces...
-                                            # Obtener listado de sistemas a los que tiene acceso el usuario, dado que
-                                            # en intranet esta el listado completo de los sistemas.
-
-                                            # print(type(os.environ.get('ID_INTRANET')))
-                                            # print(type(sistema))
-                                            if(sistema == int(os.environ.get('ID_INTRANET'))):
-                                                print("El sistema de intranet es el mismo...")
-                                                sListSistemasPermitidos = self.obtenerSistemasUsuario(idUsuario)
-
-
-                                            #Generar el tokenGlobal :) si la key es de token global o si el sistema es intranet se crea el Token global.
-                                            if (keySis == os.environ.get('KEY_GTKG')) | (sistema == int(os.environ.get('ID_INTRANET'))):
-                                                print("Se solicita generar TKG.")
-
-                                                #Se consulta que exista token global asignado al usuario
-                                                dUsTk = list(TokenGlobal.objects.filter(username=jd['user'], caduco=0).values())
-                                                            
-                                                if len(dUsTk) == 0:
-                                                    # insertar TKG en BD 05/03/2024
-                                                    # sTimeExp = 0
-                                                    if jd['timeExp'] == 0:
-                                                        sTimeExp = 3
-                                                    else:
-                                                        sTimeExp = jd['timeExp']
-
-                                                    gtkg = self.generarTKGlobal(jd['user'],sTimeExp,sistema)
-                                                    insertTkG = TokenGlobal(username=jd['user'], token=gtkg,sistemaOrigen=sistema, caduco=0)
-                                                    insertTkG.save()
+                                                
+                                                # datos = {'message': 'Success', 'datos': dUsuario}
+                                                # datos = {'message': 'Success', 'sistema':self.sNombreSistema,'permisos': dPermisos, 'grupos':dGrupos}
+                                                # token, created = Token.objects.get_or_create(username=jd['user'])
+                                                if jd['timeExp'] == 0:
+                                                    print("El tiempo de expiración es 0, por lo tanto por default el token durara 3 horas.")
+                                                    # tokenApi = self.get_custom_auth_token(jd['user'])
+                                                    tokenApi = self.get_custom_auth_token(sUserName)
                                                 else:
-                                                    gtkg = dUsTk[0]['token']
-                                                
-                                                                                        
-                                                
-                                                
+                                                    print("El tiempo de expiración no es igual 0, por lo tanto por default el token durara "+str(jd['timeExp'])+" horas.")
+                                                    # tokenApi = self.get_custom_auth_token(jd['user'],jd['timeExp'])
+                                                    tokenApi = self.get_custom_auth_token(sUserName,jd['timeExp'])
 
+                                                # print(tokenApi)
+
+                                                # Cuando el sistema sea el sistema intranet de la empresa entonces...
+                                                # Obtener listado de sistemas a los que tiene acceso el usuario, dado que
+                                                # en intranet esta el listado completo de los sistemas.
+
+                                                # print(type(os.environ.get('ID_INTRANET')))
+                                                # print(type(sistema))
+                                                if(sistema == int(os.environ.get('ID_INTRANET'))):
+                                                    print("El sistema de intranet es el mismo...")
+                                                    sListSistemasPermitidos = self.obtenerSistemasUsuario(idUsuario)
+
+
+                                                #Generar el tokenGlobal :) si la key es de token global o si el sistema es intranet se crea el Token global.
+                                                if (keySis == os.environ.get('KEY_GTKG')) | (sistema == int(os.environ.get('ID_INTRANET'))):
+                                                    print("Se solicita generar TKG.")
+
+                                                    #Se consulta que exista token global asignado al usuario
+                                                    dUsTk = list(TokenGlobal.objects.filter(username=jd['user'], caduco=0).values())
+                                                                
+                                                    if len(dUsTk) == 0:
+                                                        # insertar TKG en BD 05/03/2024
+                                                        # sTimeExp = 0
+                                                        if jd['timeExp'] == 0:
+                                                            sTimeExp = 3
+                                                        else:
+                                                            sTimeExp = jd['timeExp']
+
+                                                        gtkg = self.generarTKGlobal(jd['user'],sTimeExp,sistema)
+                                                        insertTkG = TokenGlobal(username=jd['user'], token=gtkg,sistemaOrigen=sistema, caduco=0)
+                                                        insertTkG.save()
+                                                    else:
+                                                        gtkg = dUsTk[0]['token']
+                                                    
+                                                                                            
+                                                    
+                                                    
+
+                                                    
+                                                    #Si el consumo de la Api tiene el key para generar Token Global
+                                                    #paso 1) Se consulta en Base de datos si el usuario cuenta con TKG activo
+                                                    #paso 2) En caso de que el usuario no cuente con TKG activo, entonces se inserta uno
+                                                    #paso 3) En caso de que exista un TKG en base de datos, se verifica que este aun activo, si no lo esta, entonces borrar.
+                                                    #paso 4) En caso de que exista un TKG en BD, y si aun esta activo, entonces permanecer con dicho TKG.
+                                    
+                                                    # is_token_valid = default_token_generator.check_token(jd['user'], tokenApi)
                                                 
-                                                #Si el consumo de la Api tiene el key para generar Token Global
-                                                #paso 1) Se consulta en Base de datos si el usuario cuenta con TKG activo
-                                                #paso 2) En caso de que el usuario no cuente con TKG activo, entonces se inserta uno
-                                                #paso 3) En caso de que exista un TKG en base de datos, se verifica que este aun activo, si no lo esta, entonces borrar.
-                                                #paso 4) En caso de que exista un TKG en BD, y si aun esta activo, entonces permanecer con dicho TKG.
-                                
-                                                # is_token_valid = default_token_generator.check_token(jd['user'], tokenApi)
-                                            self.registrarAcceso(sUserName,sistema,"Inicio de sesión exitoso al sistema "+self.sNombreSistema,1)
-                                            nStatus = 200
-                                            datos = {'message': 'Success','idPersonal':idPersonal,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg}
+                                                opc = 1
+                                                info = self.registrarAcceso(sUserName,sistema,"Inicio de sesión exitoso al sistema "+self.sNombreSistema,opc)
+                                                nStatus = 200
+                                                datos = {'message': 'Success','idPersonal':idPersonal,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg}
+                                            else:
+                                                nStatus = 404
+                                                datos = {'message': 'Acceso denegado', 'error':sTexto}
                                         else:
                                             nStatus = 404
-                                            datos = {'message': 'Acceso denegado', 'error':sTexto}
+                                            sTexto = 'Usuario inactivo'
+                                            datos = {'message': 'Sin datos', 'error':sTexto}
                                     else:
                                         nStatus = 404
-                                        sTexto = 'Usuario inactivo'
-                                        datos = {'message': 'Sin datos', 'error':sTexto}
-                                else:
-                                    nStatus = 404
-                                    sTexto = '¡Ups! Al parecer no existen registros de este empleado, por favor de verificar los datos proporcionados. '
-                                    datos = {'message': 'Sin datos', 'error': sTexto}
-                        else:
-                            nStatus = 404                            
-                            datos = {'message': 'Dato Invalidos', 'error':sTexto}
+                                        sTexto = '¡Ups! Al parecer no existen registros de este empleado, por favor de verificar los datos proporcionados. '
+                                        datos = {'message': 'Sin datos', 'error': sTexto}
+                            else:
+                                nStatus = 404                            
+                                datos = {'message': 'Dato Invalidos', 'error':sTexto}
 
                         # elif  sistema==4 and keySis==os.environ.get('KEY_RF'):
                         #TODO de aqui hacia abajo se comento la 2da opcion de validaciones para toke de Reconocimiento facial...
@@ -1013,6 +1102,23 @@ class CAutenticacion(APIView):
             sTexto = "%s" % error
             datos = {'message': 'JSON invalido. ', "error": sTexto}
             # return False
+        
+
+        if opc == 3:
+           info = self.registrarAcceso(jd['user'],jd['idSistema'],sTexto,opc)
+           print(info)
+        # elif opc == 2:
+        #     #El usuario se equivoco en la contraseña.
+        #     info = self.registrarAcceso(jd['user'],jd['idSistema'],sTexto,opc)
+
+        #     datos = {'message': 'Dato Invalidos', 'error':sTexto}
+
+        #     if info['message'] == 'bloqueado':
+        #         pass
+        #     else:
+        #         pass
+        # else:
+        #     pass
         
 
         print(datos)

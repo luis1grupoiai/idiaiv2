@@ -551,9 +551,14 @@ class CAutenticacion(APIView):
 
                             
                                 nTotIntentos = 3 - NumIntentos;
+                                if nTotIntentos == 0:
+                                    sTexto = "Ha alcanzado el limite de intentos, su usuario quedara bloqueado por 10 minutos."
+                                else:
+                                    sTexto = "Le queda(n) "+str(nTotIntentos)+" intento(s) para volver a iniciar sesión."
+
                                 print("Le queda(n) "+str(nTotIntentos)+" intento(s) para volver a iniciar sesión.")
                                 message = "error"
-                                sTexto = "Usuario o contraseña incorrectos, le queda(n) "+str(nTotIntentos)+" intento(s) para volver a iniciar sesión."
+                                # sTexto = "Usuario o contraseña incorrectos, le queda(n) "+str(nTotIntentos)+" intento(s) para volver a iniciar sesión."
                             else:
                                 print("Alcanzo el limite de intentos de iniciar sesión...")
 
@@ -591,10 +596,15 @@ class CAutenticacion(APIView):
 
                             nTotIntentos = 3 - 1
 
+                            if nTotIntentos == 0:
+                                sTexto = "Ha alcanzado el limite de intentos, su usuario quedara bloqueado por 10 minutos."
+                            else:
+                                sTexto = "Le queda(n) "+str(nTotIntentos)+" intento(s) para volver a iniciar sesión."
+
                             print("Le queda(n) "+str(nTotIntentos)+" intento(s) para volver a iniciar sesión.")
 
                             message = "error"
-                            sTexto = "Le queda(n) "+str(nTotIntentos)+" intento(s) para volver a iniciar sesión." 
+                            # sTexto = "Le queda(n) "+str(nTotIntentos)+" intento(s) para volver a iniciar sesión." 
                         
 
                     else:
@@ -666,11 +676,15 @@ class CAutenticacion(APIView):
                         regAcceso.save()
 
                         nTotIntentos = 3 - 1
+                        if nTotIntentos == 0:
+                            sTexto = "Ha alcanzado el limite de intentos, su usuario quedara bloqueado por 10 minutos."
+                        else:
+                            sTexto = "Le queda(n) "+str(nTotIntentos)+" intento(s) para volver a iniciar sesión."
 
                         print("Le queda(n) "+str(nTotIntentos)+" intento(s) para volver a iniciar sesión.")
 
                         message = "error"
-                        sTexto = "Le queda(n) "+str(nTotIntentos)+" intento(s) para volver a iniciar sesión." 
+                        # sTexto = "Le queda(n) "+str(nTotIntentos)+" intento(s) para volver a iniciar sesión." 
 
                     else:
                         print("Errores generales")

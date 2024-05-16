@@ -517,7 +517,7 @@ class CAutenticacion(APIView):
                         print("caso exitoso, el usuario se loggeo sin problemas : "+username)
                         message = "Success"
                         sTexto = "Caso exitoso, el usuario se loggeo sin problemas : "+username
-                        actualizaReg = intentos.objects.filter(id=idReg).update(activo=0,updated_at=timezone.now())
+                        actualizaReg = intentos.objects.filter(id=idReg).update(activo=0,updated_at=timezone.now(),observaciones=observaciones)
 
                         
                     elif opc == 2:
@@ -547,7 +547,7 @@ class CAutenticacion(APIView):
 
                                 
 
-                                actualizaReg = intentos.objects.filter(id=idReg).update(activo=1,updated_at=timezone.now(),fechaCadReg=fecha_modificada,numintentos=NumIntentos)
+                                actualizaReg = intentos.objects.filter(id=idReg).update(activo=1,updated_at=timezone.now(),fechaCadReg=fecha_modificada,numintentos=NumIntentos, observaciones=observaciones)
 
                             
                                 nTotIntentos = 3 - NumIntentos;

@@ -40,6 +40,9 @@ from datetime import datetime,timedelta
 from apps.mycore.views.ejecutarsp import CEjecutarSP
 
 from cryptography.fernet import Fernet
+from django.utils.html import strip_tags
+from django.template.loader import render_to_string
+from django.core.mail import EmailMultiAlternatives
 
 
 
@@ -47,6 +50,7 @@ from cryptography.fernet import Fernet
 import json
 import os
 import base64
+import time
 
 # stky = Fernet.generate_key()
 stky = b'VVsQPaM9IhXYrWNwLyKkAnmJdzdFR8R0MwdvZpHGsA8='
@@ -1537,4 +1541,82 @@ class CVerificaTokenGlobal(APIView):
     
     
     
+class CInactivaTkg():
+
+    oExecSP = CEjecutarSP()
+    returnValue = 0
+    asunto =""
+    titulo = ""
+    subtitulo = ""
+    contenido = ""
+    
+    def inactivarRegistrosTkg(self):
+
+        try:
+            self.oExecSP.ejecutarSP("inactivarTkg")
+            print("pruebas...")
+           
+
+        except ValueError as error:
+            sTexto = "Error en el metodo inactivarRegistrosTkg: %s" % error
+            print(sTexto)
+        else:
+            print("Ejecucicón Correcta. ")
+            
+            returnValue = self.oExecSP.ejecutarSP("obtenerInactivos")
+
+            if returnValue[0][0] == 0:
+                print("TODO OK")
+                asunto ="Resultados de la ejecución del procedimiento Inactivar registros del TKG."
+                titulo = "Registros inactivos exitosamente."
+                subtitulo = ""
+                contenido = "El siguiente correo es para notificar que el procedimiento para inactivar registros de TKG a media noche fue ejecutado con exito."
+                self.enviarCorreo(asunto,titulo,contenido,subtitulo)
+               
+            else:
+                print("Favor de ejecutar nuevamente este script...")
+                asunto ="Resultados de la ejecución del procedimiento Inactivar registros del TKG."
+                titulo = "Problemas en la ejecución del proceso de registros inactivos."
+                subtitulo = ""
+                contenido = "El siguiente correo es para notificar que el procedimiento para inactivar registros de TKG a media noche no fue ejecutado con exito, por favor de ejecutar nuevamente el procedimiento manualmente."
+                self.enviarCorreo(asunto,titulo,contenido,subtitulo)
+
+            print(os.environ.get('EMAIL_HOST'))     
+
+            print(returnValue)
+
+        return returnValue
+    
+
+    def enviarCorreo(self,asunto,titulo,contenido,subtitulo):
+        current_year = datetime.now().year
+
+        context = {
+                'year': current_year,
+                'titulo' : titulo,
+                'Subtitulo' : subtitulo,
+                'contenido' :contenido,                
+                }
+        
+        html_content = render_to_string('NotificacionCorreoExterna.html', context)
+        text_content = strip_tags(html_content)  # Esto crea una versión en texto plano del HTML
+
+        email = EmailMultiAlternatives(
+            asunto,  # Asunto
+            text_content,  # Contenido en texto plano
+            'sistemas.iai@grupo-iai.com.mx',  # Email del remitente
+            ['ana.sanchez@grupo-iai.com.mx']  # Lista de destinatarios
+        )
+        
+        email.attach_alternative(html_content, "text/html")
+
+        try:
+            time.sleep(1) #para evitar que envie un moton de solicitudes 
+            email.send()
+            print("Correo enviado correctamente.")
+        except Exception as e:
+            print(f"Error al enviar correo: {e}")
+
+        
+
 

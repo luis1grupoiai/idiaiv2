@@ -1566,7 +1566,7 @@ class CInactivaTkg():
             returnValue = self.oExecSP.ejecutarSP("obtenerInactivos")
 
             if returnValue[0][0] == 0:
-                print("TODO OK")
+                print("OK: Los registros de Token Global se inactivaron exitosamente.")
                 asunto ="Resultados de la ejecución del procedimiento Inactivar registros del TKG."
                 titulo = "Registros inactivos exitosamente."
                 subtitulo = ""
@@ -1574,14 +1574,14 @@ class CInactivaTkg():
                 self.enviarCorreo(asunto,titulo,contenido,subtitulo)
                
             else:
-                print("Favor de ejecutar nuevamente este script...")
+                print("FAIL: Favor de ejecutar nuevamente este script...")
                 asunto ="Resultados de la ejecución del procedimiento Inactivar registros del TKG."
                 titulo = "Problemas en la ejecución del proceso de registros inactivos."
                 subtitulo = ""
                 contenido = "El siguiente correo es para notificar que el procedimiento para inactivar registros de TKG a media noche no fue ejecutado con exito, por favor de ejecutar nuevamente el procedimiento manualmente."
                 self.enviarCorreo(asunto,titulo,contenido,subtitulo)
 
-            print(os.environ.get('EMAIL_HOST'))     
+            # print(os.environ.get('EMAIL_HOST'))     
 
             print(returnValue)
 
@@ -1605,7 +1605,11 @@ class CInactivaTkg():
             asunto,  # Asunto
             text_content,  # Contenido en texto plano
             'sistemas.iai@grupo-iai.com.mx',  # Email del remitente
-            ['ana.sanchez@grupo-iai.com.mx']  # Lista de destinatarios
+            ['ana.sanchez@grupo-iai.com.mx', 
+             'eloy.mendoza@grupo-iai.com.mx', 
+             'luis.dominguez@grupo-iai.com.mx',
+             'manuel.zarate@grupo-iai.com.mx', 
+             'jorge.torres@grupo-iai.com.mx' ]  # Lista de destinatarios
         )
         
         email.attach_alternative(html_content, "text/html")

@@ -14,8 +14,8 @@ class SistemaPermisoInlineForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         app_label = 'sistemas-iai'
-        content_type = ContentType.objects.get(app_label=app_label)
-        self.fields['permiso'].queryset = self.fields['permiso'].queryset.filter(content_type=content_type)
+        content_types = ContentType.objects.filter(app_label=app_label)
+        self.fields['permiso'].queryset = self.fields['permiso'].queryset.filter(content_type__in=content_types)
 
 # Define una clase de línea en la interfaz de administración para el modelo SistemaPermisoGrupo
 class SistemaPermisoInline(admin.TabularInline):

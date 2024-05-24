@@ -2,8 +2,9 @@
 
 
 from .user_views import CReconFacial, CCompareFaces
-from .views import CAutenticacion , Protegida, CVerificaToken, CVerificaTokenGlobal
+from .views import CAutenticacion , Protegida, CVerificaToken, CVerificaTokenGlobal, CInactivaTkg
 from apps.mycore.views.ejecutarsp import CEjecutarSP
+# from incTkg import *
 
 
 

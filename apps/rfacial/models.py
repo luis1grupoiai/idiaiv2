@@ -33,3 +33,25 @@ class TokenGlobal(models.Model):
     # updated_at = models.DateTimeField(auto_now=True)    
 
 
+class intentos(models.Model):
+
+    id = models.AutoField(primary_key=True)
+    username = models.CharField(max_length=50)
+    numintentos = models.IntegerField()
+    idSistema = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    fechaCadReg = models.DateTimeField()
+    activo = models.IntegerField()
+    observaciones = models.TextField(max_length=100)
+
+    class Meta:
+        managed = False
+        db_table = 'THistorialAccesos'
+
+    
+
+
+    
+
+    

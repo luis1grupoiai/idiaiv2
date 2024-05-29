@@ -44,11 +44,20 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 AD_SERVER = 'ldaps://'  # Cambia esto según tu servidor
 AD_PORT = 636  # El puerto por defecto es 389 # El puerto por defecto es 389 normalmente 389 para conexiones no seguras o 636 para conexiones seguras con SSL
-AD_USER = 'CN=desarrollo,CN=Users,DC=iai,DC=com,DC=mx'  # Cambia esto según tus credenciales -----dsquery user -name desarrollo --------dsget user "CN=desarrollo,CN=Users,DC=iai,DC=com,DC=mx"
-AD_PASSWORD = 'D3sarrollo'
+AD_USER = os.environ.get('AD_USER_P')  # Cambia esto según tus credenciales -----dsquery user -name desarrollo --------dsget user "CN=desarrollo,CN=Users,DC=iai,DC=com,DC=mx"
+AD_PASSWORD = os.environ.get('AD_PASSWORD_P')
 
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-CSRF_TRUSTED_ORIGINS= ['https://localhost:8080', 'https://127.0.0.1:8080','https://grupo-iai.com.mx:8080', 'https://www.grupo-iai.com.mx:8080', 'https://iaipc130-pc.grupo-iai.com.mx:8080', 'https://www.iaipc130-pc.grupo-iai.com.mx:8080','intranet.grupo-iai.com.mx' ]
+CSRF_TRUSTED_ORIGINS = [
+    'http://127.0.0.1:335', 
+    'https://localhost:8080', 
+    'https://127.0.0.1:8080',
+    'https://grupo-iai.com.mx:8080', 
+    'https://www.grupo-iai.com.mx:8080', 
+    'https://iaipc130-pc.grupo-iai.com.mx:8080', 
+    'https://www.iaipc130-pc.grupo-iai.com.mx:8080',
+    'https://intranet.grupo-iai.com.mx'  # Asegúrate de añadir el esquema correcto según sea http o https
+]

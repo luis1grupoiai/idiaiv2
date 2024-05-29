@@ -50,8 +50,9 @@ def asignar_dominio():
         dominio='OU=UsersIAI,DC=iai,DC=com,DC=mx' #dominio de AD para el desarrollo 
         dominioRaiz='DC=iai,DC=com,DC=mx'
     else:
-        dominio='OU=UsersIAI,DC=iai,DC=com,DC=mx'# dominio de AD  para produccion 
-        dominioRaiz='DC=iai,DC=com,DC=mx'
+        #dominio='OU=UsersIAI,DC=grupo-iai,DC=com,DC=mx'# dominio de AD  para produccion 
+        dominioRaiz='DC=grupo-iai,DC=com,DC=mx'
+        dominio='DC=grupo-iai,DC=com,DC=mx'# dominio de AD  para produccion 
 
     dominios={
         'dominio':dominio,
@@ -345,7 +346,7 @@ def personalNoContratada(request):
         
         #if usuarioexisteIDIAI(nombre_usuario): 
       #  if existeUsuario(nombre_usuario) : #VERIFICA SI EXISTE USUARIO EN ACTIVE DIRECTORY <---AQUÍ ESTUVO SON GOKU XD
-        if existeUsuario(nombre_usuario) :
+        if existeUsuario(nombre_inicio_sesion) :
             LugarNoCreado+="Active Directory "
             messages.error(request,f"Usuario existente en {LugarNoCreado}: {nombre_usuario}")
             imprimir(f"Usuario existente en {LugarNoCreado}: {nombre_usuario}")
@@ -794,6 +795,8 @@ def consultar_usuarios(request): #Consulta los usuarios de Active Directory
                           ]
             
             connection.search(search_base, search_filter, attributes=attributes)
+            imprimir( "Consulta de los Usuarios de Active Directory : ")
+            imprimir( "-------------------------------------------------------------------------------------------------------------------")
             for entry in connection.entries:
                 domain_name = '.'.join(part.replace('DC=', '') for part in entry.distinguishedName.value.split(',') if part.startswith('DC='))
                 
@@ -816,8 +819,9 @@ def consultar_usuarios(request): #Consulta los usuarios de Active Directory
                     'DistinguishedName' : entry.distinguishedName.value if 'DistinguishedName' in entry else None,
                     
                 }
-
-                #imprimir( entry.distinguishedName.value)
+               
+                imprimir( entry.distinguishedName.value)
+                
                 #if 'cn' in entry and entry.cn.value.lower() != 'administrador':
                 if not is_account_disabled(useraccountcontrol_str):
                     usuarios.append(usuario)
@@ -846,6 +850,8 @@ def consultar_usuarios(request): #Consulta los usuarios de Active Directory
         imprimir(f"Error al conectar o buscar en Active Directory: {str(e)}")
     
     # Crear el diccionario de contexto con todas las variables necesarias
+    imprimir( "-------------------------------------------------------------------------------------------------------------------")
+    imprimir( "-------------------------------------------------------------------------------------------------------------------")
     context = {
         'users': usuarios,  # Lista de usuarios
         'usersAdmin': usuariosAdmin,
@@ -1053,8 +1059,11 @@ def existeUsuario(nombreUsuario):
        # server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
         with connect_to_ad() as conn:
             search_base = dominoRaiz  # Asegúrate de que domino está definido y es correcto.
-            search_filter = f'(cn={nombreUsuario})'  # Filtro para buscar por Common Name
-            conn.search(search_base, search_filter, attributes=['cn'])
+            #search_filter = f'(cn={nombreUsuario})'  # Filtro para buscar por Common Name
+            search_filter = f'(sAMAccountName={nombreUsuario})'  # Cambiado de cn a sAMAccountName
+            imprimir(search_filter)
+            #conn.search(search_base, search_filter, attributes=['cn'])
+            conn.search(search_base, search_filter, attributes=['sAMAccountName'])
             return len(conn.entries) > 0
     except Exception as e:
         imprimir(f"Error al buscar en Active Directory: {str(e)}")
@@ -1525,8 +1534,10 @@ def get_client_ip(request):
     return request.META.get('REMOTE_ADDR')
 
 def imprimir(mensaje): #funcion para imprimir en la consola  en modo desarrollador 
-    if settings.DEBUG:
-        print(mensaje)
+    #if settings.DEBUG:
+    print(mensaje)
+    
+    
 
 
 def obtener_mensaje_error_ad(result_code):

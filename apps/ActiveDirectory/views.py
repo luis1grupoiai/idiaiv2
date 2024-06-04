@@ -1662,7 +1662,7 @@ def imprimir(mensaje): #funcion para imprimir en la consola  en modo desarrollad
     if settings.DEBUG:
        print(mensaje)
     
-    print(mensaje)
+    #print(mensaje)
     
     
 

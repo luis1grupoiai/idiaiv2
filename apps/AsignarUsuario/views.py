@@ -127,7 +127,7 @@ def nuevosIDIAI(request):
   
     # Aquí la lógica para mostrar la página de inicio
     if request.method == 'POST':
-        nombre_usuario = request.POST['nombre_usuario'].lower().strip()
+        nombre_usuario = request.POST['nombre_usuario'].strip().title()
         nombre_pila = request.POST['nombre_pila'].strip().title()
         apellido = request.POST['apellido'].strip().title()
         nombre_completo = request.POST['nombre_completo'].strip().title()
@@ -139,7 +139,7 @@ def nuevosIDIAI(request):
         #print( nombre_usuario,nombre_pila,apellido,nombre_completo,email,password,nombre_inicio_sesion,departamento,puesto )
         LugarCreado=" "
         LugarNoCreado=" "
-        user, created = User.objects.get_or_create(username= nombre_usuario, defaults={
+        user, created = User.objects.get_or_create(username= nombre_inicio_sesion, defaults={
                 'email':email,
                 'first_name': nombre_pila,
                 'last_name': apellido,
@@ -155,7 +155,7 @@ def nuevosIDIAI(request):
             user.save()
             n = Fernet(ENCRYPTION_KEY_NOMBRE)
             f = Fernet(ENCRYPTION_KEY_DESCRIPCION)
-            nombre_cifrado = n.encrypt(nombre_usuario.encode().strip()).decode()
+            nombre_cifrado = n.encrypt(nombre_inicio_sesion.encode().strip()).decode()
             descripcion_cifrado = f.encrypt(password.encode()).decode()
             nombreCompleto = nombre_completo
             messages.success(request,f"Usuario creado en  {LugarCreado} :{nombre_usuario}") # 
@@ -259,8 +259,8 @@ def enviar_correo(request):
 
 
 def imprimir(mensaje): #funcion para imprimir en la consola  en modo desarrollador 
-    if settings.DEBUG:
-        print(mensaje)
+    #if settings.DEBUG:
+    print(mensaje)
         
         
 def insertar_registro_accion(nombre_usuario, modulo, nombre_accion, descripcion, ip_usuario, user_agent, browser_id):

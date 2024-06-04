@@ -42,8 +42,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-AD_SERVER = 'ldaps://'  # Cambia esto según tu servidor
-AD_PORT = 636  # El puerto por defecto es 389 # El puerto por defecto es 389 normalmente 389 para conexiones no seguras o 636 para conexiones seguras con SSL
+AD_SERVER = os.environ.get('AD_SERVER_P')   # Cambia esto según tu servidor
+AD_PORT =os.environ.get('AD_PORT_P')  # El puerto por defecto es 389 # El puerto por defecto es 389 normalmente 389 para conexiones no seguras o 636 para conexiones seguras con SSL
 AD_USER = os.environ.get('AD_USER_P')  # Cambia esto según tus credenciales -----dsquery user -name desarrollo --------dsget user "CN=desarrollo,CN=Users,DC=iai,DC=com,DC=mx"
 AD_PASSWORD = os.environ.get('AD_PASSWORD_P')
 
@@ -58,6 +58,7 @@ CSRF_TRUSTED_ORIGINS = [
     'https://grupo-iai.com.mx:8080', 
     'https://www.grupo-iai.com.mx:8080', 
     'https://iaipc130-pc.grupo-iai.com.mx:8080', 
-    'https://www.iaipc130-pc.grupo-iai.com.mx:8080',
+    'https://iaipc125-pc.grupo-iai.com.mx:8080', 
+    'https://www.iaipc130-pc.grupo-iai.com.mx:443',
     'https://intranet.grupo-iai.com.mx'  # Asegúrate de añadir el esquema correcto según sea http o https
 ]

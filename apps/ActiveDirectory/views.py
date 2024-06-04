@@ -114,8 +114,11 @@ def actualizar_empleados():
     users = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='')
     usuarios_modificados = []
     no_cambios = True
-
+    print("Iniciando la Actualización de Información . . .")
     for usuario in users:
+        print(f"{usuario.id}")
+       # imprimir(f" Empleado :  {usuario.NombreCompleto} : {usuario.username}")
+        
         try:
             with connect_to_ad() as conn:
                 search_base = domino
@@ -127,17 +130,17 @@ def actualizar_empleados():
                     physicalDeliveryOfficeName_actual = conn.entries[0].physicalDeliveryOfficeName.value
                     department_actual = conn.entries[0].department.value
                     puesto_actual = conn.entries[0].title.value
-                    imprimir(dn)
+                    #imprimir(dn)
                     if (physicalDeliveryOfficeName_actual.strip().lower() != usuario.Proyecto.strip().lower() or
                             department_actual.strip().lower() != usuario.nombre_direccion.strip().lower() or puesto_actual.strip().lower() != usuario.Nombre_ct.strip().lower()):
-                        imprimir("")
-                        imprimir("*****************************************************************************************")
-                        imprimir(dn)
-                        imprimir(physicalDeliveryOfficeName_actual)
-                        imprimir( department_actual)
-                        imprimir( puesto_actual)
-                        imprimir("*****************************************************************************************")
-                        imprimir("")
+                        print("")
+                        print("*****************************************************************************************")
+                        print(dn)
+                        print(f'{physicalDeliveryOfficeName_actual} --> {usuario.Proyecto}')
+                        print(f' {puesto_actual}-->{usuario.Nombre_ct}')
+                        print(f'{department_actual}-->{usuario.nombre_direccion}')
+                        print("*****************************************************************************************")
+                        print("")
                         
                         
                         
@@ -156,24 +159,27 @@ def actualizar_empleados():
                                 "DJANGO",
                                 'Modulo AD',
                                 'Actualizo',
-                                f"Se Actualizó  proyecto({physicalDeliveryOfficeName_actual} -> {usuario.Proyecto}) y direccion({department_actual}->{usuario.nombre_direccion}) del '{usuario.username}' en Active Directory ",
+                                f"Actualización de Información  proyecto({physicalDeliveryOfficeName_actual} -> {usuario.Proyecto}) y direccion({department_actual}->{usuario.nombre_direccion}) del '{usuario.username}' en Active Directory ",
                                 '0.0.0.0',
                                 "LOCALHOST",
                                 'N/A'
                                 )
+                           # imprimir(f"Actualización de Información :  proyecto({physicalDeliveryOfficeName_actual} -> {usuario.Proyecto}) , Puesto ({puesto_actual}->{usuario.Nombre_ct}) direccion({department_actual}->{usuario.nombre_direccion}) del '{usuario.username}' en Active Directory ")
+                            mensajeCont=f"Actualización de Información de {usuario.NombreCompleto} ({usuario.username}) :<br> Proyecto ({physicalDeliveryOfficeName_actual} --> {usuario.Proyecto}) <br> Puesto ({puesto_actual} --> {usuario.Nombre_ct}) <br> Direccion({department_actual} --> {usuario.nombre_direccion})   "
+                            notificacionCorreo(None,f'IDIAI - Active Directory : Actualizacion del usuario {usuario.username}','Actualización de Información en Active Directory',mensajeCont) 
                             if AccountControl_actual != 66050:
                                 imprimir(mover_usuario_ou_sys(usuario.username, unidadOrganizativa[asignar_Departamento(usuario.nombre_direccion)]))
                             
                             no_cambios = False
                         else: 
-                            imprimir(conn.result)
+                            print(conn.result)
                             
         except Exception as e:
-            imprimir(f"Error al actualizar en Active Directory: {str(e)}")
+            print(f"Error al actualizar en Active Directory: {str(e)}")
 
     if no_cambios:
-        imprimir("No se realizó ningún cambio necesario.")
-        
+        print("No se realizó ningún cambio necesario.")
+    print("Fin la Actualización de Información . . .")
     return usuarios_modificados
 
 
@@ -206,7 +212,7 @@ def mover_usuario_ou_sys(nombre_usuario, nueva_ou):
                 if conn.result['result'] == 0:
                     mensaje = 'Usuario movido correctamente.'
                     insertar_registro_accion(
-                    "DJANGO",
+                    "Servidor",
                     'Modulo AD',
                     'Mover',
                     f"El usuario  '{nombre_usuario}' ha sido trasladado  a la nueva ubicación : {extraer_unidad_organizativa(nueva_ou_completa)[0]}",
@@ -244,7 +250,7 @@ def actualizarProyectoDireccion(request):
     
     noCambios=True
     for usuario in users:
-            imprimir(f" Empleado :  {usuario.NombreCompleto} : {usuario.username}")
+            #imprimir(f" Empleado :  {usuario.NombreCompleto} : {usuario.username}")
             try:
                 with connect_to_ad() as conn:
                     search_base = domino
@@ -263,9 +269,9 @@ def actualizarProyectoDireccion(request):
                             imprimir("")
                             imprimir("*****************************************************************************************")
                             imprimir(dn)
-                            imprimir(physicalDeliveryOfficeName_actual)
-                            imprimir( department_actual)
-                            imprimir( puesto_actual)
+                            imprimir(f'{physicalDeliveryOfficeName_actual} --> {usuario.Proyecto}')
+                            imprimir(f'{puesto_actual}-->{usuario.Nombre_ct}')
+                            imprimir(f'{department_actual}-->{usuario.nombre_direccion}')
                             imprimir("*****************************************************************************************")
                             imprimir("")
                             changes = {
@@ -278,12 +284,15 @@ def actualizarProyectoDireccion(request):
                                 insertar_registro_accion(
                                     empleado.nameUser(request), 'Modulo AD',
                                     'Actualizar',
-                                    f"Se Actualizó  proyecto({physicalDeliveryOfficeName_actual} -> {usuario.Proyecto}) y direccion({department_actual}->{usuario.nombre_direccion}) del '{usuario.username}' en Active Directory ",
+                                    f"Actualización de Información  proyecto({physicalDeliveryOfficeName_actual} -> {usuario.Proyecto}) y direccion({department_actual}->{usuario.nombre_direccion}) del '{usuario.username}' en Active Directory ",
                                     get_client_ip(request),
                                     request.META.get('HTTP_USER_AGENT'),
                                     'N/A'
                                     )
-                                usuariosmodificados.append(usuario)  # Añade el nombre de usuario a la lista                               
+                                mensajeCont=f"Actualización de Información de {usuario.NombreCompleto} ({usuario.username}) :<br> Proyecto ({physicalDeliveryOfficeName_actual} --> {usuario.Proyecto}) <br> Puesto ({puesto_actual} --> {usuario.Nombre_ct}) <br> Direccion({department_actual} --> {usuario.nombre_direccion})   "                
+                                usuariosmodificados.append(usuario)  # Añade el nombre de usuario a la lista
+                                notificacionCorreo(request,f'IDIAI - Active Directory : Actualizacion del usuario {usuario.username}','Actualización de Información en Active Directory',mensajeCont) 
+                                                              
                                 if AccountControl_actual !=66050: 
                                     imprimir(mover_usuario_ou(usuario.username, unidadOrganizativa[asignar_Departamento(usuario.nombre_direccion)],request))  # no comentar esta linea XD
                                     #imprimir(f" **************numero : {AccountControl_actual}") 
@@ -420,7 +429,7 @@ def personalNoContratada(request):
                             request.META.get('HTTP_USER_AGENT'),
                             'N/A'
                             )
-                        notificacionCorreo(request,f'Active Directory Creación del usuario {nombre_usuario}','Creación de usuario',mensajeCont)    
+                        notificacionCorreo(request,f'IDIAI - Active Directory : Creación del usuario {nombre_usuario}','Creación de usuario',mensajeCont)    
                             #return redirect('usuariosID')
                             
                             
@@ -750,7 +759,7 @@ def consultarUsuariosIDIAI(request):
                     
                     #return redirect('usuariosID')
                     
-                    notificacionCorreo(request,f'Active Directory Creación del usuario {nombre_usuario}','Creación de usuario',mensajeCont)
+                    notificacionCorreo(request,f'IDIAI - Active Directory : Creación del usuario {nombre_usuario}','Creación de usuario',mensajeCont)
                 else:
                     messages.error(request, f"Error {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])} o {conn.result['description']} : {conn.result['message']} ")
                     mensaje = {'titulo': 'Error', 'texto': f"Error {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])} o  {conn.result['description']} ", 'tipo': 'error'}
@@ -1797,10 +1806,10 @@ def notificacionCorreo(request,Asunto,titulo,contenido):
     current_year = datetime.now().year
     context = {
             'year': current_year,
-            'titulo' : "IDIAI-Modulo de Active Directory",
+            'titulo' : "IDIAI-V2",
             'Subtitulo' : titulo,
             'contenido' :contenido,
-            'Usuario'   : empleado.nameUser(request)
+            'Usuario'   : "Servidor de Django" if request is None else empleado.nameUser(request)
             }
             # Renderizar el contenido HTML
     html_content = render_to_string('NotificacionCorreo.html', context)
@@ -1811,7 +1820,7 @@ def notificacionCorreo(request,Asunto,titulo,contenido):
             Asunto,  # Asunto
             text_content,  # Contenido en texto plano
             'sistemas.iai@grupo-iai.com.mx',  # Email del remitente
-            ['manuel.zarate@grupo-iai.com.mx']  # Lista de destinatarios
+            ['manuel.zarate@grupo-iai.com.mx', 'luis.dominguez@grupo-iai.com.mx']  # Lista de destinatarios
         )
     email.attach_alternative(html_content, "text/html")
     try:
@@ -1830,7 +1839,11 @@ def usuarioexisteIDIAI(nombre_de_usuario):
 
 
 
-
+def imprimir_hola_mundo():
+    """
+    Tarea Celery para imprimir el mensaje "Hola Mundo".
+    """
+    print("Hola Mundo!")
 
 
 

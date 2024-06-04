@@ -808,6 +808,8 @@ class CAutenticacion(APIView):
             nStatus = 0
             opc = 3
             sTextoTkg = ""
+            dUsTk = ""
+            tkgbl = ""
 
             #Valida que el numero de claves del JSON enviado a la API
             #coincida con el numero de claves declaras en el diccioario dCamposJson
@@ -1027,6 +1029,11 @@ class CAutenticacion(APIView):
 
                                                     #Se consulta que exista token global asignado al usuario
                                                     dUsTk = list(TokenGlobal.objects.filter(username=jd['user'], caduco=0).values())
+
+                                                    #ARSI 04062024 Se agrega validación para verificar e inactivar el TKGLOBAL cuando el usuario inicie sesión en intranet.
+                                                    #o pase el key para generar token Global.
+                                                    if len(dUsTk)>0:
+                                                        tkgbl = dUsTk[0]['token']
                                                                 
                                                     if len(dUsTk) == 0:
                                                         # insertar TKG en BD 05/03/2024
@@ -1036,8 +1043,12 @@ class CAutenticacion(APIView):
                                                         else:
                                                             sTimeExp = jd['timeExp']
 
-                                                        gtkg = self.generarTKGlobal(jd['user'],sTimeExp,sistema)
-                                                        insertTkG = TokenGlobal(username=jd['user'], token=gtkg,sistemaOrigen=sistema, caduco=0)
+                                                        # gtkg = self.generarTKGlobal(jd['user'],sTimeExp,sistema)
+                                                        # insertTkG = TokenGlobal(username=jd['user'], token=gtkg,sistemaOrigen=sistema, caduco=0)
+
+                                                        #ARSI 04062024 Que el sistema origen para generar TK global sea siempre el de intranet
+                                                        gtkg = self.generarTKGlobal(jd['user'],sTimeExp,int(os.environ.get('ID_INTRANET')))
+                                                        insertTkG = TokenGlobal(username=jd['user'], token=gtkg,sistemaOrigen=int(os.environ.get('ID_INTRANET')), caduco=0)
                                                         insertTkG.save()
                                                     else:
                                                         gtkg = dUsTk[0]['token']
@@ -1400,6 +1411,61 @@ class CVerificaToken(APIView):
 class CVerificaTokenGlobal(APIView):
 
     tkgb = ""
+
+    def validarTokenGlobal(user, token):
+        datos = {}
+        bValido = True
+        sTexto = ""
+        tkg= ""
+        user = ""
+        sUserName = ""
+        nSistemaOrigen = 0
+        ntam = 0
+        nTamTot = 0
+        ltam = []
+        sSl = ""
+        dUsTk = ""
+
+        is_token_valid = False
+        is_token_expired = True
+        is_system_origin = False
+        is_len = False
+        is_signal = False
+        
+        try:
+            if len(user)==0:
+                bValido = False
+                sTexto += "El valor de usuario esta vacio."
+
+            if len(token)==0:
+                bValido = False
+                sTexto += "El valor de token esta vacio."
+
+            if bValido:
+                sUserName = user
+                tkg = token                
+
+                dUsTk = list(TokenGlobal.objects.filter(username=sUserName, caduco=0).values())
+
+                if len(dUsTk)==1:
+                    nSistemaOrigen = int(dUsTk[0]['sistemaOrigen'])
+                    tkDpt = crfr.decrypt(tkg.encode()).decode()
+
+                
+
+
+
+
+            
+
+            
+        except ValueError as error:
+            sTexto = "%s" % error
+            datos = {'message': 'Ocurrió un error al generar el token para el usuario. ', "error": sTexto}
+        else:
+            pass
+
+    
 
     @method_decorator(csrf_exempt)
     def dispatch(self,request, *args, **kwargs):

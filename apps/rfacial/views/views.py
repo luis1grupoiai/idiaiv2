@@ -1448,22 +1448,78 @@ class CVerificaTokenGlobal(APIView):
                 dUsTk = list(TokenGlobal.objects.filter(username=sUserName, caduco=0).values())
 
                 if len(dUsTk)==1:
+                    #1. Obtenemos el id del sistema autorizado con el que se expiden los TKGLB
                     nSistemaOrigen = int(dUsTk[0]['sistemaOrigen'])
+
+                    #2. Decodifica token Global.
                     tkDpt = crfr.decrypt(tkg.encode()).decode()
 
-                
+                    #3. Una vez decodificado el token, se obtiene el tamaño del token Global para compararlo con el tamaño registrado del token recibido.
+                    ltam = tkDpt.split(os.environ.get('USGL'))
+                    ntam = int(ltam[1])
+                    nTamTot = len(ltam[0]+os.environ.get('USGL'))
+
+                    #4. Se valida el tamaño del tokenGlobal.
+                    if ntam == nTamTot:
+                        is_len = True
+
+                        #5. Se divide el token por su correspondiente separador
+                        parts = tkDpt.split(',')
+
+                        if len(parts)>0:
+                            #6. Se valida el token generado por django.
+                            is_token_valid = default_token_generator.check_token(user,parts[0])
+
+                            #7. Se verifica el tiempo de expiración del token Global.
+                            timestamp = int(parts[1])
+                            expiration_time = timestamp
+
+                            if expiration_time > timezone.now().timestamp():                    
+                                is_token_expired = False #Si es false entonces el token aun no expira.
 
 
+                            #8. Se verifica si el sistema origen ingresado al token sea el mismo con el que esta insertado en la BD,
+                            if  int(parts[2]) == nSistemaOrigen and int(parts[2]) == int(os.environ.get('ID_INTRANET')) :
+                                is_system_origin = True #Si es true entonces el sistema origien es el correcto.
+
+                            #9. Se verifica si la marca agregada al token sea correcta.
+                            sSl = parts[3]
+                            
+                            if sSl[:3] == os.environ.get('SIGNAL'):
+                                is_signal = True
 
 
-            
+                            if is_len and is_token_valid and not is_token_expired and is_system_origin and is_signal:
+                                sTexto = "El token Global es valido."
+                                datos = {'message': 'Success', 'Resultado': sTexto}
+                            else:
+                                sTexto = "El token Global no es valido."
 
-            
+                                #Se actualiza registro de token. campo token vacio y campo caduco igual a 1
+                                regAct = TokenGlobal.objects.get(username=sUserName, caduco=0)
+
+                                regAct.caduco = 1
+                                regAct.token = ""
+                                regAct.save()
+                                
+                                datos = {'message': 'Error', 'Resultado': sTexto}
+
+                else:
+                     sTexto = "No existe Token Global para este usuario."
+                     datos = {'message': 'Error', 'Resultado': sTexto}
+            else:
+                datos = {'message': 'Error', "error": sTexto}          
+                            
         except ValueError as error:
             sTexto = "%s" % error
-            datos = {'message': 'Ocurrió un error al generar el token para el usuario. ', "error": sTexto}
-        else:
-            pass
+            datos = {'message': 'Error', "Resultado": sTexto}
+            # datos = {'message': 'Ocurrió un error al generar el token para el usuario. ', "error": sTexto}
+        # else:
+        #     pass
+
+        print(datos)
+
+        return JsonResponse(datos)
 
     
 

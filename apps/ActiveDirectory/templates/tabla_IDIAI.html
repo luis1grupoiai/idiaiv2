@@ -1,6 +1,6 @@
-<div class="table-responsive ">
+<div class="table-responsive container-fluid">
 
-    <table id="{{ table_id }}" class="table table-hover table-striped"> 
+    <table id="{{ table_id }}" class="table table-hover table-striped" width: "100%"> 
         <thead>
                         <tr>
                             <th class="text-center" >Acción</th>
@@ -21,7 +21,7 @@
                     
                     {% else %}
                     <button type="button" class="btn icon btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#crearUserModal" 
-                    data-nombre="{{ user.username }}"
+                    data-nombre="{{ user.NombreCompleto }}"
                     data-nombrePila ="{{ user.Nombre_ps}}"
                     data-apellidos ="{{ user.Apaterno_ps}} {{ user.Amaterno_ps}} "
                     data-puesto ="{{ user.Nombre_ct }}"

@@ -1412,7 +1412,8 @@ class CVerificaTokenGlobal(APIView):
 
     tkgb = ""
 
-    def validarTokenGlobal(user, token):
+    def validarTokenGlobal(self,user, token):
+        print("--- Accede a metodo validarTokenGlobal ---")
         datos = {}
         bValido = True
         sTexto = ""
@@ -1531,11 +1532,12 @@ class CVerificaTokenGlobal(APIView):
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={               
-                'user': openapi.Schema(type=openapi.TYPE_STRING, description='Nombre de usuario.')
+                'user': openapi.Schema(type=openapi.TYPE_STRING, description='Nombre de usuario.'),
+                'tkgbl': openapi.Schema(type=openapi.TYPE_STRING, description='Token asignado por la aplicación.'),            
             },
-            required=['user']
+            required=['user', 'tkgbl']
         ),
-        responses={200: 'Token Validado'},
+        responses={200: 'Token Validado', 500: 'Json invalido o problemas internos en el server.', 404:'Datos invalidos'},
     )
     
     def post(self,request):
@@ -1549,9 +1551,10 @@ class CVerificaTokenGlobal(APIView):
         """
         try:
             jd = json.loads(request.body)
+            nStatus = 500
             tkg = ""
             bValido = True
-            dCamposJson = ['user']
+            dCamposJson = ['user','tkgbl']
             user = ""
             sUserName = ""
             nSistemaOrigen = 0
@@ -1584,92 +1587,111 @@ class CVerificaTokenGlobal(APIView):
 
             if bValido:
                 print("CVerificaTokenGlobal - Se recibe user: "+jd['user'])
+                print("CVerificaTokenGlobal - Se recibe Token: ")
                 sUserName = jd['user']
+                tkg = jd['tkgbl']
 
-                dUsTk = list(TokenGlobal.objects.filter(username=sUserName, caduco=0).values())
+                self.validarTokenGlobal(sUserName,tkg)
+                
+                #Inicio - validaciones de TKGBL
+                # dUsTk = list(TokenGlobal.objects.filter(username=sUserName, caduco=0).values())
 
-                if len(dUsTk)==1:
+                
+                # if len(dUsTk)==1:
                                     
-                    tkg = dUsTk[0]['token']
-                    nSistemaOrigen = int(dUsTk[0]['sistemaOrigen'])
-                    user = User.objects.get(username=sUserName) 
+                #     tkg = dUsTk[0]['token']
+                #     nSistemaOrigen = int(dUsTk[0]['sistemaOrigen'])
+                #     user = User.objects.get(username=sUserName) 
 
-                    # print("Se obtiene el token.")
+                #     # print("Se obtiene el token.")
 
-                    tkDpt = crfr.decrypt(tkg.encode()).decode()
+                #     tkDpt = crfr.decrypt(tkg.encode()).decode()
 
-                    # print(tkDpt)
+                #     # print(tkDpt)
                     
-                    ltam = tkDpt.split(os.environ.get('USGL'))
+                #     ltam = tkDpt.split(os.environ.get('USGL'))
 
-                    ntam = int(ltam[1])
+                #     ntam = int(ltam[1])
 
-                    nTamTot = len(ltam[0]+os.environ.get('USGL'))
+                #     nTamTot = len(ltam[0]+os.environ.get('USGL'))
 
-                    if ntam == nTamTot:
-                        is_len = True
+                #     if ntam == nTamTot:
+                #         is_len = True
 
-                        parts = tkDpt.split(',')
+                #         parts = tkDpt.split(',')
 
-                        if len(parts)>0:
-                            # print(parts[0])
+                #         if len(parts)>0:
+                #             # print(parts[0])
                             
-                            is_token_valid = default_token_generator.check_token(user,parts[0])
-                            # if is_token_valid:
-                            #     print("el token si es valido...")
+                #             is_token_valid = default_token_generator.check_token(user,parts[0])
+                #             # if is_token_valid:
+                #             #     print("el token si es valido...")
 
-                            timestamp = int(parts[1])
-                            expiration_time = timestamp
+                #             timestamp = int(parts[1])
+                #             expiration_time = timestamp
 
-                            # print(expiration_time)
-                            # print( timezone.now().timestamp())
+                #             # print(expiration_time)
+                #             # print( timezone.now().timestamp())
 
-                            if expiration_time > timezone.now().timestamp():                    
-                                is_token_expired = False #Si es false entonces el token aun no expira.
-                            # else:
-                            #     print("Expirto token...")
+                #             if expiration_time > timezone.now().timestamp():                    
+                #                 is_token_expired = False #Si es false entonces el token aun no expira.
+                #             # else:
+                #             #     print("Expirto token...")
 
-                            if nSistemaOrigen == int(parts[2]):
-                                is_system_origin = True #Si es true entonces el sistema origien es el correcto.
+                #             if nSistemaOrigen == int(parts[2]):
+                #                 is_system_origin = True #Si es true entonces el sistema origien es el correcto.
 
-                            sSl = parts[3]
+                #             sSl = parts[3]
 
-                            if sSl[:3] == os.environ.get('SIGNAL'):
-                                is_signal = True
+                #             if sSl[:3] == os.environ.get('SIGNAL'):
+                #                 is_signal = True
 
 
-                        if is_len and is_token_valid and not is_token_expired and is_system_origin and is_signal:
-                            sTexto = "El token Global es valido."
+                #         if is_len and is_token_valid and not is_token_expired and is_system_origin and is_signal:
+                #             sTexto = "El token Global es valido."
 
-                            datos = {'message': 'Success', 'Resultado': sTexto}
-                        else:
-                            sTexto = "El token Global no es valido."
+                #             datos = {'message': 'Success', 'Resultado': sTexto}
+                #         else:
+                #             sTexto = "El token Global no es valido."
 
-                            #Se actualiza registro de token. campo token vacio y campo caduco igual a 1
-                            regAct = TokenGlobal.objects.get(username=sUserName, caduco=0)
+                #             #Se actualiza registro de token. campo token vacio y campo caduco igual a 1
+                #             regAct = TokenGlobal.objects.get(username=sUserName, caduco=0)
 
-                            regAct.caduco = 1
-                            regAct.token = ""
-                            regAct.save()
+                #             regAct.caduco = 1
+                #             regAct.token = ""
+                #             regAct.save()
                             
-                            datos = {'message': 'Error', 'Resultado': sTexto}
+                #             datos = {'message': 'Error', 'Resultado': sTexto}
 
 
-                else:
-                     sTexto = "No existe Token Global para este usuario."
-                     datos = {'message': 'Error', 'Resultado': sTexto}
+                # else:
+                #      sTexto = "No existe Token Global para este usuario."
+                #      datos = {'message': 'Error', 'Resultado': sTexto}
+
+                #Fin - validaciones de TKGBL
+
+
             else:
+                nStatus = 404
                 datos = {'message': 'JSON invalido.', 'Resultado': sTexto}
 
 
         except ValueError as error:
+            nStatus = 404
             sTexto = "%s" % error
             datos = {'message': 'JSON invalido. ', "Resultado": sTexto}
+        except KeyError as error:
+            nStatus = 500
+            sTexto = "%s" % error
+            datos = {'message': 'JSON invalido. ', "error": sTexto}
 
         
         print(datos)
+        # return JsonResponse(datos)
+    
+        return JsonResponse(datos,status=nStatus)  
 
-        return JsonResponse(datos)
+     
     
     
     

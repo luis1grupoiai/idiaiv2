@@ -810,6 +810,8 @@ class CAutenticacion(APIView):
             sTextoTkg = ""
             dUsTk = ""
             tkgbl = ""
+            infoTkg = {}
+            bExisteTkg = False   
 
             #Valida que el numero de claves del JSON enviado a la API
             #coincida con el numero de claves declaras en el diccioario dCamposJson
@@ -1025,33 +1027,38 @@ class CAutenticacion(APIView):
 
                                                 #Generar el tokenGlobal :) si la key es de token global o si el sistema es intranet se crea el Token global.
                                                 if (keySis == os.environ.get('KEY_GTKG')) | (sistema == int(os.environ.get('ID_INTRANET'))):
-                                                    print("Se solicita generar TKG.")
+                                                    print("Se solicita generar TKG.")      
 
-                                                    #Se consulta que exista token global asignado al usuario
-                                                    dUsTk = list(TokenGlobal.objects.filter(username=jd['user'], caduco=0).values())
+                                                                                              
+
+                                                    #Se consulta si existe token global asignado al usuario y que ademas este sea valido.
+                                                    dUsTk = list(TokenGlobal.objects.filter(username=sUserName, caduco=0).values())
 
                                                     #ARSI 04062024 Se agrega validación para verificar e inactivar el TKGLOBAL cuando el usuario inicie sesión en intranet.
                                                     #o pase el key para generar token Global.
                                                     if len(dUsTk)>0:
                                                         tkgbl = dUsTk[0]['token']
-                                                                
-                                                    if len(dUsTk) == 0:
-                                                        # insertar TKG en BD 05/03/2024
-                                                        # sTimeExp = 0
-                                                        if jd['timeExp'] == 0:
-                                                            sTimeExp = 3
-                                                        else:
-                                                            sTimeExp = jd['timeExp']
+                                                        infoTkg = CVerificaTokenGlobal.validarTokenGlobal(sUserName,tkgbl);
+                                                    
+                                                        if len(infoTkg)>0:
+                                                            if infoTkg['message']=="Error":                                                                                                                                                    
+                                                                # if len(dUsTk) == 0:
+                                                                # insertar TKG en BD 05/03/2024
+                                                                # sTimeExp = 0
+                                                                if jd['timeExp'] == 0:
+                                                                    sTimeExp = 3
+                                                                else:
+                                                                    sTimeExp = jd['timeExp']
 
-                                                        # gtkg = self.generarTKGlobal(jd['user'],sTimeExp,sistema)
-                                                        # insertTkG = TokenGlobal(username=jd['user'], token=gtkg,sistemaOrigen=sistema, caduco=0)
+                                                                # gtkg = self.generarTKGlobal(jd['user'],sTimeExp,sistema)
+                                                                # insertTkG = TokenGlobal(username=jd['user'], token=gtkg,sistemaOrigen=sistema, caduco=0)
 
-                                                        #ARSI 04062024 Que el sistema origen para generar TK global sea siempre el de intranet
-                                                        gtkg = self.generarTKGlobal(jd['user'],sTimeExp,int(os.environ.get('ID_INTRANET')))
-                                                        insertTkG = TokenGlobal(username=jd['user'], token=gtkg,sistemaOrigen=int(os.environ.get('ID_INTRANET')), caduco=0)
-                                                        insertTkG.save()
-                                                    else:
-                                                        gtkg = dUsTk[0]['token']
+                                                                #ARSI 04062024 Que el sistema origen para generar TK global sea siempre el de intranet
+                                                                gtkg = self.generarTKGlobal(jd['user'],sTimeExp,int(os.environ.get('ID_INTRANET')))
+                                                                insertTkG = TokenGlobal(username=sUserName, token=gtkg,sistemaOrigen=int(os.environ.get('ID_INTRANET')), caduco=0)
+                                                                insertTkG.save()
+                                                            else:
+                                                                gtkg = dUsTk[0]['token']
                                                     
                                                                                             
                                                     
@@ -1411,9 +1418,13 @@ class CVerificaToken(APIView):
 class CVerificaTokenGlobal(APIView):
 
     tkgb = ""
-
-    def validarTokenGlobal(self,user, token):
+    @staticmethod
+    # def validarTokenGlobal(self,p_suser,p_token):
+    def validarTokenGlobal(p_suser,p_token):
         print("--- Accede a metodo validarTokenGlobal ---")
+        print("usuario: "+ p_suser)
+        print("token: "+ p_token)
+
         datos = {}
         bValido = True
         sTexto = ""
@@ -1432,28 +1443,35 @@ class CVerificaTokenGlobal(APIView):
         is_system_origin = False
         is_len = False
         is_signal = False
+
+        sUserName = p_suser
+        tkg = p_token  
         
         try:
-            if len(user)==0:
+            if sUserName=="":
                 bValido = False
                 sTexto += "El valor de usuario esta vacio."
 
-            if len(token)==0:
+            if tkg=="":
                 bValido = False
                 sTexto += "El valor de token esta vacio."
 
             if bValido:
-                sUserName = user
-                tkg = token                
+                # sUserName = user
+                # tkg = token           
+                print("Los valores no vienen vacios...")     
 
                 dUsTk = list(TokenGlobal.objects.filter(username=sUserName, caduco=0).values())
 
                 if len(dUsTk)==1:
+                    print("Se obtuvo token existente en la Base de datos.")     
                     #1. Obtenemos el id del sistema autorizado con el que se expiden los TKGLB
                     nSistemaOrigen = int(dUsTk[0]['sistemaOrigen'])
 
                     #2. Decodifica token Global.
                     tkDpt = crfr.decrypt(tkg.encode()).decode()
+
+                    print(">> Se decodifica TKGBL : "+tkDpt) 
 
                     #3. Una vez decodificado el token, se obtiene el tamaño del token Global para compararlo con el tamaño registrado del token recibido.
                     ltam = tkDpt.split(os.environ.get('USGL'))
@@ -1463,32 +1481,40 @@ class CVerificaTokenGlobal(APIView):
                     #4. Se valida el tamaño del tokenGlobal.
                     if ntam == nTamTot:
                         is_len = True
+                        print(">>tamaño de token OK : ")
 
                         #5. Se divide el token por su correspondiente separador
                         parts = tkDpt.split(',')
 
                         if len(parts)>0:
                             #6. Se valida el token generado por django.
+                            user = User.objects.get(username=sUserName)
                             is_token_valid = default_token_generator.check_token(user,parts[0])
+
+                            if is_token_valid:
+                                print(">>valido para django :) ")
 
                             #7. Se verifica el tiempo de expiración del token Global.
                             timestamp = int(parts[1])
                             expiration_time = timestamp
 
-                            if expiration_time > timezone.now().timestamp():                    
+                            if expiration_time > timezone.now().timestamp():    
+                                print(">>TOken aun no expira.. ")                
                                 is_token_expired = False #Si es false entonces el token aun no expira.
 
 
                             #8. Se verifica si el sistema origen ingresado al token sea el mismo con el que esta insertado en la BD,
                             if  int(parts[2]) == nSistemaOrigen and int(parts[2]) == int(os.environ.get('ID_INTRANET')) :
-                                is_system_origin = True #Si es true entonces el sistema origien es el correcto.
+                                #TODO ahora mostrar si valida correctamente el id origen...
+                                print(">>el id del sistema es valido :)")     
+                                is_system_origin = True #Si es true entonces el sistema origen es el correcto.
 
                             #9. Se verifica si la marca agregada al token sea correcta.
                             sSl = parts[3]
                             
                             if sSl[:3] == os.environ.get('SIGNAL'):
                                 is_signal = True
-
+                                print(">>La señal existe en el token.")  
 
                             if is_len and is_token_valid and not is_token_expired and is_system_origin and is_signal:
                                 sTexto = "El token Global es valido."
@@ -1520,7 +1546,7 @@ class CVerificaTokenGlobal(APIView):
 
         print(datos)
 
-        return JsonResponse(datos)
+        return datos
 
     
 
@@ -1537,7 +1563,7 @@ class CVerificaTokenGlobal(APIView):
             },
             required=['user', 'tkgbl']
         ),
-        responses={200: 'Token Validado', 500: 'Json invalido o problemas internos en el server.', 404:'Datos invalidos'},
+        responses={200: 'Token Validado', 500: 'Json invalido o problemas internos en el server.', 404:'Datos invalidos', 401:'Token invalido, por lo tanto dicho token ha perdido autorización para acceder a diferentes sistemas o no existe.'},
     )
     
     def post(self,request):
@@ -1562,6 +1588,7 @@ class CVerificaTokenGlobal(APIView):
             nTamTot = 0
             ltam = []
             sSl = ""
+            datos = {}
 
             is_token_valid = False
             is_token_expired = True
@@ -1591,7 +1618,21 @@ class CVerificaTokenGlobal(APIView):
                 sUserName = jd['user']
                 tkg = jd['tkgbl']
 
-                self.validarTokenGlobal(sUserName,tkg)
+                datos = self.validarTokenGlobal(sUserName,tkg)
+
+                if len(datos)>0:
+                    # print(type(datos))
+
+                    # print(datos['message'])
+
+                    if datos['message'] == 'Success':
+                        nStatus = 200
+                    else:
+                        nStatus = 401
+                    
+
+
+
                 
                 #Inicio - validaciones de TKGBL
                 # dUsTk = list(TokenGlobal.objects.filter(username=sUserName, caduco=0).values())
@@ -1687,6 +1728,7 @@ class CVerificaTokenGlobal(APIView):
 
         
         print(datos)
+        print(nStatus)
         # return JsonResponse(datos)
     
         return JsonResponse(datos,status=nStatus)  

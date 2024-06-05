@@ -11,6 +11,7 @@ Agregar Usuarios  Active Directory
 
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.7.1/css/buttons.dataTables.min.css">
 <!-- Espacio para CSS adicional de plantillas hijas -->
+
 {% endblock %}
 
 {% block Encabezado %}
@@ -340,7 +341,8 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
                             {% endblock %}
 
     {% block script %} 
-    
+
+
     <script src="/static/assets/extensions/jquery/jquery.min.js"></script>
     <script src="/static/assets/extensions/datatables.net/js/jquery.dataTables.min.js"></script>
     <script src="/static/assets/extensions/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
@@ -350,7 +352,7 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
     <script src="https://cdn.datatables.net/buttons/1.7.1/js/dataTables.buttons.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.html5.min.js"></script>
-
+   
     <script>
         function addDomainIfEmpty(inputElement) {
             var nombreUsuarioInput = document.getElementById('nombre_inicio_sesion');
@@ -490,7 +492,8 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
                     var departamento = button.getAttribute('data-deparamento');
                     var distinguishedName = button.getAttribute('data-distinguishedName');
                     var nombreProyecto =button.getAttribute('data-proyecto');
-                    
+                    console.log("nombre : " + nombre);
+                    console.log("nombre Sesion : " + nombreSesion);
                     // Rellena los campos del formulario en el modal
                     document.getElementById('nombre_usuario').value = nombre ;
                     document.getElementById('nombre_pila').value = nombrePila;
@@ -515,12 +518,15 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
                     var modal = new bootstrap.Modal(document.getElementById('crearUserModal'));
                     modal.show();
                     
-                    verificarUsuario(nombre);
+                    verificarUsuario(nombreSesion);
             }
 
             function validarnuevoUsuario(){
                 var nombre2 = document.getElementById('nombre_inicio_sesion').value;
-                document.getElementById('nombre_usuario').value =nombre2
+                var nombre3 = document.getElementById('nombre_completo').value;
+                document.getElementById('nombre_usuario').value =nombre3
+                console.log("validar nombre : " + nombre3);
+                console.log("validar Sesion : " + nombre2 );
                 verificarUsuario(nombre2);
             }
 
@@ -765,6 +771,7 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
         
             function actualizarNombreCompleto() {
                 nombreCompletoInput.value = nombrePilaInput.value + ' ' + apellidoInput.value;
+                document.getElementById('nombre_usuario').value =nombreCompletoInput.value;
             }
         
             nombrePilaInput.addEventListener('input', actualizarNombreCompleto);

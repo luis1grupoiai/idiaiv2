@@ -1,11 +1,15 @@
+<div class="container-fluid"> <!-- o 'container' para un ancho máximo fijo -->
 <div class="table-responsive ">
 
     <table id="{{ table_id }}" class="table table-hover table-striped"> 
         <thead>
                         <tr>
                             <th class="text-center">Acción</th>
-                            <th class="text-center">Nombre de Usuario </th>
+                            <th class="text-center">Inicio sesion</th>
+                            <th class="text-center">Nombre(CN)</th>
+                            <!--
                             <th class="text-center">Nombre Completo </th>
+                             -->
                             <th class="text-center">Correo Electrónico</th>
                             <th class="text-center">Direccion</th>
                             <th class="text-center">Baja </th>
@@ -19,7 +23,7 @@
                     data-nombrePila ="{{ user.nombre_de_pila}}"
                     data-apellidos ="{{ user.apellidos}}"
                     data-puesto ="{{ user.puesto}}"
-                    data-nombreSesion ="{{ user.nombre_inicio_sesion}}"
+                    data-nombreSesion ="{{ user.nombre_completo}}"
                     data-nombreUsuarioPrincipal ="{{ user.usuario_principal }}"
                     data-proyecto = "{{user.nproyecto}}"
                     onclick="showUserDetails(this);">
@@ -41,8 +45,12 @@
                     </button>
                 
                 </td>
+                <td class="text-center">{{ user.nombre_inicio_sesion }}</td>
                 <td class="text-center">{{ user.nombre }}</td>
-                <td class="text-center">{{ user.nombre_completo}}<!--<br>{{ user.DistinguishedName}} --></td>
+                
+                <!--
+                <td class="text-center">{{ user.nombre_completo}}<br>{{ user.DistinguishedName}} </td>-->
+
                 <td class="text-center">{{ user.correo }}</td>
                 <td class="text-center">{{ user.departamento}}</td>
                 <td class = "text-center">
@@ -69,3 +77,4 @@
     
     
  </div>
+</div>

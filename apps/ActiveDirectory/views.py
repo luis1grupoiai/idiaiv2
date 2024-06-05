@@ -36,22 +36,30 @@ ip_sin_base_dato = IPSinBaseDatos().cambiar_ip('192.192.194.10') #en caso que no
 
 #CONFIGURACION PARA EL IP DEL SERVIDOR AD -------------------------------------------------------
 def asignar_ip():
-    
-     # Determina el servidor basado en el entorno
-    servidor = 'ADVirtual' if settings.DEBUG else 'ADProduccion'
-    # imprimir(servidor )
-    # Realiza la consulta una sola vez usando la variable `servidor`
-    ip = TActiveDirectoryIp.objects.filter(server=servidor).first()
-    #imprimir(ip.ip)
-    return ip #if ip else ip_sin_base_dato  
+    try: 
+         # Determina el servidor basado en el entorno
+        servidor = 'ADVirtual' if settings.DEBUG else 'ADProduccion'
+         # imprimir(servidor )
+        # Realiza la consulta una sola vez usando la variable `servidor`
+        ip = TActiveDirectoryIp.objects.filter(server=servidor).first()
+        if ip is None:
+            imprimir(f"No se encontró una IP para el servidor en la base de datos :  {servidor}")
+            return None
+        #imprimir(ip.ip)
+        return ip #if ip else ip_sin_base_dato
+    except Exception as e: 
+        imprimir((f"Error al obtener la IP del servidor AD: {str(e)}"))
+         
+        return None  
 
 def asignar_dominio():
     if settings.DEBUG:
-        dominio='OU=UsersIAI,DC=iai,DC=com,DC=mx' #dominio de AD para el desarrollo 
-        dominioRaiz='DC=iai,DC=com,DC=mx'
+        dominio=os.environ.get('AD_DOMINIO_P') #dominio de AD para el desarrollo 
+        dominioRaiz=os.environ.get('AD_DOMINIO_RAIZ_P')
     else:
-        dominio='OU=UsersIAI,DC=iai,DC=com,DC=mx'# dominio de AD  para produccion 
-        dominioRaiz='DC=iai,DC=com,DC=mx'
+        dominio=os.environ.get('AD_DOMINIO_P')# dominio de AD  para produccion 
+        dominioRaiz=os.environ.get('AD_DOMINIO_RAIZ_P')
+        #dominio=os.environ.get('AD_DOMINIO_P')# dominio de AD  para produccion 
 
     dominios={
         'dominio':dominio,
@@ -60,8 +68,18 @@ def asignar_dominio():
     return dominios
 
 def obtener_servidor_ad():
-    ip_dinamica = asignar_ip().ip
-    servidorAD = f'{settings.AD_SERVER}{ip_dinamica}'
+    ip_info = asignar_ip()
+    if ip_info is None:
+        
+        servidorAD=settings.AD_SERVER
+        imprimir(f'No se encontró una IP para el servidor en la base de datos, se uso la siguiente :  {servidorAD}')
+        
+        return settings.AD_SERVER
+    
+    ip_dinamica = ip_info.ip
+    servidorAD = f'ldaps://{ip_dinamica}'
+    #settings.AD_SERVER
+    
     return servidorAD
 
 #FIN DE CONFIGURACION PARA EL IP DEL SERVIDOR AD -------------------------------------------------------
@@ -96,8 +114,11 @@ def actualizar_empleados():
     users = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='')
     usuarios_modificados = []
     no_cambios = True
-
+    print("Iniciando la Actualización de Información . . .")
     for usuario in users:
+        print(f"{usuario.id}")
+       # imprimir(f" Empleado :  {usuario.NombreCompleto} : {usuario.username}")
+        
         try:
             with connect_to_ad() as conn:
                 search_base = domino
@@ -109,17 +130,17 @@ def actualizar_empleados():
                     physicalDeliveryOfficeName_actual = conn.entries[0].physicalDeliveryOfficeName.value
                     department_actual = conn.entries[0].department.value
                     puesto_actual = conn.entries[0].title.value
-                    imprimir(dn)
+                    #imprimir(dn)
                     if (physicalDeliveryOfficeName_actual.strip().lower() != usuario.Proyecto.strip().lower() or
                             department_actual.strip().lower() != usuario.nombre_direccion.strip().lower() or puesto_actual.strip().lower() != usuario.Nombre_ct.strip().lower()):
-                        imprimir("")
-                        imprimir("*****************************************************************************************")
-                        imprimir(dn)
-                        imprimir(physicalDeliveryOfficeName_actual)
-                        imprimir( department_actual)
-                        imprimir( puesto_actual)
-                        imprimir("*****************************************************************************************")
-                        imprimir("")
+                        print("")
+                        print("*****************************************************************************************")
+                        print(dn)
+                        print(f'{physicalDeliveryOfficeName_actual} --> {usuario.Proyecto}')
+                        print(f' {puesto_actual}-->{usuario.Nombre_ct}')
+                        print(f'{department_actual}-->{usuario.nombre_direccion}')
+                        print("*****************************************************************************************")
+                        print("")
                         
                         
                         
@@ -138,21 +159,27 @@ def actualizar_empleados():
                                 "DJANGO",
                                 'Modulo AD',
                                 'Actualizo',
-                                f"Se Actualizó  proyecto({physicalDeliveryOfficeName_actual} -> {usuario.Proyecto}) y direccion({department_actual}->{usuario.nombre_direccion}) del '{usuario.username}' en Active Directory ",
+                                f"Actualización de Información  proyecto({physicalDeliveryOfficeName_actual} -> {usuario.Proyecto}) y direccion({department_actual}->{usuario.nombre_direccion}) del '{usuario.username}' en Active Directory ",
                                 '0.0.0.0',
                                 "LOCALHOST",
                                 'N/A'
                                 )
+                           # imprimir(f"Actualización de Información :  proyecto({physicalDeliveryOfficeName_actual} -> {usuario.Proyecto}) , Puesto ({puesto_actual}->{usuario.Nombre_ct}) direccion({department_actual}->{usuario.nombre_direccion}) del '{usuario.username}' en Active Directory ")
+                            mensajeCont=f"Actualización de Información de {usuario.NombreCompleto} ({usuario.username}) :<br> Proyecto ({physicalDeliveryOfficeName_actual} --> {usuario.Proyecto}) <br> Puesto ({puesto_actual} --> {usuario.Nombre_ct}) <br> Direccion({department_actual} --> {usuario.nombre_direccion})   "
+                            notificacionCorreo(None,f'IDIAI - Active Directory : Actualizacion del usuario {usuario.username}','Actualización de Información en Active Directory',mensajeCont) 
                             if AccountControl_actual != 66050:
                                 imprimir(mover_usuario_ou_sys(usuario.username, unidadOrganizativa[asignar_Departamento(usuario.nombre_direccion)]))
                             
                             no_cambios = False
+                        else: 
+                            print(conn.result)
+                            
         except Exception as e:
-            imprimir(f"Error al actualizar en Active Directory: {str(e)}")
+            print(f"Error al actualizar en Active Directory: {str(e)}")
 
     if no_cambios:
-        imprimir("No se realizó ningún cambio necesario.")
-        
+        print("No se realizó ningún cambio necesario.")
+    print("Fin la Actualización de Información . . .")
     return usuarios_modificados
 
 
@@ -163,14 +190,15 @@ def mover_usuario_ou_sys(nombre_usuario, nueva_ou):
         with connect_to_ad() as conn:
             # Buscar el Distinguished Name (DN) actual del usuario
             search_filter = f'(sAMAccountName={nombre_usuario})'
-            conn.search(search_base=domino, search_filter=search_filter, attributes=['distinguishedName'])
+            conn.search(search_base=domino, search_filter=search_filter, attributes=['cn','distinguishedName'])
 
             if conn.entries:
                 dn_actual = conn.entries[0].distinguishedName.value
+                cn_actual = conn.entries[0].cn.value
                 #imprimir(f"DN actual: {dn_actual}")
 
                 # Construir el nuevo DN
-                nuevo_rdn = f"CN={nombre_usuario}"
+                nuevo_rdn = f"CN={cn_actual}"
                 if (nueva_ou =='0'):
                     nueva_ou_completa = f"{domino}"
                 else:    
@@ -184,7 +212,7 @@ def mover_usuario_ou_sys(nombre_usuario, nueva_ou):
                 if conn.result['result'] == 0:
                     mensaje = 'Usuario movido correctamente.'
                     insertar_registro_accion(
-                    "DJANGO",
+                    "Servidor",
                     'Modulo AD',
                     'Mover',
                     f"El usuario  '{nombre_usuario}' ha sido trasladado  a la nueva ubicación : {extraer_unidad_organizativa(nueva_ou_completa)[0]}",
@@ -194,6 +222,7 @@ def mover_usuario_ou_sys(nombre_usuario, nueva_ou):
                     )
                 else:
                     mensaje = f"Error al mover usuario {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])}"
+                    imprimir(conn.result)
             else:
                 mensaje = "Usuario no encontrado en AD."
     except Exception as e:
@@ -221,6 +250,7 @@ def actualizarProyectoDireccion(request):
     
     noCambios=True
     for usuario in users:
+            #imprimir(f" Empleado :  {usuario.NombreCompleto} : {usuario.username}")
             try:
                 with connect_to_ad() as conn:
                     search_base = domino
@@ -239,9 +269,9 @@ def actualizarProyectoDireccion(request):
                             imprimir("")
                             imprimir("*****************************************************************************************")
                             imprimir(dn)
-                            imprimir(physicalDeliveryOfficeName_actual)
-                            imprimir( department_actual)
-                            imprimir( puesto_actual)
+                            imprimir(f'{physicalDeliveryOfficeName_actual} --> {usuario.Proyecto}')
+                            imprimir(f'{puesto_actual}-->{usuario.Nombre_ct}')
+                            imprimir(f'{department_actual}-->{usuario.nombre_direccion}')
                             imprimir("*****************************************************************************************")
                             imprimir("")
                             changes = {
@@ -254,12 +284,15 @@ def actualizarProyectoDireccion(request):
                                 insertar_registro_accion(
                                     empleado.nameUser(request), 'Modulo AD',
                                     'Actualizar',
-                                    f"Se Actualizó  proyecto({physicalDeliveryOfficeName_actual} -> {usuario.Proyecto}) y direccion({department_actual}->{usuario.nombre_direccion}) del '{usuario.username}' en Active Directory ",
+                                    f"Actualización de Información  proyecto({physicalDeliveryOfficeName_actual} -> {usuario.Proyecto}) y direccion({department_actual}->{usuario.nombre_direccion}) del '{usuario.username}' en Active Directory ",
                                     get_client_ip(request),
                                     request.META.get('HTTP_USER_AGENT'),
                                     'N/A'
                                     )
-                                usuariosmodificados.append(usuario)  # Añade el nombre de usuario a la lista                               
+                                mensajeCont=f"Actualización de Información de {usuario.NombreCompleto} ({usuario.username}) :<br> Proyecto ({physicalDeliveryOfficeName_actual} --> {usuario.Proyecto}) <br> Puesto ({puesto_actual} --> {usuario.Nombre_ct}) <br> Direccion({department_actual} --> {usuario.nombre_direccion})   "                
+                                usuariosmodificados.append(usuario)  # Añade el nombre de usuario a la lista
+                                notificacionCorreo(request,f'IDIAI - Active Directory : Actualizacion del usuario {usuario.username}','Actualización de Información en Active Directory',mensajeCont) 
+                                                              
                                 if AccountControl_actual !=66050: 
                                     imprimir(mover_usuario_ou(usuario.username, unidadOrganizativa[asignar_Departamento(usuario.nombre_direccion)],request))  # no comentar esta linea XD
                                     #imprimir(f" **************numero : {AccountControl_actual}") 
@@ -268,6 +301,7 @@ def actualizarProyectoDireccion(request):
                                 noCambios=False
                             else:
                                 messages.error(request,  f"Error al actualizar {usuario.username} en Active Directory.  {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])}")
+                                imprimir(conn.result)
                                 
                         else:
                            if noCambios:
@@ -322,9 +356,9 @@ def personalNoContratada(request):
     #lower(): Convierte todos los caracteres de la cadena a minúsculas.
     #title(): Convierte la primera letra de cada palabra en una cadena a mayúscula.
     #capitalize(): Convierte la primera letra de la cadena a mayúscula y el resto a minúsculas
-    # Aquí la lógica para mostrar la página de inicio
+    # Aquí la lógica para mostrar la página de personal No Contratada
     if request.method == 'POST':
-        nombre_usuario = request.POST['nombre_usuario'].lower().strip()
+        nombre_usuario = request.POST['nombre_usuario'].strip().title()
         nombre_pila = request.POST['nombre_pila'].strip().title()
         apellido = request.POST['apellido'].strip().title()
         nombre_completo = request.POST['nombre_completo'].strip().title()
@@ -345,7 +379,7 @@ def personalNoContratada(request):
         
         #if usuarioexisteIDIAI(nombre_usuario): 
       #  if existeUsuario(nombre_usuario) : #VERIFICA SI EXISTE USUARIO EN ACTIVE DIRECTORY <---AQUÍ ESTUVO SON GOKU XD
-        if existeUsuario(nombre_usuario) :
+        if existeUsuario(nombre_inicio_sesion) :
             LugarNoCreado+="Active Directory "
             messages.error(request,f"Usuario existente en {LugarNoCreado}: {nombre_usuario}")
             imprimir(f"Usuario existente en {LugarNoCreado}: {nombre_usuario}")
@@ -395,12 +429,13 @@ def personalNoContratada(request):
                             request.META.get('HTTP_USER_AGENT'),
                             'N/A'
                             )
-                        notificacionCorreo(request,f'Active Directory Creación del usuario {nombre_usuario}','Creación de usuario',mensajeCont)    
+                        notificacionCorreo(request,f'IDIAI - Active Directory : Creación del usuario {nombre_usuario}','Creación de usuario',mensajeCont)    
                             #return redirect('usuariosID')
                             
                             
                     else:
                         messages.error(request, f"Error {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])}")
+                        imprimir(conn.result)
                         return redirect('personalNoContratada') 
                         
                             #return redirect('usuariosID')
@@ -412,7 +447,7 @@ def personalNoContratada(request):
         
         
         
-        user, created = User.objects.get_or_create(username= nombre_usuario, defaults={
+        user, created = User.objects.get_or_create(username= nombre_inicio_sesion, defaults={
                 'email':email,
                 'first_name': nombre_pila,
                 'last_name': apellido,
@@ -428,7 +463,7 @@ def personalNoContratada(request):
             LugarCreado+=" IDIAI V2 "
             n = Fernet(ENCRYPTION_KEY_NOMBRE)
             f = Fernet(ENCRYPTION_KEY_DESCRIPCION)
-            nombre_cifrado = n.encrypt(nombre_usuario.encode().strip()).decode()
+            nombre_cifrado = n.encrypt(nombre_inicio_sesion.encode().strip()).decode()
             descripcion_cifrado = f.encrypt(password.encode()).decode()
             nombreCompleto = nombre_completo
             messages.success(request,f"Usuario creado en  {LugarCreado} :{nombre_usuario}") # 
@@ -606,7 +641,7 @@ def bitacora(request): #LA BITACORA QUE LLEVA EL SISTEMAS DE AD PARA LLEVAR EL H
     encabezados ={
         'title' :'Bitácora AD',
         'Encabezado' :'Bienvenido a la bitácora de  Active Directory:',
-        'SubEncabezado' :'Su plataforma para visualizar las acciones.',
+        'SubEncabezado' :'Su plataforma para visualizar el historial de acciones.',
         'EncabezadoNav' :'Bitácora AD',
         'EncabezadoCard' : 'Registros de Acciones',
         
@@ -632,10 +667,12 @@ def bitacora(request): #LA BITACORA QUE LLEVA EL SISTEMAS DE AD PARA LLEVAR EL H
 @user_passes_test(es_superusuario) # Solo permitir a superusuarios 
 def consultarUsuariosIDIAI(request):
     mensaje = None
-    opc = 0
+    opc = 0 #codigo basura jajajaaj , no me acuerdo porque lo puse jejeje XD
     
     imprimir(f"Unidades Organizativas de AD :  {obtenerUnidadesOrganizativas()}")
     
+    imprimir(f"----------------------------------------------------------------------------------------------------------------")
+    imprimirUnidadesOrganizativas()
     # Obtiene los usuarios de la base de datos
     usuarios = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='').exclude(is_active=False)
     UsuaruisDown = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='').exclude(is_active=True)
@@ -663,7 +700,7 @@ def consultarUsuariosIDIAI(request):
 
     if request.method == 'POST':
         dominio_Principal ='@'+'.'.join(part.replace('DC=', '') for part in domino.split(',') if part.startswith('DC='))
-        nombre_usuario = request.POST['nombre_usuario'].lower().strip()
+        nombre_usuario = request.POST['nombre_usuario'].strip().title()
         nombre_pila = request.POST['nombre_pila'].strip().title()
         apellido = request.POST['apellido'].strip().title()
         nombre_completo = request.POST['nombre_completo'].strip().title()
@@ -722,11 +759,12 @@ def consultarUsuariosIDIAI(request):
                     
                     #return redirect('usuariosID')
                     
-                    notificacionCorreo(request,f'Active Directory Creación del usuario {nombre_usuario}','Creación de usuario',mensajeCont)
+                    notificacionCorreo(request,f'IDIAI - Active Directory : Creación del usuario {nombre_usuario}','Creación de usuario',mensajeCont)
                 else:
-                    messages.error(request, f"Error {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])}")
-                    mensaje = {'titulo': 'Error', 'texto': f"Error {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])}", 'tipo': 'error'}
+                    messages.error(request, f"Error {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])} o {conn.result['description']} : {conn.result['message']} ")
+                    mensaje = {'titulo': 'Error', 'texto': f"Error {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])} o  {conn.result['description']} ", 'tipo': 'error'}
                     imprimir(mensaje)
+                    imprimir(conn.result)
                     #return redirect('usuariosID')
         except Exception as e:
             messages.error(request, f"Error al conectar con AD: {str(e)}")
@@ -794,6 +832,8 @@ def consultar_usuarios(request): #Consulta los usuarios de Active Directory
                           ]
             
             connection.search(search_base, search_filter, attributes=attributes)
+            imprimir( "Consulta de los Usuarios de Active Directory : ")
+            imprimir( "-------------------------------------------------------------------------------------------------------------------")
             for entry in connection.entries:
                 domain_name = '.'.join(part.replace('DC=', '') for part in entry.distinguishedName.value.split(',') if part.startswith('DC='))
                 
@@ -816,8 +856,9 @@ def consultar_usuarios(request): #Consulta los usuarios de Active Directory
                     'DistinguishedName' : entry.distinguishedName.value if 'DistinguishedName' in entry else None,
                     
                 }
-
-                #imprimir( entry.distinguishedName.value)
+               
+                imprimir( entry.distinguishedName.value)
+                
                 #if 'cn' in entry and entry.cn.value.lower() != 'administrador':
                 if not is_account_disabled(useraccountcontrol_str):
                     usuarios.append(usuario)
@@ -846,6 +887,8 @@ def consultar_usuarios(request): #Consulta los usuarios de Active Directory
         imprimir(f"Error al conectar o buscar en Active Directory: {str(e)}")
     
     # Crear el diccionario de contexto con todas las variables necesarias
+    imprimir( "-------------------------------------------------------------------------------------------------------------------")
+    imprimir( "-------------------------------------------------------------------------------------------------------------------")
     context = {
         'users': usuarios,  # Lista de usuarios
         'usersAdmin': usuariosAdmin,
@@ -875,7 +918,7 @@ def editar_usuario(request):
     #imprimir("Vista de editar Usuario ")
     if request.method == 'POST':
          # Captura los datos enviados desde el formulario
-        nombre_usuario = request.POST.get('nombre_usuario').lower().strip()
+        nombre_usuario = request.POST.get('nombre_usuario').strip().title()
         nombre_pila = request.POST.get('nombre_pila').strip().title()
         apellido = request.POST.get('apellido').strip().title()
         nombre_completo = request.POST.get('nombre_completo').strip().title()
@@ -911,7 +954,7 @@ def editar_usuario(request):
                     'mail': [(MODIFY_REPLACE, [email])],
                     'department': [(MODIFY_REPLACE, [departamento])],
                     'title': [(MODIFY_REPLACE, [puesto])],
-                    'sAMAccountName': [(MODIFY_REPLACE, [nombre_inicio_sesion])],
+                   # 'sAMAccountName': [(MODIFY_REPLACE, [nombre_inicio_sesion])],
                     'physicalDeliveryOfficeName': [(MODIFY_REPLACE, [proyecto])],
                     # ... otros atributos ..
                 })
@@ -927,6 +970,7 @@ def editar_usuario(request):
                 else:
                     messages.error(request, f"Error al editar usuario: {obtener_mensaje_error_ad(conn.result['result'])}")
                     imprimir( f"Error al editar usuario: {obtener_mensaje_error_ad(conn.result['result'])}")
+                    imprimir(conn.result)
         except Exception as e:
             messages.error(request, f"Error al conectar con AD: {str(e)}")
             imprimir(f"Error al conectar con AD: {str(e)}")
@@ -1019,6 +1063,7 @@ def agregar_usuario(request): #Esta función o vista fue mantenida con la posibi
                     messages.error(request, f"Error al crear usuario {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])}")
                     mensaje = {'titulo': 'Error', 'texto': f"Error al crear usuario {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])}", 'tipo': 'error'}
                     imprimir(mensaje)
+                    imprimir(conn.result)
                     return redirect('agregar_usuario')
         except Exception as e:
             messages.error(request, f"Error al conectar con AD: {str(e)}")
@@ -1053,12 +1098,80 @@ def existeUsuario(nombreUsuario):
        # server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
         with connect_to_ad() as conn:
             search_base = dominoRaiz  # Asegúrate de que domino está definido y es correcto.
-            search_filter = f'(cn={nombreUsuario})'  # Filtro para buscar por Common Name
-            conn.search(search_base, search_filter, attributes=['cn'])
+            #search_filter = f'(cn={nombreUsuario})'  # Filtro para buscar por Common Name
+            search_filter = f'(sAMAccountName={nombreUsuario})'  # Cambiado de cn a sAMAccountName
+            imprimir(search_filter)
+            #conn.search(search_base, search_filter, attributes=['cn'])
+            conn.search(search_base, search_filter, attributes=['sAMAccountName'])
             return len(conn.entries) > 0
     except Exception as e:
         imprimir(f"Error al buscar en Active Directory: {str(e)}")
         return False
+    
+    
+def obtener_distinguishedName(samaccountname):
+    """
+    Busca el distinguishedName de un usuario basado en su sAMAccountName.
+
+    Args:
+        samaccountname (str): El sAMAccountName del usuario.
+
+    Returns:
+        str: El distinguishedName del usuario si se encuentra, None si no se encuentra o hay un error.
+    """
+    try:
+       # server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
+        with connect_to_ad() as conn:
+             if conn:
+                search_base = domino # Ajusta este DN base según tu configuración de AD
+                search_filter = f"(sAMAccountName={samaccountname})"
+                conn.search(search_base, search_filter, attributes=['distinguishedName'])
+                
+                if conn.entries:
+                    dn = conn.entries[0].distinguishedName.value
+                    imprimir(f"Distinguished Name encontrado: {dn}")
+                    return dn
+                else:
+                    imprimir("No se encontraron entradas.")
+                    return None
+             else:
+                  imprimir("No se pudo conectar a AD.")
+                  return None
+    except Exception as e:
+        imprimir(f"Error al buscar distinguishedName: {str(e)}")
+        return None
+
+def _obtener_cn(samaccountname):
+    """
+    Busca el Common Name  de un usuario basado en su sAMAccountName.
+
+    Args:
+        samaccountname (str): El sAMAccountName del usuario.
+
+    Returns:
+        str: El Common Name del usuario si se encuentra, None si no se encuentra o hay un error.
+    """
+    try:
+       # server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
+        with connect_to_ad() as conn:
+             if conn:
+                search_base = domino # Ajusta este DN base según tu configuración de AD
+                search_filter = f"(sAMAccountName={samaccountname})"
+                conn.search(search_base, search_filter, attributes=['cn'])
+                
+                if conn.entries:
+                    cn = conn.entries[0].cn.value
+                    imprimir(f"Common Name encontrado: {cn}")
+                    return cn
+                else:
+                    imprimir("No se encontraron entradas.")
+                    return None
+             else:
+                  imprimir("No se pudo conectar a AD.")
+                  return None
+    except Exception as e:
+        imprimir(f"Error al buscar Common Name: {str(e)}")
+        return None
 
 def probar_conexion_LDAP(request,nueva_ip):
     if settings.DEBUG:
@@ -1068,7 +1181,7 @@ def probar_conexion_LDAP(request,nueva_ip):
         protocolo='ldaps'# dominio de AD  para produccion 
         
     try:     
-        server = Server(f'{protocolo}://{nueva_ip}', port=settings.AD_PORT,use_ssl=True, get_info=ALL_ATTRIBUTES)
+        server = Server(f'{protocolo}://{nueva_ip}', port=int(settings.AD_PORT),use_ssl=True, get_info=ALL_ATTRIBUTES)
         conn = Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True)
             
         # Intenta establecer la conexión
@@ -1085,7 +1198,8 @@ def probar_conexion_LDAP(request,nueva_ip):
         
    
 
- 
+@login_required
+@user_passes_test(es_superusuario) # Solo permitir a superusuarios
 def activar_usuario(request, nombre_usuario):
     imprimir("entro a activar el usuario : "+str(nombre_usuario))
     try:
@@ -1100,7 +1214,7 @@ def activar_usuario(request, nombre_usuario):
                 messages.success(request, 'Usuario activado correctamente.')
                 imprimir(f'Usuario activado correctamente.{user_dn }')
                 mover = buscar_usuario_por_dn(nombre_usuario)
-                imprimir(mover_usuario_ou(mover['cn'], unidadOrganizativa[asignar_Departamento(mover['department'])],request))
+                imprimir(mover_usuario_ou(mover['sAMAccountName'], unidadOrganizativa[asignar_Departamento(mover['department'])],request))
                 insertar_registro_accion(
                 empleado.nameUser(request),
                 'Modulo AD',
@@ -1114,6 +1228,7 @@ def activar_usuario(request, nombre_usuario):
             else:
                 messages.error(request, f"Error al activar usuario: {conn.result['description']}")
                 imprimir(f"Error al activar usuario: {conn.result['description']}")
+                imprimir(conn.result)
     except Exception as e:
         messages.error(request, f"Error al conectar con AD: {str(e)}")
         imprimir(f"Error al conectar con AD: {str(e)}")
@@ -1121,7 +1236,8 @@ def activar_usuario(request, nombre_usuario):
     
     
     
- 
+@login_required
+@user_passes_test(es_superusuario) # Solo permitir a superusuarios
 def desactivar_usuario(request, nombre_usuario):
     imprimir("entro a desactivar al usuario :"+str(nombre_usuario))
     try:
@@ -1141,7 +1257,7 @@ def desactivar_usuario(request, nombre_usuario):
                 #department=mover['department']
                 #imprimir(cn)
                 #imprimir(department)
-                imprimir(mover_usuario_ou(mover['cn'], unidadOrganizativa[0],request))
+                imprimir(mover_usuario_ou(mover['sAMAccountName'], unidadOrganizativa[0],request))
                 insertar_registro_accion(
                 empleado.nameUser(request),
                 'Modulo AD',
@@ -1156,6 +1272,7 @@ def desactivar_usuario(request, nombre_usuario):
             else:
                 messages.error(request, f"Error al desactivar usuario: {conn.result['description']}")
                 imprimir(f"Error al desactivar usuario: {conn.result['description']}")
+                imprimir(conn.result)
     except Exception as e:
         messages.error(request, f"Error al conectar con AD: {str(e)}")
         imprimir(f"Error al conectar con AD: {str(e)}")
@@ -1182,7 +1299,9 @@ def connect_to_ad():
     conn = None
     try:
         servidorAD = obtener_servidor_ad()
-        server = Server(servidorAD, use_ssl=True, get_info=ALL)  # Asumiendo que quieres usar SSL
+        puerto = int(settings.AD_PORT)
+        #imprimir(f'Servidor donde se conecta : {servidorAD}:{puerto}')
+        server = Server(servidorAD, port=puerto , use_ssl=True, get_info=ALL)  # Asumiendo que quieres usar SSL
         conn = Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True)
         
         # Si la conexión es exitosa, devuelve la conexión
@@ -1201,14 +1320,17 @@ def connect_to_ad():
     #server = Server(servidorAD, port=settings.AD_PORT,use_ssl=True, get_info=ALL_ATTRIBUTES)
     
     #return Connection(server, user=settings.AD_USER, password=settings.AD_PASSWORD, auto_bind=True)
-
+@login_required
+@user_passes_test(es_superusuario) # Solo permitir a superusuarios
 def verificar_usuario(request, nombre_usuario):
     existe = existeUsuario(nombre_usuario)
     existeIDIAI = usuarioexisteIDIAI(nombre_usuario)
+    obtener_distinguishedName(nombre_usuario)
     imprimir(f'active directory : {existe} IDIAI V2: {existeIDIAI}')
     return JsonResponse({'existe': existe , 'existeIDIAI':existeIDIAI}) 
 
-@login_required  
+@login_required 
+@user_passes_test(es_superusuario) # Solo permitir a superusuarios 
 @require_http_methods(["POST"])  # Asegurar que esta vista solo acepte solicitudes POST
 def key_usuario(request):
     # Extraer el cuerpo de la solicitud y convertirlo de JSON a un diccionario de Python
@@ -1347,7 +1469,13 @@ def update_usuario (request):
             # Preparar la contraseña en formato adecuado para AD
             imprimir(mover_usuario_ou(nombre_usuario, unidadOrganizativa[asignar_Departamento(direccion)],request)) 
             _password = f'"{keyPass}"'.encode('utf-16-le')
-            user_dn =f'CN={nombre_usuario},{unidadOrganizativa[asignar_Departamento(direccion)]},{domino}'
+            imprimir(" ")
+            imprimir(f"Cambio de Contraseña {_obtener_cn(nombre_usuario)}")
+            imprimir(f"Cambio de Contraseña {obtener_distinguishedName(nombre_usuario)}")
+            #buscarel
+            #user_dn =f'CN={_obtener_cn(nombre_usuario)},{unidadOrganizativa[asignar_Departamento(direccion)]},{domino}'
+            #o
+            user_dn =obtener_distinguishedName(nombre_usuario)
             # Establecer conexión con Active Directory
             with connect_to_ad() as conn:
                 conn.modify(user_dn, {'unicodePwd': [(MODIFY_REPLACE, [_password])],
@@ -1374,6 +1502,8 @@ def update_usuario (request):
                    statusIcon='warning'
                    estatusAD = f"Active Directory Error {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])}"
                    imprimir(estatusAD) 
+                   imprimir(conn.result)
+                  # messages.error(request,f"Active Directory Error {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])}")
             
            
         except Exception as e : 
@@ -1416,14 +1546,16 @@ def mover_usuario_ou(nombre_usuario, nueva_ou,request):
         with connect_to_ad() as conn:
             # Buscar el Distinguished Name (DN) actual del usuario
             search_filter = f'(sAMAccountName={nombre_usuario})'
-            conn.search(search_base=domino, search_filter=search_filter, attributes=['distinguishedName'])
+            conn.search(search_base=domino, search_filter=search_filter, attributes=['cn','distinguishedName'])
 
             if conn.entries:
                 dn_actual = conn.entries[0].distinguishedName.value
+                cn_actual = conn.entries[0].cn.value
                 #imprimir(f"DN actual: {dn_actual}")
 
                 # Construir el nuevo DN
-                nuevo_rdn = f"CN={nombre_usuario}"
+                #nuevo_rdn = f"CN={nombre_usuario}"
+                nuevo_rdn = f"CN={cn_actual}"
                 if (nueva_ou =='0'):
                     nueva_ou_completa = f"{domino}"
                 else:    
@@ -1447,6 +1579,7 @@ def mover_usuario_ou(nombre_usuario, nueva_ou,request):
                     )
                 else:
                     mensaje = f"Error al mover usuario {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])}"
+                    imprimir(conn.result)
             else:
                 mensaje = "Usuario no encontrado en AD."
     except Exception as e:
@@ -1461,7 +1594,7 @@ def mover_usuario_ou(nombre_usuario, nueva_ou,request):
 
 
 def buscar_usuario_por_dn(dn_usuario):
-    atributos_buscados = ['cn', 'department']
+    atributos_buscados = ['cn', 'department','sAMAccountName']
     resultado = {}
 
     try:
@@ -1473,6 +1606,7 @@ def buscar_usuario_por_dn(dn_usuario):
                 # Extraer los atributos buscados
                 resultado['cn'] = conn.entries[0]['cn'].value if 'cn' in conn.entries[0] else None
                 resultado['department'] = conn.entries[0]['department'].value if 'department' in conn.entries[0] else None
+                resultado['sAMAccountName'] = conn.entries[0]['sAMAccountName'].value if 'sAMAccountName' in conn.entries[0] else None
             else:
                 resultado['error'] = 'Usuario no encontrado'
     except Exception as e:
@@ -1526,7 +1660,11 @@ def get_client_ip(request):
 
 def imprimir(mensaje): #funcion para imprimir en la consola  en modo desarrollador 
     if settings.DEBUG:
-        print(mensaje)
+       print(mensaje)
+    
+    #print(mensaje)
+    
+    
 
 
 def obtener_mensaje_error_ad(result_code):
@@ -1535,19 +1673,19 @@ def obtener_mensaje_error_ad(result_code):
   
   
     mensajes = {
-        0: "La operación se realizó correctamente.",
-        1: "Error interno del servidor.",
-        2: "El cliente ha enviado una solicitud incorrecta al servidor.",
-        32: "No se ha encontrado el objeto o usuario especificado en Active Directory.",
-        49: "Las credenciales proporcionadas no son válidas.",
-        50: "La contraseña proporcionada no cumple con los requisitos de complejidad.",
-        52: "Problema de autenticación.",
+        0: "La operación se realizó correctamente ",
+        1: "Error interno del servidor ",
+        2: "El cliente ha enviado una solicitud incorrecta al servidor ",
+        32: "No se ha encontrado el objeto o usuario especificado en Active Directory ",
+        49: "Las credenciales proporcionadas no son válidas ",
+        50: "La contraseña proporcionada no cumple con los requisitos de complejidad ",
+        52: "Problema de autenticación ",
         53: "La contraseña proporcionada no cumple con los requisitos de complejidad o no se ha encontrado el objeto especificado  ",
-        68: "No se pudo encontrar la entrada especificada en Active Directory.",
-        701: "Se ha excedido el límite de búsquedas en el servidor.",
-        773: "El usuario debe cambiar la contraseña antes de iniciar sesión.",
-        775: "El usuario ha intentado iniciar sesión demasiadas veces con una contraseña incorrecta.",
-        8381: "El servicio de directorio no está disponible.",
+        68: "No se pudo encontrar la entrada especificada en Active Directory ",
+        701: "Se ha excedido el límite de búsquedas en el servidor ",
+        773: "El usuario debe cambiar la contraseña antes de iniciar sesión ",
+        775: "El usuario ha intentado iniciar sesión demasiadas veces con una contraseña incorrecta ",
+        8381: "El servicio de directorio no está disponible ",
         8641: "El servidor no es funcional."
         
         # Añade más códigos de error y mensajes correspondientes según necesites
@@ -1629,7 +1767,38 @@ def obtenerUnidadesOrganizativas():
 
     return unidadesOrganizativas
 
+def obtenerUnidadesOrganizativas2():
+    """
+    Busca y devuelve una lista de las Unidades Organizativas en el dominio especificado.
 
+    Returns:
+        list: Una lista de cadenas con los nombres de las Unidades Organizativas.
+    """
+    unidadesOrganizativas = []
+
+    try:
+        # Establecer conexión con Active Directory
+        with connect_to_ad() as conn:
+            # Especifica el dominio a buscar. Ajusta este valor según sea necesario.
+            search_base = domino
+            # Filtro para buscar objetos de tipo Unidad Organizativa (OU)
+            search_filter = "(objectClass=organizationalUnit)"
+            # Realizar la búsqueda
+            conn.search(search_base=search_base, search_filter=search_filter, attributes=['distinguishedName'])
+
+            # Iterar sobre los resultados y añadir los nombres de las OUs a la lista
+            for entry in conn.entries:
+               unidadesOrganizativas.append(str(entry.distinguishedName))
+
+    except Exception as e:
+        imprimir(f"Error al obtener las Unidades Organizativas: {e}")
+
+    return unidadesOrganizativas
+
+def imprimirUnidadesOrganizativas():
+    uos = obtenerUnidadesOrganizativas2()
+    uos_str = "\n".join(uos)  # Une cada elemento de la lista con un salto de línea
+    imprimir(f"Unidades Organizativas de AD:\n{uos_str}")
 
 
 def notificacionCorreo(request,Asunto,titulo,contenido):
@@ -1637,10 +1806,10 @@ def notificacionCorreo(request,Asunto,titulo,contenido):
     current_year = datetime.now().year
     context = {
             'year': current_year,
-            'titulo' : "IDIAI-Modulo de Active Directory",
+            'titulo' : "IDIAI-V2",
             'Subtitulo' : titulo,
             'contenido' :contenido,
-            'Usuario'   : empleado.nameUser(request)
+            'Usuario'   : "Servidor de Django" if request is None else empleado.nameUser(request)
             }
             # Renderizar el contenido HTML
     html_content = render_to_string('NotificacionCorreo.html', context)
@@ -1651,7 +1820,7 @@ def notificacionCorreo(request,Asunto,titulo,contenido):
             Asunto,  # Asunto
             text_content,  # Contenido en texto plano
             'sistemas.iai@grupo-iai.com.mx',  # Email del remitente
-            ['manuel.zarate@grupo-iai.com.mx']  # Lista de destinatarios
+            ['manuel.zarate@grupo-iai.com.mx', 'luis.dominguez@grupo-iai.com.mx']  # Lista de destinatarios
         )
     email.attach_alternative(html_content, "text/html")
     try:
@@ -1670,6 +1839,11 @@ def usuarioexisteIDIAI(nombre_de_usuario):
 
 
 
+def imprimir_hola_mundo():
+    """
+    Tarea Celery para imprimir el mensaje "Hola Mundo".
+    """
+    print("Hola Mundo!")
 
 
 
@@ -1752,4 +1926,4 @@ def usuarioexisteIDIAI(nombre_de_usuario):
 
 
 
-
+# Este código ha sido especialmente desarrollado para facilitar las tareas diarias de nuestro compañero Dennis (muy amigo de Luis ). Esperamos que este gesto contribuya a hacer su trabajo más eficiente y agradable. ¡Esperamos que lo encuentres útil!

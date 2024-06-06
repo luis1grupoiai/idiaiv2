@@ -1027,7 +1027,7 @@ class CAutenticacion(APIView):
 
                                                 #Generar el tokenGlobal :) si la key es de token global o si el sistema es intranet se crea el Token global.
                                                 if (keySis == os.environ.get('KEY_GTKG')) | (sistema == int(os.environ.get('ID_INTRANET'))):
-                                                    print("Se solicita generar TKG.")      
+                                                    print(">> Se solicita generar TKG.")      
 
                                                                                               
 
@@ -1037,11 +1037,14 @@ class CAutenticacion(APIView):
                                                     #ARSI 04062024 Se agrega validación para verificar e inactivar el TKGLOBAL cuando el usuario inicie sesión en intranet.
                                                     #o pase el key para generar token Global.
                                                     if len(dUsTk)>0:
+                                                        print("Si devuelve datos de la consulta.")
                                                         tkgbl = dUsTk[0]['token']
                                                         infoTkg = CVerificaTokenGlobal.validarTokenGlobal(sUserName,tkgbl);
+                                                    else:
+                                                        infoTkg['message'] = 'Error'
                                                     
-                                                        if len(infoTkg)>0:
-                                                            if infoTkg['message']=="Error":                                                                                                                                                    
+                                                    if len(infoTkg)>0:
+                                                        if infoTkg['message']=="Error":                                                                                                                                                    
                                                                 # if len(dUsTk) == 0:
                                                                 # insertar TKG en BD 05/03/2024
                                                                 # sTimeExp = 0
@@ -1057,7 +1060,8 @@ class CAutenticacion(APIView):
                                                                 gtkg = self.generarTKGlobal(jd['user'],sTimeExp,int(os.environ.get('ID_INTRANET')))
                                                                 insertTkG = TokenGlobal(username=sUserName, token=gtkg,sistemaOrigen=int(os.environ.get('ID_INTRANET')), caduco=0)
                                                                 insertTkG.save()
-                                                            else:
+                                                        else:
+                                                                print(">> Si existe token Global registrado...")      
                                                                 gtkg = dUsTk[0]['token']
                                                     
                                                                                             

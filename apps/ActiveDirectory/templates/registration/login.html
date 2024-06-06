@@ -13,13 +13,29 @@
   <link rel="stylesheet" href="/static/assets/compiled/css/app.css">
   <link rel="stylesheet" href="/static/assets/compiled/css/app-dark.css">
   <link rel="stylesheet" href="/static/assets/compiled/css/auth.css">
-
+ <style>
+  #nyan-cat {
+    position: fixed;
+    bottom: 0;
+    left: -150px;  /* Posición inicial fuera de la pantalla */
+    width: 150px;  /* Ajusta el tamaño según necesites */
+    display: none; /* Oculto inicialmente */
+  }
+  @keyframes slide {
+    0% {
+      left: -150px;
+    }
+    100% {
+      left: 100%; /* Esto moverá el GIF completamente fuera de la pantalla hacia la derecha */
+    }
+  } </style>
 </head>
 
 <body onload="checkMonthAndRun()">
+    <img src="/static/img/nyan-cat.gif" alt="Nyan Cat" id="nyan-cat" style="display: none;">     
     <script src="/static/assets/static/js/initTheme.js"></script>
     <div id="auth">
-        
+            
 <div class="row h-100">
     <div class="col-lg-5 col-12">
         <div id="auth-left">
@@ -66,6 +82,20 @@
 
     </div>
     <script>
+
+       //funcion para ver el gato corriendo 
+        document.addEventListener("DOMContentLoaded", function() {
+            var nyanCat = document.getElementById('nyan-cat');
+            var hour = new Date().getHours();
+            var date = new Date();
+            var month = date.getMonth();
+           // Verifica si es junio (mes 5 porque Enero es 0)
+            if (month === 5) {
+            if (hour >= 12 || hour <= 5) {
+              nyanCat.style.display = 'block';
+              nyanCat.style.animation = 'slide 10s linear forwards';  // 'forwards' mantiene el elemento en el estado final de la animación
+            }}
+          });
 
         function checkMonthAndRun() {
             var currentDate = new Date();

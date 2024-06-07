@@ -7,14 +7,18 @@
 
 {% block extra_css %}
 
-<link rel="stylesheet" href="/static/assets/extensions/datatables.net-bs5/css/dataTables.bootstrap5.min.css">
 <link rel="stylesheet" href="/static/assets/compiled/css/table-datatable-jquery.css">
+<link rel="stylesheet" href="/static/assets/extensions/datatables.net-bs5/css/dataTables.bootstrap5.min.css">
+
+{% comment%}
+
+
 
 
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.7.1/css/buttons.dataTables.min.css">
 
 
-
+{% endcomment %}
 <!-- Espacio para CSS adicional de plantillas hijas -->
 {% endblock %}
 
@@ -166,6 +170,7 @@
                                              <!-- Aquí van los detalles del usuario -->
                                              <div class="row align-content-center " >
                                                 <div class="col-md-12">
+                                                <p id="modalnombreSesion"></p>
                                                 <p id="modalPuesto"></p> 
 
                                                 </div>
@@ -175,7 +180,7 @@
                                                 </div>
                                                 
                                                 <div class="col-md-12">    
-                                                <p id="modalnombreSesion"></p>   
+                                                   
                                                 <p id="modalNombreUsuarioPrincipal"></p>
                                                 </div>
                                             </div>
@@ -214,11 +219,12 @@
                                             <div class="col-6">
                                                 <div class="mb-2">
                                                     <label for="nombre_inicio_sesion" class="form-label">Nombre de inicio de sesion de usuario:</label>
-                                                    <input type="text" class="form-control" name="nombre_inicio_sesion" id="nombre_inicio_sesion" required>
+                                                    <input type="text" class="form-control" name="nombr3_inicio_sesion" id="nombr3_inicio_sesion" required disabled >
+                                                    <input type="hidden" class="form-control" name="nombre_inicio_sesion" id="nombre_inicio_sesion" required >
                                                 </div>
                                                 <div class="mb-2">
                                                  <!--  <label for="nombre_usuario" class="form-label">Nombre de Usuario:</label>--> 
-                                                    <input type="hidden" class="form-control" name="nombre_usuario" id="nombre_usuario" required >
+                                                    <input type="hidden"  class="form-control" name="nombre_usuario" id="nombre_usuario" required >
                                                     <input type="hidden" class="form-control" name="distinguished_name" id="distinguished_name" required >
                                                 </div>
                                             </div>
@@ -301,7 +307,6 @@
                             {% endblock %}
 
     {% block script %} 
-    
     <script src="/static/assets/extensions/jquery/jquery.min.js"></script>
     <script src="/static/assets/extensions/datatables.net/js/jquery.dataTables.min.js"></script>
     <script src="/static/assets/extensions/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
@@ -310,6 +315,16 @@
     <script src="https://cdn.datatables.net/buttons/1.7.1/js/dataTables.buttons.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.html5.min.js"></script>
+    {% comment%}
+    <script src="/static/assets/extensions/jquery/jquery.min.js"></script>
+    <script src="/static/assets/extensions/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="/static/assets/extensions/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="/static/assets/static/js/pages/datatables.js"></script>
+
+    <script src="https://cdn.datatables.net/buttons/1.7.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.html5.min.js"></script>
+    {% endcomment %}
     <script>
         $(document).ready(function() {
             var config = {
@@ -374,7 +389,7 @@
         
                 // Rellena los datos en el modal
                 document.getElementById("modalPuesto").innerText = "Puesto: " + puesto;
-                document.getElementById("modalnombreSesion").innerText = "Nombre de Sesión: " + nombreSesion;
+                document.getElementById("modalnombreSesion").innerText = "Nombre de completo: " + nombreSesion;
                 document.getElementById("modalNombreUsuarioPrincipal").innerText = "Usuario Principal: " + nombreUsuarioPrincipal;
                 document.getElementById("modalNombre").innerText = "Proyecto : " + nombreProyecto;
                // document.getElementById("modalApellidos").innerText = "Apellidos : " + apellidos;
@@ -404,6 +419,7 @@
                     document.getElementById('apellido').value = apellidos;
                     document.getElementById('puesto').value = puesto;
                     document.getElementById('nombre_inicio_sesion').value = nombreSesion;
+                    document.getElementById('nombr3_inicio_sesion').value = nombreSesion;
                     document.getElementById('nombre_completo').value = nombreCompleto ;
                     document.getElementById('email').value = email ;
                     document.getElementById('departamento').value = departamento ;

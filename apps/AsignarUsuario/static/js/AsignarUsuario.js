@@ -1,5 +1,5 @@
 function addDomainIfEmpty(inputElement) {
-    var nombreUsuarioInput = document.getElementById('nombre_usuario');
+    var nombreUsuarioInput = document.getElementById('nombre_inicio_sesion');
 
     if (inputElement.value.trim() === "") {
         inputElement.value = nombreUsuarioInput.value +"@grupo-iai.com.mx";
@@ -202,7 +202,10 @@ function generadorNombreUsuario(){
 
 function validarnuevoUsuario(){
     var nombre2 = document.getElementById('nombre_inicio_sesion').value;
-    document.getElementById('nombre_usuario').value =nombre2 
+    var nombre3 = document.getElementById('nombre_completo').value;
+                document.getElementById('nombre_usuario').value =nombre3
+                console.log("validar nombre : " + nombre3);
+                console.log("validar Sesion : " + nombre2 );
     verificarUsuario(nombre2);
 }
 
@@ -299,9 +302,9 @@ document.addEventListener('DOMContentLoaded', function () {
     var correoInput = document.getElementById('email');
     var dominioEmail = "@grupo-iai.com.mx"; // Puedes cambiar esto según sea necesario
 
-    nombreUsuarioInput.addEventListener('input', function () {
-        nombreInicioSesionInput.value = nombreUsuarioInput.value;
-        correoInput.value = nombreUsuarioInput.value + dominioEmail.toUpperCase();
+    nombreInicioSesionInput.addEventListener('input', function () {
+       // nombreInicioSesionInput.value = nombreUsuarioInput.value;
+        correoInput.value = nombreInicioSesionInput.value + dominioEmail.toUpperCase();
     });
 });
 
@@ -312,6 +315,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function actualizarNombreCompleto() {
         nombreCompletoInput.value = nombrePilaInput.value + ' ' + apellidoInput.value;
+        document.getElementById('nombre_usuario').value =nombreCompletoInput.value;
     }
 
     nombrePilaInput.addEventListener('input', actualizarNombreCompleto);

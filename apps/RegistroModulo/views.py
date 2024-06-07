@@ -316,7 +316,7 @@ def photoUser(request):
         # Si se encuentra un usuario en la BD y tiene una ruta de foto, actualizar la ruta de la foto
         if usuarioBD and usuarioBD.RutaFoto_ps:
         
-            photo = f'http://intranet.grupo-iai.com.mx:85/SERCAPNUBE/Imagenes/FOTOS/{usuarioBD.RutaFoto_ps}'
+            photo = f'https://intranet.grupo-iai.com.mx:330/SERCAPNUBE/Imagenes/FOTOS/{usuarioBD.RutaFoto_ps}'
 
     # Devolver la ruta de la foto
     return photo

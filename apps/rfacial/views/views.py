@@ -40,6 +40,9 @@ from datetime import datetime,timedelta
 from apps.mycore.views.ejecutarsp import CEjecutarSP
 
 from cryptography.fernet import Fernet
+from django.utils.html import strip_tags
+from django.template.loader import render_to_string
+from django.core.mail import EmailMultiAlternatives
 
 
 
@@ -47,6 +50,7 @@ from cryptography.fernet import Fernet
 import json
 import os
 import base64
+import time
 
 # stky = Fernet.generate_key()
 stky = b'VVsQPaM9IhXYrWNwLyKkAnmJdzdFR8R0MwdvZpHGsA8='
@@ -765,6 +769,7 @@ class CAutenticacion(APIView):
         try:
             #1. Carga los valores del json obtenido por el metodo post.
             jd = json.loads(request.body)
+            # print(jd)
             datos = {}
             info = {}
             
@@ -802,6 +807,7 @@ class CAutenticacion(APIView):
             gtkg = ""
             nStatus = 0
             opc = 3
+            sTextoTkg = ""
 
             #Valida que el numero de claves del JSON enviado a la API
             #coincida con el numero de claves declaras en el diccioario dCamposJson
@@ -850,6 +856,7 @@ class CAutenticacion(APIView):
                 elif keySis == str(os.environ.get('KEY_GTKG')):
                     bKeyTkG = True
                 elif keySis == str(os.environ.get('KEYVALIDADJG')):
+                    sTextoTkg += ". Intento de loggeo por Token Global."
                     bKeyTkG = True
                 else:
                     sTexto += 'El key del sistema es incorrecto.'
@@ -913,13 +920,13 @@ class CAutenticacion(APIView):
                                             pwdD64 = self.decodificarB64(sPwd)
 
                                             bPasswordCorrecta = self.verificarPswd(pwdD64)
-                                        else:
+                                        else:                                            
                                             bPasswordCorrecta = True
 
                                         if not bPasswordCorrecta:
                                             opc = 2
                                             sTexto += "¡Ups! la contraseña es incorrecta."
-                                            info = self.registrarAcceso(jd['user'],sistema,sTexto+" Desde el sistema "+self.sNombreSistema,opc)
+                                            info = self.registrarAcceso(jd['user'],sistema,sTexto+" Desde el sistema "+self.sNombreSistema+sTextoTkg,opc)
                                             bValido = False
                                             sTexto += " "+info['texto']
                                             
@@ -1049,7 +1056,7 @@ class CAutenticacion(APIView):
                                                     # is_token_valid = default_token_generator.check_token(jd['user'], tokenApi)
                                                 
                                                 opc = 1
-                                                info = self.registrarAcceso(sUserName,sistema,"Inicio de sesión exitoso al sistema "+self.sNombreSistema,opc)
+                                                info = self.registrarAcceso(sUserName,sistema,"Inicio de sesión exitoso al sistema "+self.sNombreSistema+sTextoTkg,opc)
                                                 nStatus = 200
                                                 datos = {'message': 'Success','idPersonal':idPersonal,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg}
                                             else:
@@ -1110,17 +1117,24 @@ class CAutenticacion(APIView):
             else:
                 nStatus = 404
                 datos = {'message': 'JSON invalido.', 'error': sTexto}
+
+            if opc == 3:
+                info = self.registrarAcceso(jd['user'],jd['idSistema'],sTexto+sTextoTkg,opc)
+                print(info)
             
         except ValueError as error:
             nStatus = 404
             sTexto = "%s" % error
             datos = {'message': 'JSON invalido. ', "error": sTexto}
+        except json.JSONDecodeError as e:
+            nStatus = 404
+            sTexto = "%s" % e
+            print('Error al decodificar JSON:', e)
+            datos = {'message': 'JSON invalido. ', "error": sTexto}
             # return False
         
 
-        if opc == 3:
-           info = self.registrarAcceso(jd['user'],jd['idSistema'],sTexto,opc)
-           print(info)
+        
         # elif opc == 2:
         #     #El usuario se equivoco en la contraseña.
         #     info = self.registrarAcceso(jd['user'],jd['idSistema'],sTexto,opc)
@@ -1537,4 +1551,86 @@ class CVerificaTokenGlobal(APIView):
     
     
     
+class CInactivaTkg():
+
+    oExecSP = CEjecutarSP()
+    returnValue = 0
+    asunto =""
+    titulo = ""
+    subtitulo = ""
+    contenido = ""
+    
+    def inactivarRegistrosTkg(self):
+
+        try:
+            self.oExecSP.ejecutarSP("inactivarTkg")
+            print("pruebas...")
+           
+
+        except ValueError as error:
+            sTexto = "Error en el metodo inactivarRegistrosTkg: %s" % error
+            print(sTexto)
+        else:
+            print("Ejecucicón Correcta. ")
+            
+            returnValue = self.oExecSP.ejecutarSP("obtenerInactivos")
+
+            if returnValue[0][0] == 0:
+                print("OK: Los registros de Token Global se inactivaron exitosamente.")
+                asunto ="Resultados de la ejecución del procedimiento Inactivar registros del TKG."
+                titulo = "Registros inactivos exitosamente."
+                subtitulo = ""
+                contenido = "El siguiente correo es para notificar que el procedimiento para inactivar registros de TKG a media noche fue ejecutado con exito."
+                self.enviarCorreo(asunto,titulo,contenido,subtitulo)
+               
+            else:
+                print("FAIL: Favor de ejecutar nuevamente este script...")
+                asunto ="Resultados de la ejecución del procedimiento Inactivar registros del TKG."
+                titulo = "Problemas en la ejecución del proceso de registros inactivos."
+                subtitulo = ""
+                contenido = "El siguiente correo es para notificar que el procedimiento para inactivar registros de TKG a media noche no fue ejecutado con exito, por favor de ejecutar nuevamente el procedimiento manualmente."
+                self.enviarCorreo(asunto,titulo,contenido,subtitulo)
+
+            # print(os.environ.get('EMAIL_HOST'))     
+
+            print(returnValue)
+
+        return returnValue
+    
+
+    def enviarCorreo(self,asunto,titulo,contenido,subtitulo):
+        current_year = datetime.now().year
+
+        context = {
+                'year': current_year,
+                'titulo' : titulo,
+                'Subtitulo' : subtitulo,
+                'contenido' :contenido,                
+                }
+        
+        html_content = render_to_string('NotificacionCorreoExterna.html', context)
+        text_content = strip_tags(html_content)  # Esto crea una versión en texto plano del HTML
+
+        email = EmailMultiAlternatives(
+            asunto,  # Asunto
+            text_content,  # Contenido en texto plano
+            'sistemas.iai@grupo-iai.com.mx',  # Email del remitente
+            ['ana.sanchez@grupo-iai.com.mx', 
+             'eloy.mendoza@grupo-iai.com.mx', 
+             'luis.dominguez@grupo-iai.com.mx',
+             'manuel.zarate@grupo-iai.com.mx', 
+             'jorge.torres@grupo-iai.com.mx' ]  # Lista de destinatarios
+        )
+        
+        email.attach_alternative(html_content, "text/html")
+
+        try:
+            time.sleep(1) #para evitar que envie un moton de solicitudes 
+            email.send()
+            print("Correo enviado correctamente.")
+        except Exception as e:
+            print(f"Error al enviar correo: {e}")
+
+        
+
 

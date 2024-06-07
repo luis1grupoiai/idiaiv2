@@ -1283,7 +1283,7 @@ class CVerificaToken(APIView):
             },
             required=['token', 'user']
         ),
-        responses={200: 'Token Validado', 500: 'Json invalido o problemas internos en el server.', 404:'Datos invalidos'},
+        responses={200: 'Token Validado', 403: 'Json invalido o problemas internos en el server.', 404:'Datos invalidos'},
     ) 
     def post(self,request):
         """
@@ -1406,7 +1406,7 @@ class CVerificaToken(APIView):
             datos = {'message': 'JSON invalido. ', "error": sTexto}
             # return False
         except KeyError as error:
-            nStatus = 500
+            nStatus = 403
             sTexto = "%s" % error
             datos = {'message': 'JSON invalido. ', "error": sTexto}
 
@@ -1567,7 +1567,7 @@ class CVerificaTokenGlobal(APIView):
             },
             required=['user', 'tkgbl']
         ),
-        responses={200: 'Token Validado', 500: 'Json invalido o problemas internos en el server.', 404:'Datos invalidos', 401:'Token invalido, por lo tanto dicho token ha perdido autorización para acceder a diferentes sistemas o no existe.'},
+        responses={200: 'Token Validado', 403: 'Json invalido o problemas internos en el server.', 404:'Datos invalidos', 401:'Token invalido, por lo tanto dicho token ha perdido autorización para acceder a diferentes sistemas o no existe.'},
     )
     
     def post(self,request):
@@ -1581,7 +1581,7 @@ class CVerificaTokenGlobal(APIView):
         """
         try:
             jd = json.loads(request.body)
-            nStatus = 500
+            nStatus = 403
             tkg = ""
             bValido = True
             dCamposJson = ['user','tkgbl']
@@ -1726,7 +1726,7 @@ class CVerificaTokenGlobal(APIView):
             sTexto = "%s" % error
             datos = {'message': 'JSON invalido. ', "Resultado": sTexto}
         except KeyError as error:
-            nStatus = 500
+            nStatus = 403
             sTexto = "%s" % error
             datos = {'message': 'JSON invalido. ', "error": sTexto}
 

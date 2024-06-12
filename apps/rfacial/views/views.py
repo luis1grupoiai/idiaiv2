@@ -381,8 +381,8 @@ class CAutenticacion(APIView):
         return dUsuario
 
     def consultarUsuarioActivo(self, nameUser):
-        print("Accede a metodo  consultarUsuarioActivo:")
-        print(nameUser)
+        # print("Accede a metodo  consultarUsuarioActivo:")
+        # print(nameUser)
         sTexto = ""
         datos = {}
         try:
@@ -1824,3 +1824,33 @@ class CInactivaTkg():
         
 
 
+class CMigraPermisos():
+
+    def migrarPermisos(self,p_sSistema = None):
+
+        oCAute = CAutenticacion()
+        
+        # print(type(p_sSistema))
+        if p_sSistema != None:
+            oExecSP = CEjecutarSP()
+            oExecSP.registrarParametros("nombreSistema",p_sSistema)
+            dUsuariosActivos = oExecSP.ejecutarSP('obtenerUsuariosActivos')
+
+            if len(dUsuariosActivos)>0:
+                
+                print("Si hubo resultados.")
+
+                for dUsuario in dUsuariosActivos:
+                    # print(dUsuario[2])
+
+                    dActivoidIai2 = oCAute.consultarUsuarioActivo(dUsuario[2])
+
+                    if len(dActivoidIai2)==0:
+                        # print("El usuario si existe en IDIAI v2.")
+                        print("El usuario "+str(dUsuario[2])+" no existe en IDIAI V2")
+                    
+                        
+                
+
+
+        # print("Hola :)")

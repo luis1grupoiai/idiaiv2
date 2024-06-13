@@ -1828,11 +1828,15 @@ class CInactivaTkg():
 class CMigraPermisos():
 
     def migrarPermisos(self,p_sSistema = None):
-
+        # Inicializar/declarar variables
         oCAute = CAutenticacion()
-        
+        sPermisosAfter = ""        
+        dInfoPermisosUbicados = dict()
+
         # print(type(p_sSistema))
-        print(getsizeof(p_sSistema))
+        # print("Tamaño del texto: ")
+        # print(getsizeof(p_sSistema))
+
         if p_sSistema != None and p_sSistema!="":
             oExecSP = CEjecutarSP()
             oExecSP.registrarParametros("nombreSistema",p_sSistema)
@@ -1841,6 +1845,10 @@ class CMigraPermisos():
             if len(dUsuariosActivos)>0:
                 
                 print("Si hubo resultados.")
+                print(dUsuariosActivos[0][6])
+
+                sPermisosAfter = dUsuariosActivos[0][6]
+                dInfoPermisosUbicados = self.obtenerPermisosAfter(p_sSistema, sPermisosAfter)
 
                 for dUsuario in dUsuariosActivos:
                     # print(dUsuario[2])
@@ -1852,7 +1860,52 @@ class CMigraPermisos():
                         print("El usuario "+str(dUsuario[2])+" no existe en IDIAI V2")
                     
                         
-                
+    def obtenerPermisosAfter(self,p_sNombreSistema ,p_sListPermisos):
+            sTexto= ""
+            sPermisosNoEncontrados = ""
+            # dDatosPerm = []
+            dInfoPermisosUbicados = dict()
+            posicion = 0
 
+            try:
+                if p_sListPermisos !=None and p_sListPermisos.strip() != "" and p_sNombreSistema!=None and p_sNombreSistema!= "":
+                    lPermiso = p_sListPermisos.split(",")
+                    
+                   
+                    for item in lPermiso:
+                        # print(item)
+                        p_sNombreSistema = p_sNombreSistema.upper().strip()
+                        item = item.upper().strip()
+
+                        oExecSP = CEjecutarSP()
+                        oExecSP.registrarParametros("nombreSistema",p_sNombreSistema)
+                        oExecSP.registrarParametros("nombrePermiso",item)
+                        dDatosPerm = oExecSP.ejecutarSP('consultarPermisosIdiai2')
+
+                        if len(dDatosPerm)==0:
+                            sPermisosNoEncontrados += item+", "
+                            dInfoPermisosUbicados.update({item:0})
+                        else:
+                            print(type(dDatosPerm))
+
+                            for dato in dDatosPerm:
+                                print(dato[2])
+                                dInfoPermisosUbicados.update({item:dato[2]})
+                        
+
+                        posicion = posicion+1
+                                
+                    
+                if sPermisosNoEncontrados!= "":
+                    print("No se encontraron los siguientes permisos: "+ sPermisosNoEncontrados)
+
+
+                print(dInfoPermisosUbicados)
+
+            except ValueError as error:
+                sTexto = "Error en el metodo obtenerPermisosAfter: %s" % error
+                print(sTexto)
+
+            return dInfoPermisosUbicados
 
         # print("Hola :)")

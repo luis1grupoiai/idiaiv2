@@ -15,11 +15,13 @@ class Command(BaseCommand):
         self.stdout.write(f'Se obtendran los usuarios que tienen acceso al sistema : {arg1}')
 
         sSistema = f'{arg1}'
-        sSistema =  sSistema.upper()
+        sSistema =  sSistema.upper().strip()
 
 
         if sSistema!="":
             oInc = CMigraPermisos()
             oInc.migrarPermisos(sSistema)
+        else:
+            print("No ingreso ningun sistema, por favor ingrese el nombre de algun sistema.")
 
         # self.stdout.write('¡Hola desde mi script de Django!')

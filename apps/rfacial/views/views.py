@@ -43,6 +43,7 @@ from cryptography.fernet import Fernet
 from django.utils.html import strip_tags
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
+from sys import getsizeof
 
 
 
@@ -1831,7 +1832,8 @@ class CMigraPermisos():
         oCAute = CAutenticacion()
         
         # print(type(p_sSistema))
-        if p_sSistema != None:
+        print(getsizeof(p_sSistema))
+        if p_sSistema != None and p_sSistema!="":
             oExecSP = CEjecutarSP()
             oExecSP.registrarParametros("nombreSistema",p_sSistema)
             dUsuariosActivos = oExecSP.ejecutarSP('obtenerUsuariosActivos')

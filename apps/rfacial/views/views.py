@@ -1827,6 +1827,8 @@ class CInactivaTkg():
 
 class CMigraPermisos():
 
+    idSistema = 0
+
     def migrarPermisos(self,p_sSistema = None):
         # Inicializar/declarar variables
         oCAute = CAutenticacion()
@@ -1849,6 +1851,9 @@ class CMigraPermisos():
 
                 sPermisosAfter = dUsuariosActivos[0][6]
                 dInfoPermisosUbicados = self.obtenerPermisosAfter(p_sSistema, sPermisosAfter)
+                print(dInfoPermisosUbicados)
+
+                # lPermiso = p_sListPermisos.split(",")
 
                 for dUsuario in dUsuariosActivos:
                     # print(dUsuario[2])
@@ -1858,6 +1863,10 @@ class CMigraPermisos():
                     if len(dActivoidIai2)==0:
                         # print("El usuario si existe en IDIAI v2.")
                         print("El usuario "+str(dUsuario[2])+" no existe en IDIAI V2")
+                    else:
+                        print("id de usuario: ")
+                        print(dActivoidIai2[0]["id"])
+                        print(self.idSistema)
                     
                         
     def obtenerPermisosAfter(self,p_sNombreSistema ,p_sListPermisos):
@@ -1890,6 +1899,7 @@ class CMigraPermisos():
 
                             for dato in dDatosPerm:
                                 print(dato[2])
+                                self.idSistema = dato[3]
                                 dInfoPermisosUbicados.update({item:dato[2]})
                         
 
@@ -1900,7 +1910,7 @@ class CMigraPermisos():
                     print("No se encontraron los siguientes permisos: "+ sPermisosNoEncontrados)
 
 
-                print(dInfoPermisosUbicados)
+                # print(dInfoPermisosUbicados)
 
             except ValueError as error:
                 sTexto = "Error en el metodo obtenerPermisosAfter: %s" % error

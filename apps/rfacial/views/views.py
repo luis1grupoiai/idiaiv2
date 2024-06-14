@@ -82,7 +82,7 @@ class CAutenticacion(APIView):
     def obtenerPermisos(self, p_nIdSistema, p_nIdUsuario):
         dPermisos = {}
         dPermisosUsuario = {}
-        print("Accede a metodo obtenerPermisos.")
+        # print("Accede a metodo obtenerPermisos.")
         try:
             # dPermisos = list(SistemaPermisoGrupo.objects.filter(sistema_id=p_nIdSistema, permiso_id__isnull=False).values())
             self.oExecSP.registrarParametros("idUsuario",p_nIdUsuario)
@@ -1834,6 +1834,7 @@ class CMigraPermisos():
         oCAute = CAutenticacion()
         sPermisosAfter = ""        
         dInfoPermisosUbicados = dict()
+        lPermisoUsuario = []
 
         # print(type(p_sSistema))
         # print("Tamaño del texto: ")
@@ -1864,10 +1865,30 @@ class CMigraPermisos():
                         # print("El usuario si existe en IDIAI v2.")
                         print("El usuario "+str(dUsuario[2])+" no existe en IDIAI V2")
                     else:
-                        print("id de usuario: ")
-                        print(dActivoidIai2[0]["id"])
-                        print(self.idSistema)
-                    
+                        # print("id de usuario: ")
+                        # print(dActivoidIai2[0]["id"])
+                        # print(self.idSistema)
+
+                        if int(self.idSistema)>0 and int(dActivoidIai2[0]["id"])>0:
+                            lPermisoUsuario = oCAute.obtenerPermisos(self.idSistema,dActivoidIai2[0]["id"])
+
+                            if len(lPermisoUsuario)==0:
+                                pass
+                                
+                                sPermisoMayusulas = sPermisosAfter.upper()
+                                print(sPermisoMayusulas)
+
+                                lPermisoMayus = sPermisoMayusulas.split(",")
+
+                                #TODO: Buscar mediante lista.index("nombrePermiso") obtener la posicion del permiso y ver si en la lista de permisos del usuario ese permiso es 1.
+
+
+
+                                
+                                # print("El usuario "+dUsuario[2]+" no tiene permisos asignados en el IDIAI v2 para el sistema "+p_sSistema)
+                            else:
+                                print("El usuario "+dUsuario[2]+" tiene permisos asignados en el IDIAI v2 para el sistema "+p_sSistema)
+                                
                         
     def obtenerPermisosAfter(self,p_sNombreSistema ,p_sListPermisos):
             sTexto= ""

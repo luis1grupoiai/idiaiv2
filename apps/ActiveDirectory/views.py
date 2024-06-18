@@ -1820,7 +1820,7 @@ def notificacionCorreo(request,Asunto,titulo,contenido):
             Asunto,  # Asunto
             text_content,  # Contenido en texto plano
             'sistemas.iai@grupo-iai.com.mx',  # Email del remitente
-            ['manuel.zarate@grupo-iai.com.mx', 'luis.dominguez@grupo-iai.com.mx']  # Lista de destinatarios
+            ['manuel.zarate@grupo-iai.com.mx','dennis.valencia@grupo-iai.com.mx', 'luis.dominguez@grupo-iai.com.mx']  # Lista de destinatarios
         )
     email.attach_alternative(html_content, "text/html")
     try:

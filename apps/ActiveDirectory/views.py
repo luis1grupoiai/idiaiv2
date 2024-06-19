@@ -22,6 +22,8 @@ from datetime import datetime
 from django.utils.html import strip_tags
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
+from django.contrib.auth import authenticate, login
+from django.views.decorators.http import require_POST
 
 ENCRYPTION_KEY_DESCRIPCION =os.environ.get('KEY_DESCRIPCION').encode()
 ENCRYPTION_KEY_NOMBRE = os.environ.get('KEY_NOMBRE').encode()
@@ -1848,7 +1850,19 @@ def imprimir_hola_mundo():
 
 
 
-
+@require_POST
+def Verificarlogin(request):
+    username = request.POST.get('username')
+    password = request.POST.get('password')
+    user = authenticate(request, username=username, password=password)
+    #if user is not None:
+    if user is not None and user.is_active:
+        login(request, user)
+        return JsonResponse({'success': True}, status=200)
+        print("true")
+    else:
+        print("si entro")
+        return JsonResponse({'success': False, 'error': 'Usuario o contraseña incorrectos'}, status=401)
 
 
 

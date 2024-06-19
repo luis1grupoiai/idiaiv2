@@ -29,20 +29,42 @@
       left: 100%; /* Esto moverá el GIF completamente fuera de la pantalla hacia la derecha */
     }
   } </style>
+  <style>
+    .spinner {
+        border: 16px solid #f3f3f3; /* Light grey */
+        border-top: 16px solid #3498db; /* Blue */
+        border-radius: 50%;
+        width: 120px;
+        height: 120px;
+        animation: spin 2s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    </style>
 </head>
 
 <body onload="checkMonthAndRun()">
+    
+    <script src="/static/assets/extensions/sweetalert2/sweetalert2.all.js"></script>
     <img src="/static/img/nyan-cat.gif" alt="Nyan Cat" id="nyan-cat" style="display: none;">     
     <script src="/static/assets/static/js/initTheme.js"></script>
     <div id="auth">
             
+        <div id="spinner-overlay" style="display:none; position:fixed; width:100%; height:100%; top:0; left:0; background:rgba(255,255,255,0.7); z-index:9999;">
+            <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
+                <div class="spinner"></div>
+            </div>
+        </div>
 <div class="row h-100">
     <div class="col-lg-5 col-12">
         <div id="auth-left">
             <div class="auth-logo">
                 <a href="#"><img src="/static/img/logo2.png" alt="Logo"></a>
             </div>
-            <h1 class="auth-title">Bienvenido a IDIAI</h1>
+            <h1 class="auth-title">Bienvenido </h1>
             <p class="auth-subtitle mb-5">Iniciar sesión</p>
             <form action="" method="post">
                 {% csrf_token %}
@@ -81,7 +103,128 @@
 </div>
 
     </div>
+
+
+    
+                <p id="year" ></p>
+       
+
+    <script src="/static/js/base.js"> </script>
+    <script src="/static/assets/extensions/jquery/jquery.min.js"></script>
     <script>
+
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            var loginForm = document.querySelector('form');
+            loginForm.addEventListener('submit', function(event) {
+                var username = document.querySelector('input[name="username"]').value;
+                var password = document.querySelector('input[name="password"]').value;
+                var valid = true;
+                var errorMessage = '';
+        
+                if (username.trim() === '') {
+                    errorMessage += ' Ingrese su nombre de usuario';
+                    valid = false;
+                }
+                if (password.trim() === '') {
+                    if (!valid){
+                        errorMessage += ' y '
+                    }
+                    errorMessage += ' Ingrese su contraseña';
+                    valid = false;
+                }
+                errorMessage +='.'
+                if (!valid) {
+                    event.preventDefault(); // Detiene el envío del formulario
+                    //alert(errorMessage); // Muestra un mensaje de error
+                    Swal.fire({
+                        title: "Por favor, ",
+                        text: errorMessage,
+                        icon: "info"
+                      });
+                }else {
+                    function getCookie(name) {
+                        let cookieValue = null;
+                        if (document.cookie && document.cookie !== '') {
+                            const cookies = document.cookie.split(';');
+                            for (let i = 0; i < cookies.length; i++) {
+                                const cookie = cookies[i].trim();
+                                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                    break;
+                                }
+                            }
+                        }
+                        return cookieValue;
+                    }
+                    const csrftoken = getCookie('csrftoken');
+
+                            mostrarSpinner()
+                        event.preventDefault(); // Previene el envío normal del formulario
+                        $.ajax({
+                            url: "{% url 'verificarlogin' %}",
+                            type: 'post',
+                            data: $(this).serialize(),
+                            beforeSend: function(xhr) {
+                                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    ocultarSpinner()
+                                    Swal.fire({
+                                        position: "top",
+                                        icon: "success",
+                                        title: "Bienvenido ",
+                                        showConfirmButton: false,
+                                        timer: 3000
+                                    });
+                                    
+                                    
+                                    window.location.href = "{% url 'home' %}";
+                                } else {
+                                    ocultarSpinner()
+                                    Swal.fire({
+                                        position: "top",
+                                        icon: "error",
+                                        title:  "Usuario o contraseña incorrectos ",
+                                        showConfirmButton: false,
+                                        timer: 3000
+                                    });
+                                    
+                                }
+                            },
+                            error: function(error) {
+                                ocultarSpinner()
+                                console.log("Error al cargar los datos: ", error.responseText);
+                                Swal.fire({
+                                    position: "top",
+                                    icon: "error",
+                                    title: "Usuario o contraseña incorrectos ",
+                                    showConfirmButton: false,
+                                    timer: 3000
+                                });
+                            // alert();
+                            }
+                        });
+                }
+            });
+        });
+
+
+     
+
+
+
+
+
+
+
+
+
+
+
+
+
 
        //funcion para ver el gato corriendo 
         document.addEventListener("DOMContentLoaded", function() {

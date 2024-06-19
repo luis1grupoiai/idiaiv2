@@ -319,7 +319,7 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
         
             <div class="modal-footer">
                 <button type="button" class="btn btn-light-danger"
-                data-bs-dismiss="modal" onclick="updateUserkey();" id="botonActualizar" name "botonActualizar">
+                onclick="updateUserkey();" id="botonActualizar" name "botonActualizar">
                
                 <span class="d-none d-sm-block">Actualizar</span>
 
@@ -595,9 +595,10 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
               //modal.show();
       }
             
-              
-      
-
+      function keyModal() {    
+      var modal = new bootstrap.Modal(document.getElementById('verUserkeyModal'));
+                  modal.show();
+      }
            
            
 
@@ -681,6 +682,22 @@ aria-labelledby="myModalLabel33" aria-hidden="true">
             // console.log("Nombre Completo : " + nombreCompleto)
              //console.log("Direccion  : " + setDireccion)
              //console.log("---------------------------------------")
+             
+             var regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#\-()=¡/.,_])[A-Za-z\d@$!%*?&#\-()=¡/.,_]{8,}$/;
+             if (!regex.test(contrasena)) {
+                 Swal.fire({
+                     title: "Formato de contraseña incorrecto",
+                     text: "La contraseña debe tener al menos 8 caracteres, incluir mayúsculas, minúsculas, números y los siguientes símbolos especiales: @, $, !, %, *, ?, &, -, #, (, ), =, ¡, /, ., _.",
+                     icon: "error",
+                     confirmButtonText: 'Ok'
+                 });
+                 
+                 ocultarSpinner();
+                 return false;
+             }
+
+
+
               const datos = JSON.stringify({ direccion:setDireccion , keypass:contrasena, nombre_usuario:nombreUsuario,nombre_completo:nombreCompleto });
         
               fetch(`/modulo-update/`, {

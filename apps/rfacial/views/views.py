@@ -1836,7 +1836,7 @@ class CMigraPermisos():
         dInfoPermisosUbicados = dict()
         lPermisoUsuario = []
 
-        # print(type(p_sSistema))
+        print(type(p_sSistema))
         # print("Tamaño del texto: ")
         # print(getsizeof(p_sSistema))
 
@@ -1850,8 +1850,11 @@ class CMigraPermisos():
                 print("Si hubo resultados.")
                 print(dUsuariosActivos[0][6])
 
+                # obtener el listado completo de los permisos originales del sistema desde IDIAI v1
                 sPermisosAfter = dUsuariosActivos[0][6]
                 dInfoPermisosUbicados = self.obtenerPermisosAfter(p_sSistema, sPermisosAfter)
+
+                # Relación de permisos originales del sistema desde IDIAI v1 y el ID del permiso del IDIAI v2
                 print(dInfoPermisosUbicados)
 
                 # lPermiso = p_sListPermisos.split(",")
@@ -1880,11 +1883,7 @@ class CMigraPermisos():
 
                                 lPermisoMayus = sPermisoMayusulas.split(",")
 
-                                #TODO: Buscar mediante lista.index("nombrePermiso") obtener la posicion del permiso y ver si en la lista de permisos del usuario ese permiso es 1.
-
-
-
-                                
+                                #TODO: Buscar mediante lista.index("nombrePermiso") obtener la posicion del permiso y ver si en la lista de permisos del usuario ese permiso es 1.                                
                                 # print("El usuario "+dUsuario[2]+" no tiene permisos asignados en el IDIAI v2 para el sistema "+p_sSistema)git
                             else:
                                 print("El usuario "+dUsuario[2]+" tiene permisos asignados en el IDIAI v2 para el sistema "+p_sSistema)

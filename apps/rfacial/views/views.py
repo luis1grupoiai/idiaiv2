@@ -45,12 +45,10 @@ from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 from sys import getsizeof
 
-
-
-
 import json
 import os
 import base64
+import time
 import time
 
 # stky = Fernet.generate_key()
@@ -1828,6 +1826,7 @@ class CInactivaTkg():
 class CMigraPermisos():
 
     idSistema = 0
+    listaPermisosv1 = []
 
     def migrarPermisos(self,p_sSistema = None):
         # Inicializar/declarar variables
@@ -1836,26 +1835,27 @@ class CMigraPermisos():
         dInfoPermisosUbicados = dict()
         lPermisoUsuario = []
 
-        print(type(p_sSistema))
+        # print(type(p_sSistema))
         # print("Tamaño del texto: ")
         # print(getsizeof(p_sSistema))
 
         if p_sSistema != None and p_sSistema!="":
+            #Consulta los usuarios activos de IDIAIV1 para el sistema X
             oExecSP = CEjecutarSP()
             oExecSP.registrarParametros("nombreSistema",p_sSistema)
             dUsuariosActivos = oExecSP.ejecutarSP('obtenerUsuariosActivos')
 
             if len(dUsuariosActivos)>0:
                 
-                print("Si hubo resultados.")
-                print(dUsuariosActivos[0][6])
+                print("Total de usuarios activos:" +str(len(dUsuariosActivos)))
+                # print(dUsuariosActivos[0][6])
 
                 # obtener el listado completo de los permisos originales del sistema desde IDIAI v1
                 sPermisosAfter = dUsuariosActivos[0][6]
                 dInfoPermisosUbicados = self.obtenerPermisosAfter(p_sSistema, sPermisosAfter)
 
                 # Relación de permisos originales del sistema desde IDIAI v1 y el ID del permiso del IDIAI v2
-                print(dInfoPermisosUbicados)
+                # print(dInfoPermisosUbicados)
 
                 # lPermiso = p_sListPermisos.split(",")
 
@@ -1866,7 +1866,8 @@ class CMigraPermisos():
 
                     if len(dActivoidIai2)==0:
                         # print("El usuario si existe en IDIAI v2.")
-                        print("El usuario "+str(dUsuario[2])+" no existe en IDIAI V2")
+                        print("El usuario "+dUsuario[2]+" no existe en IDIAI V2")
+                       
                     else:
                         # print("id de usuario: ")
                         # print(dActivoidIai2[0]["id"])
@@ -1879,9 +1880,22 @@ class CMigraPermisos():
                                 pass
                                 
                                 sPermisoMayusulas = sPermisosAfter.upper()
-                                print(sPermisoMayusulas)
+                                # print(sPermisoMayusulas)
 
                                 lPermisoMayus = sPermisoMayusulas.split(",")
+
+                                # print("Los permisos del IDIAI V1 del usuario: ")
+                                # print(dInfoPermisosUbicados)
+                                # print(dUsuario[3])
+                                # print("El id del usuario es: ")
+                                # print(dActivoidIai2[0]["id"])
+                                # print(self.listaPermisosv1)
+
+                                nInsert = self.insertarPermiso(dActivoidIai2[0]["id"], self.listaPermisosv1, dUsuario[3],dInfoPermisosUbicados)
+
+                                if nInsert == 1:
+                                    print("Permisos insertados para el usuario: "+dUsuario[2])
+                                    
 
                                 #TODO: Buscar mediante lista.index("nombrePermiso") obtener la posicion del permiso y ver si en la lista de permisos del usuario ese permiso es 1.                                
                                 # print("El usuario "+dUsuario[2]+" no tiene permisos asignados en el IDIAI v2 para el sistema "+p_sSistema)git
@@ -1895,11 +1909,12 @@ class CMigraPermisos():
             # dDatosPerm = []
             dInfoPermisosUbicados = dict()
             posicion = 0
-
+            print("> Inicio al proceso de relación de permisos de IDIAI v1 vs IDIAIV2.")
             try:
                 if p_sListPermisos !=None and p_sListPermisos.strip() != "" and p_sNombreSistema!=None and p_sNombreSistema!= "":
                     lPermiso = p_sListPermisos.split(",")
                     
+                    self.listaPermisosv1 = lPermiso
                    
                     for item in lPermiso:
                         # print(item)
@@ -1915,10 +1930,10 @@ class CMigraPermisos():
                             sPermisosNoEncontrados += item+", "
                             dInfoPermisosUbicados.update({item:0})
                         else:
-                            print(type(dDatosPerm))
+                            # print(type(dDatosPerm))
 
                             for dato in dDatosPerm:
-                                print(dato[2])
+                                # print(dato[2])
                                 self.idSistema = dato[3]
                                 dInfoPermisosUbicados.update({item:dato[2]})
                         
@@ -1928,6 +1943,8 @@ class CMigraPermisos():
                     
                 if sPermisosNoEncontrados!= "":
                     print("No se encontraron los siguientes permisos: "+ sPermisosNoEncontrados)
+                else:
+                    print("Relación de Permisos : OK ")
 
 
                 # print(dInfoPermisosUbicados)
@@ -1935,7 +1952,86 @@ class CMigraPermisos():
             except ValueError as error:
                 sTexto = "Error en el metodo obtenerPermisosAfter: %s" % error
                 print(sTexto)
-
+            
+            print("> Concluye proceso de relación de permisos de IDIAI v1 vs IDIAIV2.")
+            
             return dInfoPermisosUbicados
 
         # print("Hola :)")
+
+
+    def insertarPermiso(self, idUsuario ,listadoPermisov1 = None, permisosUsuariov1 = None, lPermisosCorrelacion = None):
+        sTexto = ""
+        nNumitera=0
+        sPerm = ""
+        idPerm = 0
+        oExecSP = False
+        dDatosPerm = False
+        nInsert = 0
+        oCAute = CAutenticacion()
+        lPermisoUsuario = []
+
+        print("Inicio al método para insertar permiso(s) a usuario.")
+   
+
+        try:
+            pass
+            
+            if listadoPermisov1 != None and permisosUsuariov1 != None and lPermisosCorrelacion != None:
+                # print("Listado de permisos de IDIAI V1: ")
+                # print(listadoPermisov1)
+
+                # print("Listado de permisos de IDIAI V1 asignados al usuario: ")
+                # print(permisosUsuariov1)
+
+                # print("Listado de Permisos Correlacionados ")
+                # print(lPermisosCorrelacion)
+
+                lPermiso = permisosUsuariov1.split(",")
+
+                for item in lPermiso:
+                    # print(item)
+
+                    if int(item) == 1:
+                        
+                        sPerm = listadoPermisov1[nNumitera].upper().strip()
+                        idPerm = lPermisosCorrelacion[sPerm]
+                        print('El usuario con id '+str(idUsuario)+' Tiene asignado el permiso: '+sPerm+' - '+str(idPerm))
+
+                        if idPerm != 0:
+                            pass
+                            # oExecSP = CEjecutarSP()
+                            # oExecSP.registrarParametros("idUsuario",idUsuario)
+                            # oExecSP.registrarParametros("idPermiso",idPerm)
+                            # dDatosPerm = oExecSP.ejecutarSP('InsertarPermisoUsuario')
+                        else:
+                            print('El permiso: '+sPerm+' no esta registrado en IDIAV2, por favor de revisar.')
+                            
+                            # time.sleep(3)
+
+                lPermisoUsuario = oCAute.obtenerPermisos(self.idSistema,idUsuario)
+
+                if len(lPermisoUsuario)>0:
+                    nInsert = 1
+                    print("El usuario ya cuenta con permisos al sistema .")
+                else:
+                    print("El usuario aun no cuenta con permisos al sistema .")            
+
+                    nNumitera = nNumitera+1
+
+                # for item in permisosUsuariov1:
+                    # print(item.upper().strip())
+                    # print(item)
+
+
+            else:
+                print("Al parecer olvidaste pasar algun parametro, por favor verifica que estes pasando todos los datos solicitados para este metodo.")
+
+
+        except ValueError as error:
+            sTexto = "Error en el metodo obtenerPermisosAfter: %s" % error
+            print(sTexto)
+
+        print("Concluye el método para insertar permiso(s) a usuario.")
+
+        return nInsert

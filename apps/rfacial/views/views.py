@@ -2009,6 +2009,8 @@ class CMigraPermisos():
                             
                             # time.sleep(3)
 
+                    nNumitera = nNumitera+1
+
                 lPermisoUsuario = oCAute.obtenerPermisos(self.idSistema,idUsuario)
 
                 if len(lPermisoUsuario)>0:
@@ -2017,7 +2019,7 @@ class CMigraPermisos():
                 else:
                     print("El usuario aun no cuenta con permisos al sistema .")            
 
-                    nNumitera = nNumitera+1
+                    
 
                 # for item in permisosUsuariov1:
                     # print(item.upper().strip())

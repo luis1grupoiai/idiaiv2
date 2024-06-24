@@ -410,9 +410,14 @@
                     var nombreSesion = button.getAttribute('data-nombreSesion');
                     var nombreCompleto = button.getAttribute('data-nombreCompleto');
                     var email = button.getAttribute('data-email');
+                    
                     var departamento = button.getAttribute('data-deparamento');
                     var distinguishedName = button.getAttribute('data-distinguishedName');
                     var nombreProyecto =button.getAttribute('data-proyecto');
+
+                    if (button.getAttribute('data-email') == "None" ){
+                    var email=button.getAttribute('data-nombreUsuarioPrincipal');
+                    }
                     // Rellena los campos del formulario en el modal
                     document.getElementById('nombre_usuario').value = nombre ;
                     document.getElementById('nombre_pila').value = nombrePila;

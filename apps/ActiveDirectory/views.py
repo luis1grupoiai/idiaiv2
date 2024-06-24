@@ -133,6 +133,25 @@ def actualizar_empleados():
                     department_actual = conn.entries[0].department.value
                     puesto_actual = conn.entries[0].title.value
                     #imprimir(dn)
+                    if physicalDeliveryOfficeName_actual is None:
+                        physicalDeliveryOfficeName_actual = ""
+                           
+                    if department_actual is None:
+                        department_actual = ""
+                           
+                    if puesto_actual is None:
+                        puesto_actual = ""
+                           
+                    if usuario.Proyecto is None:
+                        usuario.Proyecto = ""
+                            
+                    if usuario.nombre_direccion is None:
+                        usuario.nombre_direccion = ""
+                           
+                    if usuario.Nombre_ct is None:
+                        usuario.Nombre_ct = ""   
+                    
+                    
                     if (physicalDeliveryOfficeName_actual.strip().lower() != usuario.Proyecto.strip().lower() or
                             department_actual.strip().lower() != usuario.nombre_direccion.strip().lower() or puesto_actual.strip().lower() != usuario.Nombre_ct.strip().lower()):
                         print("")
@@ -252,7 +271,7 @@ def actualizarProyectoDireccion(request):
     
     noCambios=True
     for usuario in users:
-            #imprimir(f" Empleado :  {usuario.NombreCompleto} : {usuario.username}")
+            imprimir(f" Empleado :  {usuario.NombreCompleto} : {usuario.username}")
             try:
                 with connect_to_ad() as conn:
                     search_base = domino
@@ -266,6 +285,27 @@ def actualizarProyectoDireccion(request):
                         puesto_actual = conn.entries[0].title.value
 
                         imprimir(dn)
+                        if physicalDeliveryOfficeName_actual is None:
+                           physicalDeliveryOfficeName_actual = ""
+                           
+                        if department_actual is None:
+                           department_actual = ""
+                           
+                        if puesto_actual is None:
+                           puesto_actual = ""
+                           
+                        if usuario.Proyecto is None:
+                           usuario.Proyecto = ""
+                            
+                        if usuario.nombre_direccion is None:
+                           usuario.nombre_direccion = ""
+                           
+                        if usuario.Nombre_ct is None:
+                            usuario.Nombre_ct = ""   
+                        
+                        
+                        
+                        
                        
                         if physicalDeliveryOfficeName_actual.strip().lower() != usuario.Proyecto.strip().lower() or department_actual.strip().lower() != usuario.nombre_direccion.strip().lower() or puesto_actual.strip().lower() != usuario.Nombre_ct.strip().lower() :
                             imprimir("")

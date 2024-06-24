@@ -1829,6 +1829,13 @@ class CMigraPermisos():
     listaPermisosv1 = []
 
     def migrarPermisos(self,p_sSistema = None):
+        sMsg = ""
+        # sMsg +="Proceso automatico de insertado de permisos .\n"
+
+        sMsg1 = ""
+        sMsg2 = ""
+        sMsg3 = ""
+
         # Inicializar/declarar variables
         oCAute = CAutenticacion()
         sPermisosAfter = ""        
@@ -1841,6 +1848,7 @@ class CMigraPermisos():
 
         if p_sSistema != None and p_sSistema!="":
             #Consulta los usuarios activos de IDIAIV1 para el sistema X
+            sMsg = "Se migran TODOS los permisos de TODOS los usuarios del sistema "+p_sSistema+" de IDIAI v1 al IDIAI v2 <br>"
             oExecSP = CEjecutarSP()
             oExecSP.registrarParametros("nombreSistema",p_sSistema)
             dUsuariosActivos = oExecSP.ejecutarSP('obtenerUsuariosActivos')
@@ -1858,7 +1866,8 @@ class CMigraPermisos():
                 # print(dInfoPermisosUbicados)
 
                 # lPermiso = p_sListPermisos.split(",")
-
+                # sMsg1 +="Listado de usuarios que no se encuentran en IDIAIV2:\n"
+                
                 for dUsuario in dUsuariosActivos:
                     # print(dUsuario[2])
 
@@ -1867,6 +1876,7 @@ class CMigraPermisos():
                     if len(dActivoidIai2)==0:
                         # print("El usuario si existe en IDIAI v2.")
                         print("El usuario "+dUsuario[2]+" no existe en IDIAI V2")
+                        sMsg1 += "El usuario "+dUsuario[2]+" no existe en IDIAI V2 <br>"
                        
                     else:
                         # print("id de usuario: ")
@@ -1895,12 +1905,28 @@ class CMigraPermisos():
 
                                 if nInsert == 1:
                                     print("Permisos insertados para el usuario: "+dUsuario[2])
+                                else:
+                                     print("No se insertaron Permisos para el usuario: "+dUsuario[2])
+                                     sMsg3 += "No se insertaron permisos en IDIAI v2 para el usuario: "+dUsuario[2]+"<br> "
                                     
 
                                 #TODO: Buscar mediante lista.index("nombrePermiso") obtener la posicion del permiso y ver si en la lista de permisos del usuario ese permiso es 1.                                
                                 # print("El usuario "+dUsuario[2]+" no tiene permisos asignados en el IDIAI v2 para el sistema "+p_sSistema)git
                             else:
+                                sMsg2 += "El usuario "+dUsuario[2]+" tiene permisos asignados en el IDIAI v2 para el sistema "+p_sSistema+"<br>"
                                 print("El usuario "+dUsuario[2]+" tiene permisos asignados en el IDIAI v2 para el sistema "+p_sSistema)
+
+
+            sAsunto = "Resultado final de proceso migrarPermisos"
+            sTitulo = "Insertado automático de permisos."
+            contenido = sMsg1+" <br><br> "+sMsg2+" <br> "+sMsg3
+            sSubtitulo = sMsg+"<br>"
+
+            oCItkg = CInactivaTkg()
+            oCItkg.enviarCorreo(sAsunto,sTitulo,contenido,sSubtitulo)
+
+
+
                                 
                         
     def obtenerPermisosAfter(self,p_sNombreSistema ,p_sListPermisos):
@@ -1971,8 +1997,11 @@ class CMigraPermisos():
         oCAute = CAutenticacion()
         lPermisoUsuario = []
 
+       
+
         print("Inicio al método para insertar permiso(s) a usuario.")
    
+        
 
         try:
             pass
@@ -2000,10 +2029,10 @@ class CMigraPermisos():
 
                         if idPerm != 0:
                             pass
-                            # oExecSP = CEjecutarSP()
-                            # oExecSP.registrarParametros("idUsuario",idUsuario)
-                            # oExecSP.registrarParametros("idPermiso",idPerm)
-                            # dDatosPerm = oExecSP.ejecutarSP('InsertarPermisoUsuario')
+                            oExecSP = CEjecutarSP()
+                            oExecSP.registrarParametros("idUsuario",idUsuario)
+                            oExecSP.registrarParametros("idPermiso",idPerm)
+                            dDatosPerm = oExecSP.ejecutarSP('InsertarPermisoUsuario')
                         else:
                             print('El permiso: '+sPerm+' no esta registrado en IDIAV2, por favor de revisar.')
                             

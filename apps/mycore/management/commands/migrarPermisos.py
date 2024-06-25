@@ -10,7 +10,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--arg2',
             type=str,
-            help='Nombre del usuario/Allkn/Alluk; Donde si el parametro es Allkn realiza una busqueda para obtener solo los usuarios que ya cuentan con permisos al sistema descrito en arg1 y a estos mismos asignarle el permiso de arg3;Alluk realiza una busqueda absoluta de todos los usuarios para asignarle el permiso escrito en arg3, sin importar que los usuarios cuenten o no con permisos al sistema de arg1; si el parametro es el nombre de un usuario entonces solo a ese usuario se le asignara el o los permisos descritos en arg3. Este parametro es opcional.',
+            help='Nombre del usuario/Allkn/Alluk(en construcción); Donde si el parametro es Allkn realiza una busqueda para obtener solo los usuarios que ya cuentan con permisos al sistema descrito en arg1 y a estos mismos asignarle el permiso de arg3;Alluk realiza una busqueda absoluta de todos los usuarios para asignarle el permiso escrito en arg3, sin importar que los usuarios cuenten o no con permisos al sistema de arg1; si el parametro es el nombre de un usuario entonces solo a ese usuario se le asignara el o los permisos descritos en arg3. Este parametro es opcional.',
             default=None
         )
 

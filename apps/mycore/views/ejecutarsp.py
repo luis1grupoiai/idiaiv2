@@ -20,7 +20,7 @@ class CEjecutarSP():
 
     #metodo que ejecuta el procedimiento almacenado con los parametros obtenidos de la función registrarParametros.
     def ejecutarSP(self, sNombreSP = ""):
-        print("Accede a metodo ejecutarSP.")
+        # print("Accede a metodo ejecutarSP.")
 
         sQuery = ""
         nCont = 0
@@ -47,7 +47,7 @@ class CEjecutarSP():
                                 sQuery+= f'@{clave} = "{valor}"'
                                 # print(nCont)    
 
-                        print("El valor del query es: " +sQuery)
+                        # print("El valor del query es: " +sQuery)
                         # cursor.execute("EXEC obtenerPermisosUsuario @idUsuario=%s",[2])
                         cursor.execute(sQuery)
 
@@ -73,7 +73,7 @@ class CEjecutarSP():
                         
                         
                     else:
-                        print("No se recibieron parametros, por lo tanto se ejecutará el SP sin parametros.")
+                        # print("No se recibieron parametros, por lo tanto se ejecutará el SP sin parametros.")
                         sQuery = "EXEC "+sNombreSP
 
                         cursor.execute(sQuery)
@@ -90,7 +90,9 @@ class CEjecutarSP():
                  print(f"Error al ejecutar el procedimiento almacenado: {str(e)}")
 
             #retorna una lista de los registros obtenidos de la consulta.
-            self.parametros = {}
+            # self.parametros = {}
+
+            self.parametros.clear()
             
             return resultados
         

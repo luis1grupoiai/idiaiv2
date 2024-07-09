@@ -91,7 +91,7 @@ domino=asignar_dominio()['dominio']
 dominoRaiz=asignar_dominio()['dominioRaiz']
 
 unidadOrganizativa = ('OU=Bajas','OU=Administracion','OU=Ingeniería','OU=DCASS','OU=Proyectos Especiales','0') #esta variable esta relacionada con las funciones de   mover_usuario_ou y asignar_Departamento
-selectDepartamento= ('Administración','Ingeniería','Calidad, Ambiental, Seguridad y Salud','Proyectos Especiales','Tecnatom','Presidencia Grupo IAI','Calidad Ambiental Seguridad y Salud')
+selectDepartamento= ('Administración','Ingeniería','Calidad, Ambiental, Seguridad y Salud','Proyectos Especiales','Tecnatom','Presidencia Grupo IAI',' ','Calidad Ambiental Seguridad y Salud','Ingenieria','Administracion')
 
 
 
@@ -103,7 +103,11 @@ def asignar_Departamento(departamento):
     
     if departamento == "Administración":
         opc = 1
+    elif departamento == "Administracion":
+        opc = 1
     elif departamento == "Ingeniería":
+        opc = 2
+    elif departamento == "Ingenieria":
         opc = 2
     elif departamento == "Calidad, Ambiental, Seguridad y Salud":
         opc = 3

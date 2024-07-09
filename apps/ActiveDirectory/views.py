@@ -24,7 +24,7 @@ from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.auth import authenticate, login
 from django.views.decorators.http import require_POST
-
+import unicodedata
 ENCRYPTION_KEY_DESCRIPCION =os.environ.get('KEY_DESCRIPCION').encode()
 ENCRYPTION_KEY_NOMBRE = os.environ.get('KEY_NOMBRE').encode()
 def es_superusuario(user):
@@ -91,7 +91,9 @@ domino=asignar_dominio()['dominio']
 dominoRaiz=asignar_dominio()['dominioRaiz']
 
 unidadOrganizativa = ('OU=Bajas','OU=Administracion','OU=Ingeniería','OU=DCASS','OU=Proyectos Especiales','0') #esta variable esta relacionada con las funciones de   mover_usuario_ou y asignar_Departamento
-selectDepartamento= ('Administración','Ingeniería','Calidad, Ambiental, Seguridad y Salud','Proyectos Especiales','Tecnatom','Presidencia Grupo IAI')
+selectDepartamento= ('Administración','Ingeniería','Calidad, Ambiental, Seguridad y Salud','Proyectos Especiales','Tecnatom','Presidencia Grupo IAI','Calidad Ambiental Seguridad y Salud')
+
+
 
 def SelectDepartamento():
     return selectDepartamento
@@ -107,10 +109,55 @@ def asignar_Departamento(departamento):
         opc = 3
     elif departamento == "Proyectos Especiales":
         opc = 4
+    elif departamento == "Calidad Ambiental Seguridad y Salud":
+        opc = 3
     else:
         opc = 5 #se le va asignar  '0'
     return opc
 
+def asignar_departamento_falta_probar(departamento):  #probar despues este codigo XD
+    # Normaliza la cadena para manejar acentos y convertir a minúsculas
+    departamento_normalizado = unicodedata.normalize('NFKD', departamento).encode('ASCII', 'ignore').decode('utf-8').lower()
+    
+    # Diccionario para mapear departamentos a sus respectivos códigos
+    departamento_map = {
+        "administracion": 1,
+        "ingenieria": 2,
+        "calidad ambiental seguridad y salud": 3,
+        "calidad, ambiental, seguridad y salud": 3,
+        "proyectos especiales": 4
+    }
+    
+    # Se usa el diccionario para asignar el valor o el valor por defecto 5
+    opc = departamento_map.get(departamento_normalizado, 5)
+    return opc
+
+def quitar_comas(cadena):
+    """
+    Esta función toma una cadena y devuelve una nueva cadena sin comas.
+    
+    :param cadena: La cadena original que puede contener comas.
+    :return: Una nueva cadena sin comas.
+    """
+    return cadena.replace(',', '')
+
+def quitar_espacios_poner_guion_bajo(cadena):
+    """
+    Esta función toma una cadena y devuelve una nueva cadena con los espacios reemplazados por guiones bajos.
+    
+    :param cadena: La cadena original que puede contener espacios.
+    :return: Una nueva cadena con los espacios reemplazados por guiones bajos.
+    """
+    return cadena.replace(' ', '_')
+
+def quitar_guion_bajo_poner_espacios(cadena):
+    """
+    Esta función toma una cadena y devuelve una nueva cadena con los guiones bajos reemplazados por espacios.
+    
+    :param cadena: La cadena original que puede contener guiones bajos.
+    :return: Una nueva cadena con los guiones bajos reemplazados por espacios.
+    """
+    return cadena.replace('_', ' ')
 #Funcion para acciones asíncronas
 def actualizar_empleados():
     users = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='')
@@ -1903,6 +1950,85 @@ def Verificarlogin(request):
     else:
         print("si entro")
         return JsonResponse({'success': False, 'error': 'Usuario o contraseña incorrectos'}, status=401)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

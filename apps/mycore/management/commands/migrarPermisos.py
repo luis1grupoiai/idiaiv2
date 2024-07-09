@@ -21,6 +21,14 @@ class Command(BaseCommand):
             default=None
         )
 
+
+        parser.add_argument(
+            '--arg4',
+            type=str,
+            help='Nombre de permiso al que se va correlacionar el permiso indicado en el arg3.',
+            default=None
+        )
+
     def handle(self, *args, **options):
         # Aquí va tu lógica
         sSistema = ""
@@ -31,15 +39,19 @@ class Command(BaseCommand):
         arg1 = options['arg1']
         arg2 = options.get('arg2',"")
         arg3 = options.get('arg3',"")
+        arg4 = options.get('arg4',"")
+
         self.stdout.write(f'Se obtendran los usuarios que tienen acceso al sistema : {arg1}')
         self.stdout.write(f'Argumento 2 : {arg2}')
         self.stdout.write(f'Argumento 3 : {arg3}')
+        self.stdout.write(f'Argumento 4 : {arg4}')
 
         sSistema = f'{arg1}'
         sSistema =  sSistema.upper().strip()
 
         sUsuarios = arg2
         sPermisos = arg3
+        sPermisoIdiaiv1 = arg4
 
 
         if sUsuarios == None:
@@ -60,7 +72,7 @@ class Command(BaseCommand):
 
         if sSistema!="" and bValido:
             oInc = CMigraPermisos()
-            oInc.migrarPermisos(sSistema,sUsuarios, sPermisos)
+            oInc.migrarPermisos(sSistema,sUsuarios, sPermisos,sPermisoIdiaiv1)
         else:
             print("No ingreso correctamento los argumentos, por favor de verificar el uso del comando consultado  migrarPermisos --help")
 

@@ -41,3 +41,38 @@ CONFIGURAR EL ENTRYPOINT.SH CON SALTO DE LINEA LF
 MUY IMPORTANTE!!!
 Para corregir el error de CMAKE y dlib ejecuta lo siguiente:
 python install https://files.pythonhosted.org/packages/2e/9d/4e1003c044bdb07f7c0d83ae87d694e10e5a6c296b84566aa9a6ec9eed2a/dlib-19.24.2.tar.gz#sha256=2d4f618073bc6b297aa01ce05595a2d32b5b37e69cafd99f796e77346f6dcfb5
+
+
+
+--------------------------------
+Uso del comando migrarPermisos:
+* Argumentos obligatorios:
+
+	"Nombre del sistema" ejemplo SAPAI, el primer argumento obligatorio es indicar el nombre del sistema, y este sirve para obtener todos los usuarios activos que tienen permisos de dicho sistema en IDIAIv1,
+	correlacina los permisos viejos con los nuevos y asigna los permisos correspondientes a los usuarios, por eso es IMPORTANTE, que los permisos en IDIAIV2 tengan los mismos nombres que en IDIAIV1.
+
+
+* Argumentos opcionales: 
+	arg2 maneja dos tipos de procesos:
+		Allkn =  todos los conocidos, donde indicas que quieres asignar nuevos permisos a TODOS los usuarios activos que ya tienen acceso a X sistema en IDIAIV2 (en este caso no importa si el usuario 
+		contaba con el permiso en IDIAIv1)
+		PE = Permiso Especifico, donde indicas que vas quieres asignar un permiso en IDIAIV2 a los usuarios que ya contaban con dicho  permiso en IDIAIV1 pero por alguna razón el permiso cambio de nombre en IDIAIv2.
+	arg3 tiene el nombre del permiso actual en IDIAIV2
+	arg4 tiene el nombre del permiso anteior en IDIAIV1
+
+* Ejemplos:
+
+	1.- python manage.py migrarPermisos SAPAI --arg2 PE --arg3 EIMS --arg4 IMS --settings=config.settings.development
+	
+		relaciona un permiso existente en IDIAI V2 con uno en IDIAI v1 con los usuarios activos de IDIAIV1 y existentes en la BD de IDIAIv2, lo principal es que ambos permisos tienen diferente nombre
+
+	
+	
+	2.- python manage.py migrarPermisos SAPAI --arg2 Allkn --arg3 SS  --settings=config.settings.development
+	
+		relaciona un permiso existente en IDIAIV2 con IDIAIV1 con los usuarios activos de IDIAIV1  y existentes en la BD de IDIAIv2, lo principal es que ambos permisos tienen exactamente el mismo nombre
+	
+	3.- python manage.py migrarPermisos SAPAI   --settings=config.settings.development
+	
+		Obtiene todos los usuarios activos  y sus permisos asignados de IDIAIv1, los relaciona con los usuarios de IDIAIv2, después correlaciona los permisos de IDIAIV1 con IDIAIV2 (solo permisos con el mismo nombre) 
+		y al final asigna a los usuarios existentes en IDIAIv2 los permisos que tenía en IDIAIv1.

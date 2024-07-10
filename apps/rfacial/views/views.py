@@ -75,6 +75,7 @@ class CAutenticacion(APIView):
     sNombreSistema = ""
     oUser = ""
     dGruposAsigUsuario = {}
+    intTiempoExpira = 0
 
     # @staticmethod
     def obtenerPermisos(self, p_nIdSistema, p_nIdUsuario):
@@ -216,6 +217,11 @@ class CAutenticacion(APIView):
             expiration_time = timestamp + (expiration_hours * 3600)  # 3600 segundos en una hora
             # expiration_time = timestamp + (expiration_hours * 60)  # 60 segundos en un minuto, solo para terminos de prueba ...
             # print(expiration_time)
+            #ARSI 10072024
+            self.intTiempoExpira = expiration_time
+            print("======== > Tiempo de expiración ====> :o ")
+            print(self.intTiempoExpira)
+            
             token = default_token_generator.make_token(user)+ ',' + str(expiration_time)
    
             # sToken_encoded = urlsafe_base64_encode(force_bytes(token))
@@ -242,6 +248,7 @@ class CAutenticacion(APIView):
 
             # Calcular la fecha de expiración del token
             expiration_time = timestamp + (expiration_hours * 3600)  # 3600 segundos en una hora
+           
             # expiration_time = timestamp + (expiration_hours * 60)  # 60 segundos en un minuto, solo para terminos de prueba ...
             
             token = default_token_generator.make_token(user)+ ',' + str(expiration_time)+','+str(p_nIdSistema)+','+os.environ.get('SIGNAL')
@@ -1081,7 +1088,7 @@ class CAutenticacion(APIView):
                                                 opc = 1
                                                 info = self.registrarAcceso(sUserName,sistema,"Inicio de sesión exitoso al sistema "+self.sNombreSistema+sTextoTkg,opc)
                                                 nStatus = 200
-                                                datos = {'message': 'Success','idPersonal':idPersonal,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg, 'fechaNac':dFechaNac, 'rutaFoto':sRutaFoto}
+                                                datos = {'message': 'Success','idPersonal':idPersonal,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg, 'fechaNac':dFechaNac, 'rutaFoto':sRutaFoto, 'expira':self.intTiempoExpira}
                                             else:
                                                 nStatus = 404
                                                 datos = {'message': 'Acceso denegado', 'error':sTexto}

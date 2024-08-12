@@ -800,6 +800,9 @@ class CAutenticacion(APIView):
             idPersonal = 0
             sNombreCompleto = ""
             sUserName = ""
+            dFechaNac = ""
+            sRutaFoto =  ""
+            nNoEmpleado = 0
             tokenApi = ""
             nItemJson = 0
             keySis = ""
@@ -978,6 +981,7 @@ class CAutenticacion(APIView):
                                         sUserName = dDatosPersonales[0][3]
                                         dFechaNac = dDatosPersonales[0][22]
                                         sRutaFoto =  dDatosPersonales[0][12]
+                                        nNoEmpleado = dDatosPersonales[0][2]
 
                                         
                                         dUsuario = self.consultarUsuarioActivo(sUserName)
@@ -1088,7 +1092,7 @@ class CAutenticacion(APIView):
                                                 opc = 1
                                                 info = self.registrarAcceso(sUserName,sistema,"Inicio de sesión exitoso al sistema "+self.sNombreSistema+sTextoTkg,opc)
                                                 nStatus = 200
-                                                datos = {'message': 'Success','idPersonal':idPersonal,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg, 'fechaNac':dFechaNac, 'rutaFoto':sRutaFoto, 'expira':self.intTiempoExpira}
+                                                datos = {'message': 'Success','idPersonal':idPersonal,'nNoEmpleado':nNoEmpleado,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg, 'fechaNac':dFechaNac, 'rutaFoto':sRutaFoto, 'expira':self.intTiempoExpira}
                                             else:
                                                 nStatus = 404
                                                 datos = {'message': 'Acceso denegado', 'error':sTexto}

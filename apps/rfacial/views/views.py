@@ -2314,3 +2314,81 @@ class CMigraPermisos():
 
 
         return sTexto   
+    
+
+
+class CRelacionPermisos():
+
+    def listarPermisos(self,p_sSistema = None):
+        
+        sPermisosAfter = ""
+        lPermiso = []
+
+        if p_sSistema != None and p_sSistema!="":
+            oExecSP = CEjecutarSP()
+            oExecSP.registrarParametros("nombreSistema",p_sSistema)
+            dUsuariosActivos = oExecSP.ejecutarSP('obtenerUsuariosActivos')
+            print("El sistema a consultar es: "+p_sSistema)
+            
+            sTexto = ""
+
+
+            if len(dUsuariosActivos)>0:
+                # print("Total de usuarios activos:" +str(len(dUsuariosActivos)))
+                # print("Valor de registros devueltos: " +str(len(dUsuariosActivos)))
+                
+
+                    # obtener el listado completo de los permisos originales del sistema desde IDIAI v1
+                sPermisosAfter = dUsuariosActivos[0][6]
+                # print(sPermisosAfter)
+
+                if(sPermisosAfter != ""):
+                    self.lPermiso = sPermisosAfter.split(",")
+
+                    # print("Total de permisos: "+str(len(self.lPermiso)))
+                    
+                    for item in dUsuariosActivos:
+                        # print(item[2])
+
+                        sTexto += "|"+item[2]
+
+                        lista1 = item[3].split(",")
+
+                        sTexto += self.convertirPermiso(lista1)+"\n"
+
+                    print(sTexto)
+
+
+    def convertirPermiso(self, permisosAsignados= None):
+            # print("Accede a convertirPermiso")
+            # print("Total de permisos: "+str(len(self.lPermiso)))
+            # print("Permisos asignados:"+str(len(permisosAsignados)))
+            
+            sTexto = ""
+            nPos = 0
+
+            # print(self.lPermiso[0])
+
+            for item in permisosAsignados:
+                # print(item)
+
+                if item == "1":
+                    # print(self.lPermiso[nPos])
+                    sTexto += "|"+self.lPermiso[nPos]
+                else:
+                    pass
+
+                nPos = nPos +1
+
+            
+            return sTexto
+
+                        
+
+
+                        
+
+
+
+
+         

@@ -803,6 +803,8 @@ class CAutenticacion(APIView):
             dFechaNac = ""
             sRutaFoto =  ""
             nNoEmpleado = 0
+            sProyectoActual = "" #Se crea  variable de proyecto actual
+            sPuestoActual = ""  #Se crea variable de puesto actual
             tokenApi = ""
             nItemJson = 0
             keySis = ""
@@ -982,6 +984,8 @@ class CAutenticacion(APIView):
                                         dFechaNac = dDatosPersonales[0][22]
                                         sRutaFoto =  dDatosPersonales[0][12]
                                         nNoEmpleado = dDatosPersonales[0][2]
+                                        sProyectoActual = dDatosPersonales[0][20]
+                                        sPuestoActual = dDatosPersonales[0][13]
 
                                         
                                         dUsuario = self.consultarUsuarioActivo(sUserName)
@@ -1092,7 +1096,7 @@ class CAutenticacion(APIView):
                                                 opc = 1
                                                 info = self.registrarAcceso(sUserName,sistema,"Inicio de sesión exitoso al sistema "+self.sNombreSistema+sTextoTkg,opc)
                                                 nStatus = 200
-                                                datos = {'message': 'Success','idPersonal':idPersonal,'nNoEmpleado':nNoEmpleado,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg, 'fechaNac':dFechaNac, 'rutaFoto':sRutaFoto, 'expira':self.intTiempoExpira}
+                                                datos = {'message': 'Success','idPersonal':idPersonal,'nNoEmpleado':nNoEmpleado,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg, 'fechaNac':dFechaNac, 'rutaFoto':sRutaFoto, 'expira':self.intTiempoExpira, 'proyectoActual':sProyectoActual,'puestoActual':sPuestoActual}
                                             else:
                                                 nStatus = 404
                                                 datos = {'message': 'Acceso denegado', 'error':sTexto}

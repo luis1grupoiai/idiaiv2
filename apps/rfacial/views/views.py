@@ -806,6 +806,7 @@ class CAutenticacion(APIView):
             sProyectoActual = "" #Se crea  variable de proyecto actual
             sPuestoActual = ""  #Se crea variable de puesto actual
             idPuestoActual = 0  #Se crea variable de id del puesto actual
+            idProyectoActual = 0 #Se crea variable de id proyecto actual
             tokenApi = ""
             nItemJson = 0
             keySis = ""
@@ -988,6 +989,7 @@ class CAutenticacion(APIView):
                                         sProyectoActual = dDatosPersonales[0][20]
                                         sPuestoActual = dDatosPersonales[0][13]
                                         idPuestoActual = dDatosPersonales[0][23]
+                                        idProyectoActual = dDatosPersonales[0][24]
 
                                         
                                         dUsuario = self.consultarUsuarioActivo(sUserName)
@@ -1098,7 +1100,7 @@ class CAutenticacion(APIView):
                                                 opc = 1
                                                 info = self.registrarAcceso(sUserName,sistema,"Inicio de sesión exitoso al sistema "+self.sNombreSistema+sTextoTkg,opc)
                                                 nStatus = 200
-                                                datos = {'message': 'Success','idPersonal':idPersonal,'nNoEmpleado':nNoEmpleado,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg, 'fechaNac':dFechaNac, 'rutaFoto':sRutaFoto, 'expira':self.intTiempoExpira, 'proyectoActual':sProyectoActual,'idPuestoActual':idPuestoActual,'puestoActual':sPuestoActual}
+                                                datos = {'message': 'Success','idPersonal':idPersonal,'nNoEmpleado':nNoEmpleado,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg, 'fechaNac':dFechaNac, 'rutaFoto':sRutaFoto, 'expira':self.intTiempoExpira,'idProyectoActual':idProyectoActual ,'proyectoActual':sProyectoActual,'idPuestoActual':idPuestoActual,'puestoActual':sPuestoActual}
                                             else:
                                                 nStatus = 404
                                                 datos = {'message': 'Acceso denegado', 'error':sTexto}

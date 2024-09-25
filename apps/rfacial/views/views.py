@@ -364,6 +364,50 @@ class CAutenticacion(APIView):
 
     
         return dSistema
+    
+    def obtenerProyectoAsignadosEmpleado(self, idPersonal):
+        # ARSI 25092024 Se obtendrá el listado de todos los proyectos donde el empleado estuvo involucrado.
+        sTexto = ""
+        dProyectosInvolucrados = []
+        dHistoricoProyectos = {}
+        nPos = 0
+        clave = ""
+
+        try:
+            self.oExecSP.registrarParametros("idPersonal",idPersonal)
+            # self.oExecSP.registrarParametros("pNoption",2)
+            dProyectosInvolucrados = self.oExecSP.ejecutarSP("obtenerProyectosContratadoEmpleado")
+
+            # dProyectosInvolucrados = list(Sistemas.objects.filter(id=idSistema).values())
+            if len(dProyectosInvolucrados)>0:
+                # print(dProyectosInvolucrados)
+                
+                for item in dProyectosInvolucrados:
+                    print(item[0])
+                    print(item[1])
+
+                    if(item[0]== None):
+                        clave = 'SIN_ID_'+str(nPos)
+                    else:
+                        clave = item[0]
+
+                    dHistoricoProyectos[clave] = item[1]
+
+                    nPos = nPos+1
+
+
+                # self.sNombreSistema = dSistema[0]['nombre']
+            else:
+                 print("Al parecer el empleado con id personal "+str(idPersonal)+" no tiene ningun proyecto en el que este involucrado.")
+
+        except ValueError as error:
+            sTexto = "%s" % error
+            datos = {'message': 'Error al ejecutar query. ', "error": sTexto}
+
+            print(datos)
+
+    
+        return dHistoricoProyectos
 
     def consultarExisteUsuario(self, nameUser):
         print("Accede a metodo  consultarExisteUsuario:")
@@ -825,6 +869,7 @@ class CAutenticacion(APIView):
             tkgbl = ""
             infoTkg = {}
             bExisteTkg = False   
+            dListaProyectos = {} #ARSI 25092024 VARIABLE QUE ALMACENA EL LISTADO DE PROYECTOS DONDE EL EMPLEADO ESTUVO INVOLUCRADO
 
             #Valida que el numero de claves del JSON enviado a la API
             #coincida con el numero de claves declaras en el diccioario dCamposJson
@@ -1096,11 +1141,13 @@ class CAutenticacion(APIView):
                                                     #paso 4) En caso de que exista un TKG en BD, y si aun esta activo, entonces permanecer con dicho TKG.
                                     
                                                     # is_token_valid = default_token_generator.check_token(jd['user'], tokenApi)
+                                                #ARSI 25092024 SE AGREGA CONSULTA PARA OBTENER TODOS LOS PROYECTOS EN LOS QUE EL EMPLEADO ESTUVO INVOLUCRADO. 
+                                                dListaProyectos = self.obtenerProyectoAsignadosEmpleado(idPersonal)
                                                 
                                                 opc = 1
                                                 info = self.registrarAcceso(sUserName,sistema,"Inicio de sesión exitoso al sistema "+self.sNombreSistema+sTextoTkg,opc)
                                                 nStatus = 200
-                                                datos = {'message': 'Success','idPersonal':idPersonal,'nNoEmpleado':nNoEmpleado,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg, 'fechaNac':dFechaNac, 'rutaFoto':sRutaFoto, 'expira':self.intTiempoExpira,'idProyectoActual':idProyectoActual ,'proyectoActual':sProyectoActual,'idPuestoActual':idPuestoActual,'puestoActual':sPuestoActual}
+                                                datos = {'message': 'Success','idPersonal':idPersonal,'nNoEmpleado':nNoEmpleado,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg, 'fechaNac':dFechaNac, 'rutaFoto':sRutaFoto, 'expira':self.intTiempoExpira,'idProyectoActual':idProyectoActual ,'proyectoActual':sProyectoActual,'idPuestoActual':idPuestoActual,'puestoActual':sPuestoActual,'dHistoricoProyectosAsignados':dListaProyectos}
                                             else:
                                                 nStatus = 404
                                                 datos = {'message': 'Acceso denegado', 'error':sTexto}

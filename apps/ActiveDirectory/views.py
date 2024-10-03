@@ -1366,6 +1366,15 @@ def desactivar_usuario(request, nombre_usuario):
                 messages.error(request, f"Error al desactivar usuario: {conn.result['description']}")
                 imprimir(f"Error al desactivar usuario: {conn.result['description']}")
                 imprimir(conn.result)
+                insertar_registro_accion(
+                empleado.nameUser(request),
+                'Modulo AD',
+                'Error',
+                f"El usuario '{mover['cn']}'  NO dado de baja en AD : {conn.result['description']} ",
+                get_client_ip(request),
+                request.META.get('HTTP_USER_AGENT'),
+                'N/A'
+                )
     except Exception as e:
         messages.error(request, f"Error al conectar con AD: {str(e)}")
         imprimir(f"Error al conectar con AD: {str(e)}")

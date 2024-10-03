@@ -2110,4 +2110,4 @@ def Verificarlogin(request):
 
 
 
-# Este código ha sido especialmente desarrollado para facilitar las tareas diarias de nuestro compañero Dennis (muy amigo de Luis ). Esperamos que este gesto contribuya a hacer su trabajo más eficiente y agradable. ¡Esperamos que lo encuentres útil!
+# JMZS-03-06-2024-Este código ha sido especialmente desarrollado para facilitar las tareas diarias de nuestro compañero Dennis (muy amigo de Luis ). Esperamos que este gesto contribuya a hacer su trabajo más eficiente y agradable. ¡Esperamos que lo encuentres útil!

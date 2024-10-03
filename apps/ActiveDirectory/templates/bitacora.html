@@ -103,8 +103,17 @@
         
         var config = {
             "pageLength": 100,
-            //"order": [[3, 'asc']],//"order": [[3, 'desc']],
-       
+            "order": [[3, 'asc']],//"order": [[3, 'desc']],
+       "columnDefs": [
+                { 
+                    "targets": 3,  // Índice de la columna de fecha/hora
+                    "type": "date",  // Definir el tipo como 'date'
+                    // Configuración para el formato de la fecha en español
+                    "render": function ( data, type, row ) {
+                        return type === "sort" || type === "type" ? moment(data, "D [de] MMMM [de] YYYY [a las] HH:mm").format("YYYYMMDDHHmm") : data;
+                    }
+                }
+            ],
             "language": {
                 "lengthMenu": "Mostrar _MENU_ usuarios por página",
                 "zeroRecords": "No se encontraron resultados",

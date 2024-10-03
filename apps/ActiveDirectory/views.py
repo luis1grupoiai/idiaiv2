@@ -1370,14 +1370,14 @@ def desactivar_usuario(request, nombre_usuario):
                 empleado.nameUser(request),
                 'Modulo AD',
                 'Error',
-                f"El usuario '{mover['cn']}'  NO dado de baja en AD : {conn.result['description']} ",
+                f"Desactivar usuario -Descripcion :   {conn.result['description']} ",
                 get_client_ip(request),
                 request.META.get('HTTP_USER_AGENT'),
                 'N/A'
                 )
     except Exception as e:
-        messages.error(request, f"Error al conectar con AD: {str(e)}")
-        imprimir(f"Error al conectar con AD: {str(e)}")
+        messages.error(request, f"Desactivar usuario - Error al conectar con AD: {str(e)} ")
+        imprimir(f"Desactivar usuario - Error al conectar con AD: {str(e)}")
 
 
 
@@ -1410,7 +1410,7 @@ def connect_to_ad():
         return conn
     except Exception as e:
         # Si ocurre un error, imprime o logea el error
-        imprimir(f"Error al conectar con AD: {str(e)}")  # Considera usar logging en lugar de print
+        imprimir(f"Conexion() - Error al conectar con AD: {str(e)}")  # Considera usar logging en lugar de print
         # Asegúrate de cerrar la conexión si fue parcialmente establecida antes del error
         if conn:
             conn.unbind()
@@ -1712,7 +1712,7 @@ def buscar_usuario_por_dn(dn_usuario):
             else:
                 resultado['error'] = 'Usuario no encontrado'
     except Exception as e:
-        resultado['error'] = f"Error de conexión con AD: {e}"
+        resultado['error'] = f"Buscar el Usuario - Error de conexión con AD: {e}"
 
     return resultado
 

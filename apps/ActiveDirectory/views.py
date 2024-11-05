@@ -952,6 +952,8 @@ def consultar_usuarios(request): #Consulta los usuarios de Active Directory
                
                 imprimir( entry.distinguishedName.value)
                 
+                #imprimir(f"Valor actual de userAccountControl de {entry.userAccountControl.value}:")
+                #imprimir( "-")
                 #if 'cn' in entry and entry.cn.value.lower() != 'administrador':
                 if not is_account_disabled(useraccountcontrol_str):
                     usuarios.append(usuario)

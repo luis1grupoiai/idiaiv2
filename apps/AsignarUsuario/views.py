@@ -40,7 +40,8 @@ def solicitud(request):
     
         
     empleados = []
-    empleados = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='')
+   # empleados = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='')
+    empleados = VallEmpleado.objects.exclude(nombre_direccion='Tecnatom').exclude(username__isnull=True).exclude(username='').filter(is_active=True)
     encabezados ={
         'title' :'Empleados de Grupo IAI  - IDIAI',
         'Encabezado' :'Personal de Grupo IAI:',

@@ -1063,7 +1063,7 @@ class CAutenticacion(APIView):
                                         idUsuario = dDatosPersonales[0][0]                               
                                         sUserName = dDatosPersonales[0][3]
                                         dFechaNac = dDatosPersonales[0][22]
-                                        # sRutaFoto =  dDatosPersonales[0][12]
+                                        sRutaFoto =  dDatosPersonales[0][12]
                                        
 
                                         nNoEmpleado = dDatosPersonales[0][2]
@@ -1076,9 +1076,6 @@ class CAutenticacion(APIView):
                                         dUsuario = self.consultarUsuarioActivo(sUserName)
                                          #ARSI 08/11/2024 
                                         # sRutaFoto = self.photo_view(sUserName)
-                                         #return reverse('model-detail-view', args=[str(self.id)])
-
-                                        sRutaFoto = reverse('photo_view', args=[str(sUserName)])
 
                                         if len(dUsuario):
                                             dPermisos = self.obtenerPermisos(sistema,idUsuario)

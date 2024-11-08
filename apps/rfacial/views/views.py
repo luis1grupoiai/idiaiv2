@@ -45,6 +45,10 @@ from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 from sys import getsizeof
 
+from django.http import FileResponse, Http404
+from apps.AsignarUsuario.models import VallEmpleado
+from django.urls import reverse
+
 import json
 import os
 import base64
@@ -107,6 +111,36 @@ class CAutenticacion(APIView):
             print(sTexto)
 
         return dPermisosUsuario
+    
+    #EMC 08/11/2024 METODO PARA OBTENER ARCHIVO FOTO DEL EMPLEADO.
+    def photo_view(self, p_sUsername):
+        # Obtén el usuario autenticado
+        usuarioBD = VallEmpleado.objects.filter(username=p_sUsername).first()
+
+        entorno = os.environ.get('DJANGO_ENV')
+
+        # Verifica si el usuario tiene una ID personal asociada
+        if usuarioBD and usuarioBD.id_personal:
+            # Ruta completa del archivo en la red compartida
+            if entorno == 'development':
+                file_path = f'//intranet.grupo-iai.com.mx/SERCAPNUBE/Imagenes/FOTOS/{usuarioBD.id_personal}.jpg'
+            elif entorno == 'production':
+                file_path = f'C:/xampp/htdocs/SERCAPNUBE/Imagenes/FOTOS/{usuarioBD.id_personal}.jpg'
+            else:
+                raise ValueError("El valor de 'entorno' no es válido")
+
+            # Verifica si el archivo existe en la ruta de red
+            if os.path.exists(file_path):
+                try:
+                    # Intenta abrir y devolver la imagen como respuesta de archivo
+                   
+                    return FileResponse(open(file_path, 'rb'), content_type='image/jpeg')
+                except FileNotFoundError:
+                    # raise Http404("Imagen no encontrada o acceso denegado")
+                    return None
+
+
+            # raise Http404("Imagen no encontrada o acceso denegado")
     
 
     def obtenerDatosPersonales(self, p_nIdUsuario=0, p_nIdPersonal=0):
@@ -1029,7 +1063,9 @@ class CAutenticacion(APIView):
                                         idUsuario = dDatosPersonales[0][0]                               
                                         sUserName = dDatosPersonales[0][3]
                                         dFechaNac = dDatosPersonales[0][22]
-                                        sRutaFoto =  dDatosPersonales[0][12]
+                                        # sRutaFoto =  dDatosPersonales[0][12]
+                                       
+
                                         nNoEmpleado = dDatosPersonales[0][2]
                                         sProyectoActual = dDatosPersonales[0][20]
                                         sPuestoActual = dDatosPersonales[0][13]
@@ -1038,6 +1074,11 @@ class CAutenticacion(APIView):
 
                                         
                                         dUsuario = self.consultarUsuarioActivo(sUserName)
+                                         #ARSI 08/11/2024 
+                                        # sRutaFoto = self.photo_view(sUserName)
+                                         #return reverse('model-detail-view', args=[str(self.id)])
+
+                                        sRutaFoto = reverse('photo_view', args=[str(sUserName)])
 
                                         if len(dUsuario):
                                             dPermisos = self.obtenerPermisos(sistema,idUsuario)

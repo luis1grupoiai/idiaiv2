@@ -1284,6 +1284,10 @@ class CAutenticacion(APIView):
     # def delete(self,request):
     #     pass
 
+
+# EMC 09/11/24 :
+# La clase `CPhotoView` es una API basada en `APIView` que responde a solicitudes POST para obtener la foto de perfil de un usuario.
+# A través del parámetro `username` en el cuerpo de la solicitud, la API verifica si el usuario existe en la base de datos y, si tiene una ID personal asociada, intenta localizar su imagen en una ruta predefinida.
 class CPhotoView(APIView):
     def post(self, request, *args, **kwargs):
         username = request.data.get('username')

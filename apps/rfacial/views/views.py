@@ -3,6 +3,7 @@ from django.views import View
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.hashers import check_password
+from django.http import FileResponse, HttpResponse, Http404
 
 # from django.http import HttpResponse
 from django.db import models
@@ -113,35 +114,31 @@ class CAutenticacion(APIView):
         return dPermisosUsuario
     
     #EMC 08/11/2024 METODO PARA OBTENER ARCHIVO FOTO DEL EMPLEADO.
-    def photo_view(self, p_sUsername):
-        # Obtén el usuario autenticado
-        usuarioBD = VallEmpleado.objects.filter(username=p_sUsername).first()
+    # def photo_view(self):
+    #     # Obtén el usuario autenticado
+    #     usuarioBD = VallEmpleado.objects.filter(username=p_sUsername).first()
 
-        entorno = os.environ.get('DJANGO_ENV')
+    #     entorno = os.environ.get('DJANGO_ENV')
 
-        # Verifica si el usuario tiene una ID personal asociada
-        if usuarioBD and usuarioBD.id_personal:
-            # Ruta completa del archivo en la red compartida
-            if entorno == 'development':
-                file_path = f'//intranet.grupo-iai.com.mx/SERCAPNUBE/Imagenes/FOTOS/{usuarioBD.id_personal}.jpg'
-            elif entorno == 'production':
-                file_path = f'C:/xampp/htdocs/SERCAPNUBE/Imagenes/FOTOS/{usuarioBD.id_personal}.jpg'
-            else:
-                raise ValueError("El valor de 'entorno' no es válido")
+    #     # Verifica si el usuario tiene una ID personal asociada
+    #     if usuarioBD and usuarioBD.id_personal:
+    #         # Ruta completa del archivo en la red compartida
+    #         if entorno == 'development':
+    #             file_path = f'//intranet.grupo-iai.com.mx/SERCAPNUBE/Imagenes/FOTOS/{usuarioBD.id_personal}.jpg'
+    #         elif entorno == 'production':
+    #             file_path = f'C:/xampp/htdocs/SERCAPNUBE/Imagenes/FOTOS/{usuarioBD.id_personal}.jpg'
+    #         else:
+    #             raise ValueError("El valor de 'entorno' no es válido")
 
-            # Verifica si el archivo existe en la ruta de red
-            if os.path.exists(file_path):
-                try:
-                    # Intenta abrir y devolver la imagen como respuesta de archivo
+    #         # Verifica si el archivo existe en la ruta de red
+    #         if os.path.exists(file_path):
+    #             try:
+    #                 # Intenta abrir y devolver la imagen como respuesta de archivo
                    
-                    return FileResponse(open(file_path, 'rb'), content_type='image/jpeg')
-                except FileNotFoundError:
-                    # raise Http404("Imagen no encontrada o acceso denegado")
-                    return None
-
-
-            # raise Http404("Imagen no encontrada o acceso denegado")
-    
+    #                 return FileResponse(open(file_path, 'rb'), content_type='image/jpeg')
+    #             except FileNotFoundError:
+    #                 # raise Http404("Imagen no encontrada o acceso denegado")
+    #                 return None
 
     def obtenerDatosPersonales(self, p_nIdUsuario=0, p_nIdPersonal=0):
         dDatos = {}
@@ -1287,6 +1284,51 @@ class CAutenticacion(APIView):
     # def delete(self,request):
     #     pass
 
+class CPhotoView(APIView):
+    def post(self, request, *args, **kwargs):
+        username = request.data.get('username')
+        if not username:
+            print("Error: No se proporcionó el nombre de usuario en la solicitud.")
+            return HttpResponse("Nombre de usuario no proporcionado.", status=400)
+        
+        print(f"Intentando obtener la foto del usuario: {username}")
+
+        # Buscar el usuario en la base de datos
+        usuarioBD = VallEmpleado.objects.filter(username=username).first()
+        if usuarioBD:
+            print(f"Usuario encontrado: {usuarioBD.username}, ID Personal: {usuarioBD.Id_personal}")
+        else:
+            print("Error: Usuario no encontrado en la base de datos.")
+            return HttpResponse("Usuario no encontrado.", status=404)
+
+        # Validar si tiene una ID personal asociada
+        if not usuarioBD.Id_personal:
+            print(f"El usuario '{username}' no tiene ID personal asociada.")
+            return HttpResponse("El usuario no tiene una ID personal asociada.", status=404)
+
+        # Determinar la ruta del archivo en función del entorno
+        entorno = os.environ.get('DJANGO_ENV')
+        if entorno == 'development':
+            file_path = f'//intranet.grupo-iai.com.mx/SERCAPNUBE/Imagenes/FOTOS/{usuarioBD.Id_personal}.jpg'
+        elif entorno == 'production':
+            file_path = f'C:/xampp/htdocs/SERCAPNUBE/Imagenes/FOTOS/{usuarioBD.Id_personal}.jpg'
+        else:
+            print("Error: Valor de entorno no válido.")
+            return HttpResponse("El valor de 'entorno' no es válido", status=400)
+
+        print(f"Ruta del archivo determinada: {file_path}")
+
+        # Verificar si el archivo existe en la ruta especificada
+        if os.path.exists(file_path):
+            try:
+                print(f"El archivo existe. Preparando para enviar la imagen de {username}.")
+                return FileResponse(open(file_path, 'rb'), content_type='image/jpeg')
+            except FileNotFoundError:
+                print("Error: Archivo no encontrado al intentar abrirlo.")
+                return HttpResponse("Imagen no encontrada o acceso denegado", status=404)
+        else:
+            print(f"Error: El archivo no existe en la ruta especificada: {file_path}")
+            return HttpResponse("Imagen no encontrada en la ruta especificada", status=404)
 
 class Protegida(APIView):
     # permission_classes = [IsAuthenticated]

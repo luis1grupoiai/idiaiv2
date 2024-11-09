@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from .views import CAutenticacion, CReconFacial, CCompareFaces
+from .views.views import CPhotoView
 
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -49,7 +50,7 @@ urlpatterns = [
    path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
    path('verifytk/', CVerificaToken.as_view(), name='verifytk'),
    path('verifytkG/', CVerificaTokenGlobal.as_view(), name='verifytkG'),
-   path('auth/{str:sUserName}', CAutenticacion.photo_view, name='photo_view'),
+   path('photo_view/', CPhotoView.as_view(), name='photo_view'),
    
    #  path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
    #  re_path(r'^swagger(?P<format>\.json)$', swagger_json, name='swagger-json'),

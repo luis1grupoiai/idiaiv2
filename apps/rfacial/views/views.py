@@ -49,6 +49,7 @@ from sys import getsizeof
 from django.http import FileResponse, Http404
 from apps.AsignarUsuario.models import VallEmpleado
 from django.urls import reverse
+from ..utils import EnvioCorreos
 
 import json
 import os
@@ -1333,6 +1334,33 @@ class CPhotoView(APIView):
         else:
             print(f"Error: El archivo no existe en la ruta especificada: {file_path}")
             return HttpResponse("Imagen no encontrada en la ruta especificada", status=404)
+
+
+class EnviarCorreoAPIView(APIView):
+    def post(self, request):
+        # Obtener los datos de la solicitud
+        asunto = request.data.get("asunto")
+        destinatarios = request.data.get("destinatarios")
+        mensaje_texto = request.data.get("mensaje_texto")
+        mensaje_html = request.data.get("mensaje_html", None)  # HTML opcional
+
+        # Validar los campos requeridos
+        if not (asunto and destinatarios and mensaje_texto):
+            return Response(
+                {"error": "Asunto, destinatarios y mensaje de texto son obligatorios"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        # Crear instancia de EnvioCorreos y enviar
+        correo = EnvioCorreos(asunto, destinatarios, mensaje_texto, mensaje_html)
+        resultado = correo.enviar()
+
+        # Responder según el resultado del envío
+        if resultado["status"] == "success":
+            return Response({"message": resultado["message"]}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": resultado["message"]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class Protegida(APIView):
     # permission_classes = [IsAuthenticated]

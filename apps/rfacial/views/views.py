@@ -1357,9 +1357,9 @@ class EnviarCorreoAPIView(APIView):
 
         # Responder según el resultado del envío
         if resultado["status"] == "success":
-            return Response({"message": resultado["message"]}, status=status.HTTP_200_OK)
+            return Response({"status": "success", "message": resultado["message"]}, status=status.HTTP_200_OK)
         else:
-            return Response({"error": resultado["message"]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"status": "error", "message": resultado["message"]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class Protegida(APIView):

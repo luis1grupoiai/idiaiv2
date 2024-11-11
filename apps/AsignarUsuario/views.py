@@ -255,8 +255,8 @@ def enviar_correo(request):
             print("Correo enviado correctamente.")
         except Exception as e:
             print(f"Error al enviar correo: {e}")
-
-    return render(request, 'CorreoSolicitudAlta.html', context)
+    return render(request, 'personal.html',context)
+    #return render(request, 'CorreoSolicitudAlta.html', context)
 
 
 def imprimir(mensaje): #funcion para imprimir en la consola  en modo desarrollador 

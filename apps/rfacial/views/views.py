@@ -1286,11 +1286,29 @@ class CAutenticacion(APIView):
     #     pass
 
 
+
 # EMC 09/11/24 :
 # La clase `CPhotoView` es una API basada en `APIView` que responde a solicitudes POST para obtener la foto de perfil de un usuario.
 # A través del parámetro `username` en el cuerpo de la solicitud, la API verifica si el usuario existe en la base de datos y, si tiene una ID personal asociada, intenta localizar su imagen en una ruta predefinida.
 class CPhotoView(APIView):
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'username': openapi.Schema(type=openapi.TYPE_STRING, description='Nombre de usuario.'),
+            },
+            required=[ 'username' ]
+        ),
+        responses={200: 'Usuario loggeado exitosamente'},
+    )  
+
     def post(self, request, *args, **kwargs):
+        """
+        Obtiene la foto del usuario.
+
+        Para realizar un consulta exitosa, envía un objeto JSON con los siguientes campos:
+       
+        """
         username = request.data.get('username')
         if not username:
             print("Error: No se proporcionó el nombre de usuario en la solicitud.")
@@ -1337,7 +1355,38 @@ class CPhotoView(APIView):
 
 # EMC 11/11/24 : La clase `EnviarCorreoAPIView` es una API basada en `APIView` que responde a solicitudes POST para obtener el envio de correos.
 class EnviarCorreoAPIView(APIView):
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'asunto': openapi.Schema(type=openapi.TYPE_STRING, description='Asunto del correo.'),
+                'destinatarios': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_STRING),  # Tipo de elementos en la lista
+                    description='Lista de destinatarios (correos electrónicos).'
+                ),
+                'contexto_html': openapi.Schema(
+                    type=openapi.TYPE_OBJECT,  # Cambio de ARRAY a OBJECT
+                    description='Contenido HTML del correo',
+                    properties={
+                        "sistema": openapi.Schema(type=openapi.TYPE_STRING, description="Sistema que envía el correo"),
+                        "contenido": openapi.Schema(type=openapi.TYPE_STRING, description="Contenido del mensaje en HTML"),
+                        "URL": openapi.Schema(type=openapi.TYPE_STRING, description="URL para incluir en el correo")
+                    }
+                )
+            },
+            required=['asunto', 'destinatarios', 'contexto_html']
+        ),
+        responses={200: 'Correo enviado exitosamente'},
+    )
+
     def post(self, request):
+        """
+        Se encarga de enviar correos.
+
+        Para realizar un consulta exitosa, envía un objeto JSON con los siguientes campos:
+       
+        """
         # Obtener los datos de la solicitud
         asunto = request.data.get("asunto")
         destinatarios = request.data.get("destinatarios")

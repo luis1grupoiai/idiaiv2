@@ -86,6 +86,7 @@ TEMPLATES = [
                  os.path.join(BASE_DIR, 'apps/Archivos/templates'),
                  os.path.join(BASE_DIR, 'components', 'templates'),
                  os.path.join(BASE_DIR, 'apps/AsignarUsuario/templates'),
+                 os.path.join(BASE_DIR, 'apps/rfacial/templates'),
                  ],
         # 'APP_DIRS': True,
         'OPTIONS': {

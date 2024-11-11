@@ -1,0 +1,88 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitud de Acceso para {{ sistema }}</title>
+    <style>
+        .botonA, .botonS {
+            display: inline-block;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            color: #ffffff;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .botonA { background-color: #435ebe; }
+        .botonS { background-color: #87212E; }
+    </style>
+</head>
+<body>
+    <table align="center" border="0" cellpadding="0" cellspacing="0" width="800" bgcolor="#f8f9fa">
+        <!-- Encabezado y Logo -->
+        <tr>
+            <td bgcolor="#87212E" style="border-radius: 4px;">
+                <h1 align="center" style="color: #ffffff;">{{ sistema }}</h1>
+                <h2 align="center" style="color: #ffffff;">{{ asunto }}</h2>
+                <tr>
+                    <td align="center" style="padding: 5px;">
+                        <img src="https://intranet.grupo-iai.com.mx:330/SERCAPNUBE/Imagenes/LOGO_IAI.png" alt="Logo" width="325" style="border-radius: 15px; margin: 10px;">
+                    </td>
+                </tr>
+            </td>
+        </tr>
+
+        <tr>
+            <td style="padding: 5px;">
+                <p>{{ contenido|safe }}</p>
+                {% if URL %}
+                    <br>Puedes consultar mas detalles en el siguiente enlace:
+                {% endif %}
+            </td>
+        </tr>
+
+        <tr>
+            <td align="center" style="padding: 5px;">
+                <table border="0" cellspacing="0" cellpadding="0" style="text-align: center;">
+                    <tr>
+                        {% if URL %}
+                            <!-- Si la condición se cumple, se muestra el contenido de esta sección -->
+                            <td align="center" bgcolor="#435ebe" style="padding: 10px 15px; border-radius: 5px; margin: 0 10px;">
+                                <a href={{ URL }} style="font-size: 16px; color: #ffffff; text-decoration: none; font-weight: bold; display: block;">
+                                    Ver Detalles en {{ sistema }}
+                                </a>
+                            </td>
+                        {% else %}
+                            <!-- Si la condición no se cumple, se muestra el contenido de esta sección -->
+                            <td></td>
+                        {% endif %}
+                    </tr>                    
+                </table>
+            </td>
+        </tr>
+
+        <tr>
+            <td style="padding: 5px;">
+                <p style="font-size: 10px;"><strong style="color: #87212E;">CONFIDENCIALIDAD.</strong> Este e-mail y
+                    cualquiera de sus archivos anexos son confidenciales y pueden constituir información privilegiada.
+                    Si usted no es el destinatario adecuado, por favor, notifíquelo inmediatamente al emisor y elimínelo
+                    de su computadora, no revele estos contenidos a ninguna otra persona, no los utilice para otra
+                    finalidad, ni almacene o copie esta información en medio alguno.</p>
+                <p style="font-size: 10px;"><strong style="color: #87212E;">CONFIDENTIALITY.</strong> This e-mail and
+                    any attachments thereof are confidential and may be privileged. If you are not a named recipient,
+                    please notify the sender immediately and delete it from your computer, do not disclose its contents
+                    to another person, use it for any purpose or store or copy the information in any medium.</p>
+            </td>
+        </tr>
+
+        <tr>
+            <td align="center" bgcolor="#87212E" style="padding: 5px; border-radius: 4px;">
+                <p style="color: #ffffff;">{{ year }} Grupo IAI. Todos los derechos reservados.</p>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>

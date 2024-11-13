@@ -1353,6 +1353,7 @@ class CPhotoView(APIView):
             print(f"Error: El archivo no existe en la ruta especificada: {file_path}")
             return HttpResponse("Imagen no encontrada en la ruta especificada", status=404)
 
+
 # EMC 11/11/24 : La clase `EnviarCorreoAPIView` es una API basada en `APIView` que responde a solicitudes POST para obtener el envio de correos.
 class EnviarCorreoAPIView(APIView):
     @swagger_auto_schema(
@@ -1493,7 +1494,6 @@ class Protegida(APIView):
 
         return JsonResponse(datos)
     
-
 
 class CVerificaToken(APIView):
 
@@ -1641,10 +1641,7 @@ class CVerificaToken(APIView):
        
 
         return JsonResponse(datos,status=nStatus)  
-    
 
-    
-    
 
 class CVerificaTokenGlobal(APIView):
 
@@ -1963,11 +1960,8 @@ class CVerificaTokenGlobal(APIView):
         # return JsonResponse(datos)
     
         return JsonResponse(datos,status=nStatus)  
-
+ 
      
-    
-    
-    
 class CInactivaTkg():
 
     oExecSP = CEjecutarSP()
@@ -2049,8 +2043,6 @@ class CInactivaTkg():
             print(f"Error al enviar correo: {e}")
 
         
-
-
 class CMigraPermisos():
 
     idSistema = 0
@@ -2531,7 +2523,6 @@ class CMigraPermisos():
         return sTexto   
     
 
-
 class CRelacionPermisos():
 
     def listarPermisos(self,p_sSistema = None):
@@ -2597,13 +2588,3 @@ class CRelacionPermisos():
 
             
             return sTexto
-
-                        
-
-
-                        
-
-
-
-
-         

@@ -7,6 +7,10 @@ from apps.AsignarUsuario.models import  TRegistroAccionesModulo
 from apps.RegistroModulo.models import TRegistroDeModulo 
 from apps.ActiveDirectory.views import  SelectDepartamento , notificacionCorreo
 
+# from apps.rfacial.tasks import tarea_larga
+from django.http import JsonResponse
+from celery.result import AsyncResult
+
 from django.db.models import Q
 from django.core.mail import send_mail
 from django.shortcuts import redirect
@@ -307,3 +311,27 @@ def get_client_ip(request):
 
     # Si no se encuentra en las cabeceras, tomar la dirección del remitente de la solicitud
     return request.META.get('REMOTE_ADDR')
+
+# def iniciarTask(request):
+#     # Ejecuta la tarea en segundo plano y obtiene su ID
+#     task = tarea_larga.delay()
+    
+#     # Retorna un JSON con el ID de la tarea
+#     return JsonResponse({'status': 'Tarea iniciada en segundo plano', 'task_id': task.id})
+
+# def estadoTarea(request, task_id):
+#     # Usa AsyncResult para verificar el estado de la tarea
+#     task_result = AsyncResult(task_id)
+    
+#     # Obtén el estado y resultado de la tarea
+#     if task_result.state == 'SUCCESS':
+#         result = task_result.result
+#     else:
+#         result = None
+    
+#     # Devuelve el estado y resultado
+#     return JsonResponse({
+#         'task_id': task_id,
+#         'status': task_result.state,
+#         'result': result,
+#     })

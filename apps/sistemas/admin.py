@@ -1,8 +1,10 @@
 from django import forms
 from django.contrib import admin
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import Group, Permission, User
 from django.contrib.contenttypes.models import ContentType
 from .models import Sistemas, SistemaPermisoGrupo, UserSPG
+from .signals import set_changed_by
 
 # Define un formulario para el modelo SistemaPermisoGrupo en la interfaz de administración de Django
 class SistemaPermisoInlineForm(forms.ModelForm):
@@ -70,3 +72,14 @@ admin.site.unregister(Group)
 
 # Registra el modelo Group con la configuración personalizada en la interfaz de administración
 admin.site.register(Group, CustomGroupAdmin)
+
+
+class CustomUserAdmin(UserAdmin):
+    def save_related(self, request, form, formsets, change):
+        # Configura el usuario que realiza el cambio antes de guardar los permisos
+        set_changed_by(request.user)
+        super().save_related(request, form, formsets, change)
+
+# Registra el nuevo UserAdmin
+admin.site.unregister(User)
+admin.site.register(User, CustomUserAdmin)

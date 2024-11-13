@@ -81,12 +81,12 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR,),
-                 os.path.join(BASE_DIR, 'apps/ActiveDirectory/templates'),
-                 os.path.join(BASE_DIR, 'apps/Archivos/templates'),
-                 os.path.join(BASE_DIR, 'components', 'templates'),
-                 os.path.join(BASE_DIR, 'apps/AsignarUsuario/templates'),
-                 os.path.join(BASE_DIR, 'apps/rfacial/templates'),
+        'DIRS':[os.path.join(BASE_DIR,),
+                os.path.join(BASE_DIR, 'apps/ActiveDirectory/templates'),
+                os.path.join(BASE_DIR, 'apps/Archivos/templates'),
+                os.path.join(BASE_DIR, 'components', 'templates'),
+                os.path.join(BASE_DIR, 'apps/AsignarUsuario/templates'),
+                os.path.join(BASE_DIR, 'apps/rfacial/templates'),
                  ],
         # 'APP_DIRS': True,
         'OPTIONS': {

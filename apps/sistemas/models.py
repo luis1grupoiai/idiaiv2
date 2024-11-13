@@ -74,5 +74,17 @@ class UserSPG(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     spg = models.ForeignKey(SistemaPermisoGrupo, on_delete=models.CASCADE)
 
+class PermissionChangeHistory(models.Model):
+    changed_by = models.ForeignKey(User, related_name='performed_changes', on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey(User, related_name='permission_changes', on_delete=models.CASCADE)
+    permission = models.ForeignKey(Permission, on_delete=models.CASCADE)
+    action = models.CharField(max_length=10)  # 'add' o 'remove'
+    changed_fields = models.TextField(null=True, blank=True)  # Detalles adicionales del cambio
+    timestamp = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        managed = False  # No migrar esta tabla, ya que fue creada manualmente en SQL Server
+        db_table = 'PermissionChangeHistory'
     
+    def __str__(self):
+        return f"{self.user.username} - {self.action} - {self.permission.codename}"

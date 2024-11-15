@@ -13,7 +13,7 @@ urlpatterns = [
     path('areas/', include('apps.areas.urls')),
     path('AD/', include('apps.ActiveDirectory.urls'),name='ActDir'),
     path('', include('apps.ActiveDirectory.urls'),name='index'),
-    path('SolicitudUsuario/', include('apps.AsignarUsuario.urls'),name='SolicitudUsuario'),
+    path('SU/', include('apps.AsignarUsuario.urls'),name='SolicitudUsuario'),
     path('accounts/', include ('django.contrib.auth.urls')),
     path('RegistroModulo/',include('apps.RegistroModulo.urls'), name='Modulo'),
     path('importarUsuario/',include('apps.ImportarUsuario.urls'),name ='ImpartUsuario')

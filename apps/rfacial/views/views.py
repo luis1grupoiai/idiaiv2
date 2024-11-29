@@ -1362,35 +1362,39 @@ class EnviarCorreoAPIView(APIView):
                 'asunto': openapi.Schema(type=openapi.TYPE_STRING, description='Asunto del correo.'),
                 'destinatarios': openapi.Schema(
                     type=openapi.TYPE_ARRAY,
-                    items=openapi.Items(type=openapi.TYPE_STRING),  # Tipo de elementos en la lista
+                    items=openapi.Items(type=openapi.TYPE_STRING),
                     description='Lista de destinatarios (correos electrónicos).'
                 ),
                 'contexto_html': openapi.Schema(
-                    type=openapi.TYPE_OBJECT,  # Cambio de ARRAY a OBJECT
+                    type=openapi.TYPE_OBJECT,
                     description='Contenido HTML del correo',
                     properties={
                         "sistema": openapi.Schema(type=openapi.TYPE_STRING, description="Sistema que envía el correo"),
                         "contenido": openapi.Schema(type=openapi.TYPE_STRING, description="Contenido del mensaje en HTML"),
                         "URL": openapi.Schema(type=openapi.TYPE_STRING, description="URL para incluir en el correo")
                     }
+                ),
+                'cco': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_STRING),
+                    description='Lista de destinatarios en copia oculta (opcional).',
                 )
             },
             required=['asunto', 'destinatarios', 'contexto_html']
         ),
         responses={200: 'Correo enviado exitosamente'},
     )
-
     def post(self, request):
         """
         Se encarga de enviar correos.
 
         Para realizar un consulta exitosa, envía un objeto JSON con los siguientes campos:
-       
         """
         # Obtener los datos de la solicitud
         asunto = request.data.get("asunto")
         destinatarios = request.data.get("destinatarios")
-        mensaje_html = request.data.get("contexto_html", None)  # HTML opcional
+        mensaje_html = request.data.get("contexto_html")
+        cco = request.data.get("cco", [])  # Lista de CCO opcional
 
         # Validar los campos requeridos
         if not (asunto and destinatarios and mensaje_html):
@@ -1400,7 +1404,7 @@ class EnviarCorreoAPIView(APIView):
             )
         
         # Crear instancia de EnvioCorreos y enviar
-        correo = EnvioCorreos(asunto, destinatarios, mensaje_html)
+        correo = EnvioCorreos(asunto, destinatarios, mensaje_html, cco=cco)
         resultado = correo.enviar()
 
         # Responder según el resultado del envío

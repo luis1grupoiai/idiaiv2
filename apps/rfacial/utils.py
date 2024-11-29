@@ -8,11 +8,12 @@ from django.template.loader import render_to_string
 
 # EMC 11/11/24 : La clase `EnvioCorreos` se encarga de rendirizar y enviar el correo.
 class EnvioCorreos:
-    def __init__(self, asunto, destinatarios, contexto_html):
+    def __init__(self, asunto, destinatarios, contexto_html, cco=None):
         self.asunto = asunto
         self.destinatarios = destinatarios if isinstance(destinatarios, list) else [destinatarios]
         self.contexto_html = contexto_html or {}
         self.from_email = 'sistemas.iai@grupo-iai.com.mx'
+        self.cco = cco if isinstance(cco, list) else []  # Manejar cco como lista, incluso si es None o string
 
     def cargar_y_renderizar_plantilla(self):
         # Agrega las variables adicionales al contexto
@@ -33,11 +34,12 @@ class EnvioCorreos:
             # Renderizar el HTML del correo
             plantilla_html = self.cargar_y_renderizar_plantilla()
             
-            # Crear el correo solo con HTML
+            # Crear el correo con HTML y la lista de destinatarios en CCO
             correo = EmailMultiAlternatives(
                 subject=self.asunto,
                 from_email=self.from_email,
                 to=self.destinatarios,
+                bcc=self.cco,  # Añadimos la lista de CCO
             )
             correo.attach_alternative(plantilla_html, "text/html")
             

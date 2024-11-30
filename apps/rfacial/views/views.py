@@ -883,6 +883,8 @@ class CAutenticacion(APIView):
             sPuestoActual = ""  #Se crea variable de puesto actual
             idPuestoActual = 0  #Se crea variable de id del puesto actual
             idProyectoActual = 0 #Se crea variable de id proyecto actual
+            idArea= "" #ARSI 30/11/2024 SE CREA VARIABLE QUE CONTENDRA ID AREA RELACIONADO A LA CATEGORIA DEL EMPLEADO.
+            sNombreArea = "" #ARSI 30/11/2024 SE CREA VARIABLE QUE CONTENDRA NOMBRE DEL AREA RELACIONADO A LA CATEGORIA DEL EMPLEADO.
             tokenApi = ""
             nItemJson = 0
             keySis = ""
@@ -1070,6 +1072,11 @@ class CAutenticacion(APIView):
                                         idPuestoActual = dDatosPersonales[0][23]
                                         idProyectoActual = dDatosPersonales[0][24]
 
+                                        #ARSI 30/11/2024 
+                                        idArea= dDatosPersonales[0][25]
+                                        sNombreArea = dDatosPersonales[0][26]
+
+
                                         
                                         dUsuario = self.consultarUsuarioActivo(sUserName)
                                          #ARSI 08/11/2024 
@@ -1183,7 +1190,7 @@ class CAutenticacion(APIView):
                                                 opc = 1
                                                 info = self.registrarAcceso(sUserName,sistema,"Inicio de sesión exitoso al sistema "+self.sNombreSistema+sTextoTkg,opc)
                                                 nStatus = 200
-                                                datos = {'message': 'Success','idPersonal':idPersonal,'nNoEmpleado':nNoEmpleado,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg, 'fechaNac':dFechaNac, 'rutaFoto':sRutaFoto, 'expira':self.intTiempoExpira,'idProyectoActual':idProyectoActual ,'proyectoActual':sProyectoActual,'idPuestoActual':idPuestoActual,'puestoActual':sPuestoActual,'dHistoricoProyectosAsignados':dListaProyectos}
+                                                datos = {'message': 'Success','idPersonal':idPersonal,'nNoEmpleado':nNoEmpleado,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg, 'fechaNac':dFechaNac, 'rutaFoto':sRutaFoto, 'expira':self.intTiempoExpira,'idProyectoActual':idProyectoActual ,'proyectoActual':sProyectoActual,'idPuestoActual':idPuestoActual,'puestoActual':sPuestoActual,'dHistoricoProyectosAsignados':dListaProyectos,'idArea':idArea,'sNombreArea':sNombreArea}
                                             else:
                                                 nStatus = 404
                                                 datos = {'message': 'Acceso denegado', 'error':sTexto}

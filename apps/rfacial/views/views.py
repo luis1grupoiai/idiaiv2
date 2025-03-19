@@ -244,15 +244,15 @@ class CAutenticacion(APIView):
         try:
             user = User.objects.get(username=p_sUsuario) 
             timestamp = int(timezone.now().timestamp())
-            print(timezone.now())
+            #print(timezone.now())
             # Calcular la fecha de expiración del token
             expiration_time = timestamp + (expiration_hours * 3600)  # 3600 segundos en una hora
             # expiration_time = timestamp + (expiration_hours * 60)  # 60 segundos en un minuto, solo para terminos de prueba ...
             # print(expiration_time)
             #ARSI 10072024
             self.intTiempoExpira = expiration_time
-            print("======== > Tiempo de expiración ====> :o ")
-            print(self.intTiempoExpira)
+            # print("======== > Tiempo de expiración ====> ")
+            # print(self.intTiempoExpira)
             
             token = default_token_generator.make_token(user)+ ',' + str(expiration_time)
    
@@ -375,7 +375,7 @@ class CAutenticacion(APIView):
             datos = {'message': 'Error al convertir de base64. ', "error": sTexto}
 
             print(datos)
-        print(sTextFinal)
+        #print(sTextFinal)
 
     
         return sTextFinal
@@ -415,8 +415,8 @@ class CAutenticacion(APIView):
                 # print(dProyectosInvolucrados)
                 
                 for item in dProyectosInvolucrados:
-                    print(item[0])
-                    print(item[1])
+                    # print(item[0])
+                    # print(item[1])
 
                     if(item[0]== None):
                         clave = 'SIN_ID_'+str(nPos)
@@ -443,7 +443,7 @@ class CAutenticacion(APIView):
 
     def consultarExisteUsuario(self, nameUser):
         print("Accede a metodo  consultarExisteUsuario:")
-        print(nameUser)
+        #print(nameUser)
         sTexto = ""
         datos = {}
         oUser = {}
@@ -511,8 +511,8 @@ class CAutenticacion(APIView):
         return bCorrecto
     
 
-
-    def registrarAcceso(self, username, idSistema, observaciones, opc, bConsultaBloqueo = False):
+    #ARSI  19/03/2025 SE ACTUALIZA METODO REGISTRAR ACCESO se valida token
+    def registrarAcceso(self, username, idSistema, observaciones, opc, bConsultaBloqueo = False, bSaveTk = 0, tk= ""):
             print("----- Accede a metodo registrar accesos -----")
 
             #Se declaran e Inicializan variables
@@ -533,6 +533,8 @@ class CAutenticacion(APIView):
             sTexto = ""
             message = ""
             datos = {}            
+            nReg = 0 #ARSI 19/03/2025 VARIABLE QUE ALMACENA ID DE REG DE TOKEN ACTIVO
+            nTotAfectadas = 0  #ARSI 19/03/2025 VARIABLE QUE ALMACENA total de filas afectadas para inactivar el registro de token.
             # print(username)
             # zona_horaria = timezone()
             # print("zona_horaria")
@@ -554,8 +556,8 @@ class CAutenticacion(APIView):
                         intFechaCad = int(fechaCad.timestamp()) #Fecha/hora de caducidad del intento registrado
                         timestamp = int(timezone.now().timestamp()) #Fecha/hora actual
 
-                        print(intFechaCad)
-                        print(timestamp)
+                        # print(intFechaCad)
+                        # print(timestamp)
 
                         if timestamp  > intFechaCad: 
                             bExisteRegAccess = False
@@ -600,10 +602,24 @@ class CAutenticacion(APIView):
                     print("Si existe registro de historial de acceso en los sistemas para el usuario : "+username)
 
                     if opc == 1:
+                        #ARSI 19/03/2025 SE GUARDA EL TOKEN SOLO SI bSaveTk ES 1
                         print("caso exitoso, el usuario se loggeo sin problemas : "+username)
                         message = "Success"
                         sTexto = "Caso exitoso, el usuario se loggeo sin problemas : "+username
-                        actualizaReg = intentos.objects.filter(id=idReg).update(activo=0,updated_at=timezone.now(),observaciones=observaciones)
+
+                        if bSaveTk == 0:
+                            actualizaReg = intentos.objects.filter(id=idReg).update(activo=0,updated_at=timezone.now(),observaciones=observaciones)
+                        elif bSaveTk == 1:
+                            nReg = self.obtenerTokenActivo(username,idSistema)
+
+                            if nReg > 0:
+                               nTotAfectadas = self.inactivarToken(nReg)
+
+                               if nTotAfectadas>0:
+                                   print("CAutenticacion - registrarAccesos - Se inactivaron "+str(nTotAfectadas)+" tokens")
+
+                            actualizaReg = intentos.objects.filter(id=idReg).update(activo=0,updated_at=timezone.now(),observaciones=observaciones,token=tk,tokenActivo=1)
+
 
                         
                     elif opc == 2:
@@ -713,15 +729,36 @@ class CAutenticacion(APIView):
                     print("No existe registro de historial de acceso en los sistemas para el usuario : "+username)
 
                     if opc == 1:
+                        #ARSI 19/03/2025 SE GUARDA EL TOKEN SOLO SI bSaveTk ES 1
                         print("caso exitoso, el usuario se loggeo sin problemas : "+username)
 
-                        regAcceso = intentos(
-                            username= username,
-                            numintentos = 0,
-                            idSistema = idSistema,
-                            activo = 0,
-                            observaciones = observaciones
-                        )
+                        if bSaveTk == 0:
+                            regAcceso = intentos(
+                                username= username,
+                                numintentos = 0,
+                                idSistema = idSistema,
+                                activo = 0,
+                                observaciones = observaciones
+                            )
+                        elif bSaveTk == 1:
+                            
+                            nReg = self.obtenerTokenActivo(username,idSistema)
+
+                            if nReg > 0:
+                               nTotAfectadas = self.inactivarToken(nReg)
+
+                               if nTotAfectadas>0:
+                                   print("CAutenticacion - registrarAccesos - Se inactivaron "+str(nTotAfectadas)+" tokens")
+
+                            regAcceso = intentos(
+                                username= username,
+                                numintentos = 0,
+                                idSistema = idSistema,
+                                activo = 0,
+                                observaciones = observaciones,
+                                token=tk,
+                                tokenActivo=1
+                            )
 
                         regAcceso.save()
 
@@ -800,6 +837,38 @@ class CAutenticacion(APIView):
 
         # resultado = instancia.ejecutarSP(sSP)
 
+ 
+    #ARSI 19/03/2025 SE CONSULTA SI EL USUARIO TIENE TOKEN ACTIVO PARA EL SISTEMA AL QUE INTENTA ACCEDER.
+    def obtenerTokenActivo(self, username, idSistema):
+        bExisteRegTokenActivo = True
+        idReg = 0
+        
+        try:
+            idReg = intentos.objects.get(username=username,tokenActivo=1, idSistema=idSistema).id                
+        except intentos.DoesNotExist:
+            bExisteRegTokenActivo = False
+            idReg = 0
+
+        return idReg
+    
+
+    #ARSI 19/03/2025 INACTIVAR TOKEN ACTIVO, actualiza el registro del token activo que encuentre y devuelve el numero de filas
+    #actualizadas.
+    def inactivarToken(self, idReg):
+        
+        actualizaReg = 0
+        
+        try:
+            #idReg = intentos.objects.get(username=username,tokenActivo=1, idSistema=idSistema).id                
+            actualizaReg = intentos.objects.filter(id=idReg).update(token="",tokenActivo=0,updated_at=timezone.now())
+
+            print(f"Se actualizaron {actualizaReg} registros.")
+        except intentos.DoesNotExist:
+            #bExisteRegTokenActivo = False
+            actualizaReg = 0
+
+        return actualizaReg
+
     @method_decorator(csrf_exempt)
     def dispatch(self,request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
@@ -830,7 +899,7 @@ class CAutenticacion(APIView):
                 'password': openapi.Schema(type=openapi.TYPE_STRING, description='contraseña en base64.'),
                 'idSistema': openapi.Schema(type=openapi.TYPE_INTEGER, description='Id del sistema donde el usuario esta iniciando sesión.'),
                 'timeExp': openapi.Schema(type=openapi.TYPE_INTEGER, description='Número de horas de la vigencia del token; si número de horas es 0, entonces por default el token durara 3 hrs.'),
-                #'saveTk': openapi.Schema(type=openapi.TYPE_INTEGER, description='Indica si se desea guardar el token en la base de datos, por defecto su valor es 0 (No se almacena Token).'),
+                'saveTk': openapi.Schema(type=openapi.TYPE_INTEGER, description='Indica si se desea guardar el token en la base de datos, por defecto su valor es 0 (No se almacena Token).'),
             },
             required=['token', 'user', 'password','idSistema','timeExp']
         ),
@@ -862,8 +931,10 @@ class CAutenticacion(APIView):
             bKey = False
             bKeyTkG = False
             bKeyRF = False
-            
-            dCamposJson = ['token', 'user', 'password','idSistema', 'timeExp']
+
+            #ARSI 19/03/2025 SE AGREGA saveTk A CAMPOS A VERIFICAR DEL JSON ENVIADO EN LA SOLICITUD.
+            dCamposJson = ['token', 'user', 'password','idSistema', 'timeExp', 'saveTk']
+
             sTexto = ""
             pwdD64 = ""
             dUsuario = ""
@@ -908,16 +979,9 @@ class CAutenticacion(APIView):
             bExisteTkg = False   
             dListaProyectos = {} #ARSI 25092024 VARIABLE QUE ALMACENA EL LISTADO DE PROYECTOS DONDE EL EMPLEADO ESTUVO INVOLUCRADO
 
-            #Valida que el numero de claves del JSON enviado a la API
-            #coincida con el numero de claves declaras en el diccioario dCamposJson
-            nItemJson = len(jd)
-            
-            if nItemJson != nLenDef:
-                sTexto = "El tamaño del JSON obtenido no es el esperado, por favor de verificar. "
-                bValido = False
-
-
-
+           
+            #ARSI 19/03/2025 SE VALIDA SI EXISTE LA CLAVE SAVETK, en caso de no existir (porque no es obligatoria, se agrega al diccionario
+            #y se asigna valor de 0).
             #Validación de las claves json, si alguna clave no se encuentra en el objeto, entonces
             #el valor de bValido es Falso y regresa un mensaje de error indicando el identificador
             #  faltante.
@@ -925,14 +989,34 @@ class CAutenticacion(APIView):
                 if item in jd:
                     continue
                 else:
-                    sTexto += "El campo faltante es: "+item+". "
-                    bValido = False
-                    break
+                    if item == 'saveTk':
+                        print("CAutenticacion - El campo saveTk no se encuentra en el JSON, se asigna valor de 0.")
+                        jd['saveTk'] = 0
+                        continue
+                    else:
+                        sTexto += "El campo faltante es: "+item+". "
+                        bValido = False
+                        break
+
+            #ARSI 19/03/2025 se valida tamaño de claves del JSON enviado a la API
+            #Valida que el numero de claves del JSON enviado a la API
+            #coincida con el numero de claves declaras en el diccioario dCamposJson
+            nItemJson = len(jd)
+            
+            if nItemJson != nLenDef:
+                sTexto += "El tamaño del JSON obtenido no es el esperado, por favor de verificar. "
+                bValido = False
             
             #si las claves estan correctas, continuara realizando el resto del proceso
             # de autenticación
             if bValido:
                 print("1 ) Tamaño y nombre de claves de JSON obtenido, validos.")
+
+                print("1.1 ) Validando saveTk: "+str(jd['saveTk']))
+                
+                #ARSI 19/03/2025 SE CREA VARIABLE nSaveTk
+                nSaveTk = jd['saveTk']
+
                 # IMPORTANTE!
                 # Intranet tiene el id de sistema 3, Reconocimiento facial tiene el id de sistema 4.
 
@@ -943,7 +1027,7 @@ class CAutenticacion(APIView):
                 skTk = str(jd['token'])
                 # keySis = self.decodificarB64(jd['token'])
                 keySis = self.decodificarB64(skTk)
-                print(keySis)
+                #print(keySis)
 
                 # print(keySis)
                 # print(os.environ.get('KEY_RF'))
@@ -1007,7 +1091,7 @@ class CAutenticacion(APIView):
                                         # password = dUsuario[0]['password']
                                         idUsuario = dUsuario[0]['id']
                                         
-                                        print("paso 2")
+                                        #print("paso 2")
 
                                         # Si la clave obtenida NO es la llave de validado por django, entonces verifica la password.
                                         if keySis!=os.environ.get('KEYVALIDADJG'):
@@ -1060,7 +1144,7 @@ class CAutenticacion(APIView):
                                         print("No se recuperaron datos del usuario.")
                                     
                                     if len(dDatosPersonales)>0:
-                                        print(dDatosPersonales[0][1])
+                                        #print(dDatosPersonales[0][1])
                                         idPersonal = dDatosPersonales[0][1]
                                         sNombreCompleto = dDatosPersonales[0][9]
                                         idUsuario = dDatosPersonales[0][0]                               
@@ -1195,8 +1279,13 @@ class CAutenticacion(APIView):
                                                 #ARSI 25092024 SE AGREGA CONSULTA PARA OBTENER TODOS LOS PROYECTOS EN LOS QUE EL EMPLEADO ESTUVO INVOLUCRADO. 
                                                 dListaProyectos = self.obtenerProyectoAsignadosEmpleado(idPersonal)
                                                 
+                                                #ARSI 19/03/2025 ALMACENAR TOKEN EN LA BASE DE DATOS
                                                 opc = 1
-                                                info = self.registrarAcceso(sUserName,sistema,"Inicio de sesión exitoso al sistema "+self.sNombreSistema+sTextoTkg,opc)
+                                                if nSaveTk==0:
+                                                    info = self.registrarAcceso(sUserName,sistema,"Inicio de sesión exitoso al sistema "+self.sNombreSistema+sTextoTkg,opc)
+                                                elif nSaveTk == 1:
+                                                    info = self.registrarAcceso(sUserName,sistema,"Inicio de sesión exitoso al sistema "+self.sNombreSistema+sTextoTkg,opc,False,1,tokenApi)
+
                                                 nStatus = 200
                                                 datos = {'message': 'Success','idPersonal':idPersonal,'nNoEmpleado':nNoEmpleado,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg, 'fechaNac':dFechaNac, 'rutaFoto':sRutaFoto, 'expira':self.intTiempoExpira,'idProyectoActual':idProyectoActual ,'proyectoActual':sProyectoActual,'idPuestoActual':idPuestoActual,'puestoActual':sPuestoActual,'dHistoricoProyectosAsignados':dListaProyectos,'idArea':idArea,'sNombreArea':sNombreArea, 'idDir':nDir,'sNombreDir':sNombreDir}
                                             else:
@@ -1289,7 +1378,7 @@ class CAutenticacion(APIView):
         #     pass
         
 
-        print(datos)
+       # print(datos)
 
         return JsonResponse(datos,status= nStatus)
     

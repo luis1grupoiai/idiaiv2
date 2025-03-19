@@ -44,6 +44,8 @@ class intentos(models.Model):
     fechaCadReg = models.DateTimeField()
     activo = models.IntegerField()
     observaciones = models.TextField(max_length=100)
+    token = models.CharField(max_length=250) #ARSI 19/03/2025 SE AGREGA CAMPO TOKEN
+    tokenActivo = models.IntegerField()  #ARSI 19/03/2025 SE AGREGA CAMPO TOKEN ACTIVO
 
     class Meta:
         managed = False

@@ -830,6 +830,7 @@ class CAutenticacion(APIView):
                 'password': openapi.Schema(type=openapi.TYPE_STRING, description='contraseña en base64.'),
                 'idSistema': openapi.Schema(type=openapi.TYPE_INTEGER, description='Id del sistema donde el usuario esta iniciando sesión.'),
                 'timeExp': openapi.Schema(type=openapi.TYPE_INTEGER, description='Número de horas de la vigencia del token; si número de horas es 0, entonces por default el token durara 3 hrs.'),
+                #'saveTk': openapi.Schema(type=openapi.TYPE_INTEGER, description='Indica si se desea guardar el token en la base de datos, por defecto su valor es 0 (No se almacena Token).'),
             },
             required=['token', 'user', 'password','idSistema','timeExp']
         ),
@@ -2669,7 +2670,7 @@ class CRelacionPermisos():
             
             return sTexto
 
-#ARSI 17/03/2025 CREAR CLASE QUE HAGA LA CONSULTA DE PERMISOS DE UN USUARIO EN Y VALIDE EL TOKEN
+#ARSI 17/03/2025 CREAR CLASE QUE HAGA LA CONSULTA DE PERMISOS DE UN USUARIO Y VALIDE EL TOKEN
 # obtenerPermisos, obtenerGrupos y crear otro metodo que valide el token y que devuelva los permisos del usuario. (CValidaToken)            
 class CVerificarTokenPermiso(APIView):
 

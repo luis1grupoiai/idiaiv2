@@ -1102,6 +1102,7 @@ class CAutenticacion(APIView):
 
                                                 #El listado de permisos de grupos se unen al bloque permisos, todo junto.
                                                 dPermisos.update(dGrupos)
+                                                
 
                                             
                                                 # resultados = vUsuarioPermiso.objects.all()
@@ -2688,9 +2689,10 @@ class CVerificarTokenPermiso(APIView):
                 'token': openapi.Schema(type=openapi.TYPE_STRING, description='Token asignado por la aplicación.'),
                 'user': openapi.Schema(type=openapi.TYPE_STRING, description='Nombre de usuario.'),
                 'idSistema' :  openapi.Schema(type=openapi.TYPE_INTEGER, description='Id del sistema.'),
-                'permisoGrupo' : openapi.Schema(type=openapi.TYPE_STRING, description='Nombre del permiso o grupo a validar.')
+                'permisoGrupo' : openapi.Schema(type=openapi.TYPE_STRING, description='Nombre del permiso o grupo a validar.'),
+                'tipoPerGp' : openapi.Schema(type=openapi.TYPE_STRING, description='Por favor de especificar que valor es el indicado en "permisoGrupo", si es un Grupo colocar G, si es un Permiso colocar P.')
             },
-            required=['token', 'user','idSistema','permisoGrupo']
+            required=['token', 'user','idSistema','permisoGrupo','tipoPerGp']
         ),
         responses={200: 'Token Validado', 400:'JSON INVALIDO' , 404:'Datos invalidos',401: 'Sin autorización,El servidor ha recibido la solicitud, pero no se ha podido autenticar al usuario.', 403:'Prohibido, El servidor entiende la solicitud, pero el usuario no tiene permiso para acceder al recurso, aunque sí está autenticado'},
     )   
@@ -2717,7 +2719,7 @@ class CVerificarTokenPermiso(APIView):
             nItemJson = 0
             nStatus = 0
 
-            dCamposJson = ['token', 'user','idSistema','permisoGrupo']
+            dCamposJson = ['token', 'user','idSistema','permisoGrupo','tipoPerGp']
             
             jd = json.loads(request.body)
 
@@ -2729,7 +2731,7 @@ class CVerificarTokenPermiso(APIView):
             #datos = []
 
             if nItemJson != nLenDef:
-                sTexto = "El tamaño del JSON obtenido no es el esperado, por favor de verificar. "
+                sTexto += "El tamaño del JSON obtenido no es el esperado, por favor de verificar. "
                 bValido = False
 
             for item in dCamposJson:
@@ -2766,6 +2768,18 @@ class CVerificarTokenPermiso(APIView):
                 nStatus = 400
                 bValido = False
 
+            if (jd['tipoPerGp'].isspace() or len(jd['tipoPerGp']) > 1):
+                sTexto += "El item de tipoPerGp es muy largo o contiene espacios en blanco. "
+                nStatus = 400
+                bValido = False
+
+            if (jd['tipoPerGp'] != "G" and jd['tipoPerGp'] != "P"):
+                sTexto += "El item de tipoPerGp debe tener los valores G o P. "
+                nStatus = 400
+                bValido = False
+
+            
+
             if bValido:
                 print("CVerificarTokenPermiso - Verificar token ...")
                 
@@ -2773,30 +2787,63 @@ class CVerificarTokenPermiso(APIView):
                 sUserName = jd['user']
                 nSistemaOrigen = jd['idSistema']
                 sPermGp  = jd['permisoGrupo']
+                sTipo = jd['tipoPerGp']
 
                 dDatos = self.oVeficarTk.validarToken(sUserName,sToken_encoded)
 
                 if dDatos['valido'] == 1:
                     
+                    print("CVerificarTokenPermiso - El token es valido.")
+                    
                     dUsuario = self.oAuth.consultarUsuarioActivo(sUserName)
 
                     if len(dUsuario):                                        
                         idUsuario = dUsuario[0]['id']
-                        print("CVerificarTokenPermiso - El id del usuario es: "+str(idUsuario))
+                        print("CVerificarTokenPermiso - Usuario validado, el id del usuario es: "+str(idUsuario))
 
-                        lPermisoUsuario = self.oAuth.obtenerPermisos(nSistemaOrigen,idUsuario)
-                        lGrupoUsuario = self.oAuth.obtenerGrupos(nSistemaOrigen,idUsuario)
-                        
+                        # lPermisoUsuario = self.oAuth.obtenerPermisos(nSistemaOrigen,idUsuario)
+                        # lGrupoUsuario = self.oAuth.obtenerGrupos(nSistemaOrigen,idUsuario)
 
-                        print("CVerificarTokenPermiso - Lista de permisos: ")
-                        print(lPermisoUsuario)
+                        if(sTipo == "P"):                           
+                            print("CVerificarTokenPermiso -  se valida el permiso: "+sPermGp)
+                            lPermisoUsuario = self.oAuth.obtenerPermisos(nSistemaOrigen,idUsuario)
+                            lGrupoUsuario = self.oAuth.obtenerGrupos(nSistemaOrigen,idUsuario)
 
-                        print("CVerificarTokenPermiso - Lista de grupos: ")
-                        print(lGrupoUsuario)
-                  
-                        print("CVerificarTokenPermiso - El token es valido.")
-                        nStatus = 200
-                        datos = {'status': 'Success', "message":'El token es válido y no ha expirado.'}
+                            #if len(lPermisoUsuario)>0 & len(lGrupoUsuario)>0:
+                            lPermisoUsuario.update(lGrupoUsuario)
+
+                            print("CVerificarTokenPermiso -  se obtiene listado de permisos: ")
+                            print(lPermisoUsuario)
+
+                            if sPermGp in lPermisoUsuario:
+                                print("CVerificarTokenPermiso - El usuario "+sUserName+" tiene el permiso: "+sPermGp);
+                                
+                                nStatus = 200
+                                datos = {'status': 'Success', "message":'El token es válido y no ha expirado.'}
+                            else:
+                                nStatus = 200
+                                datos = {'status': 'NOAUTORIZADO', "message":'El token es válido, pero el usuario no cuenta con el permiso solicitado.'}
+                        elif(sTipo == "G"):
+                            print("CVerificarTokenPermiso -  se valida el grupo: "+sPermGp)
+                            
+                            self.oAuth.obtenerGrupos(nSistemaOrigen,idUsuario)
+
+                            lGrupoUsuario = self.oAuth.dGruposAsigUsuario
+
+                            print("CVerificarTokenPermiso -  se obtiene listado de grupos: ")
+                            print(lGrupoUsuario)
+
+                            if sPermGp in lGrupoUsuario:
+                                print("CVerificarTokenPermiso - El usuario "+sUserName+" esta asignado al grupo "+sPermGp);
+                                nStatus = 200
+                                datos = {'status': 'Success', "message":'El token es válido y no ha expirado.'}
+                            else:
+                                nStatus = 200
+                                datos = {'status': 'NOAUTORIZADO', "message":'El token es válido, pero el usuario no esta asignado al grupo solicitado.'}
+                        else:
+                            nStatus = 400
+                            datos = {'status': 'Error', "message":'El tipo de permiso o grupo no es valido.'}
+                                                                  
                     else:
                         nStatus = 401
                         datos = {'status': 'Error', "message":'El usuario no existe.'}
@@ -2814,12 +2861,12 @@ class CVerificarTokenPermiso(APIView):
             
         except ValueError as error:
             nStatus = 404
-            sTexto = "%s" % error
+            sTexto += "%s" % error
             datos = {'status': 'Error', "message": sTexto}
             # return False
         except KeyError as error:
             nStatus = 403
-            sTexto = "%s" % error
+            sTexto += "%s" % error
             datos = {'status': 'Error', "message": sTexto}
 
 

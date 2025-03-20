@@ -534,6 +534,7 @@ class CAutenticacion(APIView):
             message = ""
             datos = {}            
             nReg = 0 #ARSI 19/03/2025 VARIABLE QUE ALMACENA ID DE REG DE TOKEN ACTIVO
+            dDatosTk = [] #ARSI 19/03/2025 VARIABLE QUE ALMACENA los datos de los token activos
             nTotAfectadas = 0  #ARSI 19/03/2025 VARIABLE QUE ALMACENA total de filas afectadas para inactivar el registro de token.
             # print(username)
             # zona_horaria = timezone()
@@ -610,9 +611,22 @@ class CAutenticacion(APIView):
                         if bSaveTk == 0:
                             actualizaReg = intentos.objects.filter(id=idReg).update(activo=0,updated_at=timezone.now(),observaciones=observaciones)
                         elif bSaveTk == 1:
-                            nReg = self.obtenerTokenActivo(username,idSistema)
+                            
+                            dDatosTk = self.obtenerTokenActivo(username,idSistema)
 
-                            if nReg > 0:
+                            nReg = dDatosTk['idReg']
+                            nTotReg = dDatosTk['TotReg']
+
+                            # print(nReg)
+                            # print(nTotReg)
+
+                            if nTotReg>1:
+                                nTotAfectadas = self.inactivarTokens(username,idSistema)
+
+                                if nTotAfectadas>0:
+                                   print("CAutenticacion - registrarAccesos - Se inactivaron "+str(nTotAfectadas)+" tokens")
+
+                            elif nReg > 0:
                                nTotAfectadas = self.inactivarToken(nReg)
 
                                if nTotAfectadas>0:
@@ -742,9 +756,22 @@ class CAutenticacion(APIView):
                             )
                         elif bSaveTk == 1:
                             
-                            nReg = self.obtenerTokenActivo(username,idSistema)
+                            #nReg = self.obtenerTokenActivo(username,idSistema)
+                            dDatosTk = self.obtenerTokenActivo(username,idSistema)
 
-                            if nReg > 0:
+                            nReg = dDatosTk['idReg']
+                            nTotReg = dDatosTk['TotReg']
+
+                            # print(nReg)
+                            # print(nTotReg)
+
+                            if nTotReg>1:
+                                nTotAfectadas = self.inactivarTokens(username,idSistema)
+
+                                if nTotAfectadas>0:
+                                   print("CAutenticacion - registrarAccesos - Se inactivaron "+str(nTotAfectadas)+" tokens")
+
+                            elif nReg > 0:
                                nTotAfectadas = self.inactivarToken(nReg)
 
                                if nTotAfectadas>0:
@@ -842,14 +869,21 @@ class CAutenticacion(APIView):
     def obtenerTokenActivo(self, username, idSistema):
         bExisteRegTokenActivo = True
         idReg = 0
+        nTotReg = 0
+        dResult = []
         
         try:
             idReg = intentos.objects.get(username=username,tokenActivo=1, idSistema=idSistema).id                
+            #nTotReg = intentos.objects.get(username=username,tokenActivo=1, idSistema=idSistema).count()
+            nTotReg = intentos.objects.filter(username=username,tokenActivo=1, idSistema=idSistema).count()
         except intentos.DoesNotExist:
             bExisteRegTokenActivo = False
             idReg = 0
+            nTotReg = 0
 
-        return idReg
+        sResult = {"idReg": idReg, "TotReg": nTotReg}
+
+        return sResult
     
 
     #ARSI 19/03/2025 INACTIVAR TOKEN ACTIVO, actualiza el registro del token activo que encuentre y devuelve el numero de filas
@@ -861,6 +895,24 @@ class CAutenticacion(APIView):
         try:
             #idReg = intentos.objects.get(username=username,tokenActivo=1, idSistema=idSistema).id                
             actualizaReg = intentos.objects.filter(id=idReg).update(token="",tokenActivo=0,updated_at=timezone.now())
+
+            print(f"Se actualizaron {actualizaReg} registros.")
+        except intentos.DoesNotExist:
+            #bExisteRegTokenActivo = False
+            actualizaReg = 0
+
+        return actualizaReg
+
+
+    #ARSI 19/03/2025 INACTIVAR TOKEN ACTIVO, actualiza el registro del token activo que encuentre y devuelve el numero de filas
+    #actualizadas.
+    def inactivarTokens(self, username,idSistema):
+        
+        actualizaReg = 0
+        
+        try:
+            #idReg = intentos.objects.get(username=username,tokenActivo=1, idSistema=idSistema).id                
+            actualizaReg = intentos.objects.filter(username=username,idSistema=idSistema).update(token="",tokenActivo=0,updated_at=timezone.now())
 
             print(f"Se actualizaron {actualizaReg} registros.")
         except intentos.DoesNotExist:

@@ -597,6 +597,22 @@ class CAutenticacion(APIView):
                             message = "bloqueado"
                             sTexto = "El usuario alcanzo un limite de 3 intentos de inicio de sesión, por lo que esta bloqueado por 10 min."
 
+            #ARSI 20/03/2025 BLOQUE DE CODIGO PARA INACTIVAR TODOS LOS TOKENS EN CASO DE QUE EL USUARIO configure a no guardar TOKEN
+            if bSaveTk == 0:
+                dDatosTk = self.obtenerTokenActivo(username,idSistema)
+            
+                nTotReg = dDatosTk['TotReg']
+
+                print("1. nTotReg")
+                print(nTotReg)
+
+                if nTotReg > 0:
+                    nTotAfectadas = self.inactivarTokens(username,idSistema)
+                    print("CAutenticacion - registrarAccesos - Se inactivaron "+str(nTotAfectadas)+" tokens")
+                else:
+                    print("CAutenticacion - registrarAccesos - No Se inactivaron tokens")
+
+
 
             if bValido and not bConsultaBloqueo:                       
                 if bExisteRegAccess:
@@ -876,6 +892,8 @@ class CAutenticacion(APIView):
             idReg = intentos.objects.get(username=username,tokenActivo=1, idSistema=idSistema).id                
             #nTotReg = intentos.objects.get(username=username,tokenActivo=1, idSistema=idSistema).count()
             nTotReg = intentos.objects.filter(username=username,tokenActivo=1, idSistema=idSistema).count()
+            # print("obtenerTokenActivo :")
+            # print(nTotReg)
         except intentos.DoesNotExist:
             bExisteRegTokenActivo = False
             idReg = 0
@@ -912,7 +930,7 @@ class CAutenticacion(APIView):
         
         try:
             #idReg = intentos.objects.get(username=username,tokenActivo=1, idSistema=idSistema).id                
-            actualizaReg = intentos.objects.filter(username=username,idSistema=idSistema).update(token="",tokenActivo=0,updated_at=timezone.now())
+            actualizaReg = intentos.objects.filter(username=username,idSistema=idSistema,tokenActivo=1).update(token="",tokenActivo=0,updated_at=timezone.now())
 
             print(f"Se actualizaron {actualizaReg} registros.")
         except intentos.DoesNotExist:

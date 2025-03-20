@@ -887,9 +887,11 @@ class CAutenticacion(APIView):
         idReg = 0
         nTotReg = 0
         dResult = []
+        token = ""
         
         try:
             idReg = intentos.objects.get(username=username,tokenActivo=1, idSistema=idSistema).id                
+            token = intentos.objects.get(username=username,tokenActivo=1, idSistema=idSistema).token                
             #nTotReg = intentos.objects.get(username=username,tokenActivo=1, idSistema=idSistema).count()
             nTotReg = intentos.objects.filter(username=username,tokenActivo=1, idSistema=idSistema).count()
             # print("obtenerTokenActivo :")
@@ -898,10 +900,11 @@ class CAutenticacion(APIView):
             bExisteRegTokenActivo = False
             idReg = 0
             nTotReg = 0
+            token = ""
 
-        sResult = {"idReg": idReg, "TotReg": nTotReg}
+        dResult = {"idReg": idReg, "TotReg": nTotReg,"token": token}
 
-        return sResult
+        return dResult
     
 
     #ARSI 19/03/2025 INACTIVAR TOKEN ACTIVO, actualiza el registro del token activo que encuentre y devuelve el numero de filas
@@ -1683,7 +1686,9 @@ class CVerificaToken(APIView):
             type=openapi.TYPE_OBJECT,
             properties={
                 'token': openapi.Schema(type=openapi.TYPE_STRING, description='Token asignado por la aplicación.'),
-                'user': openapi.Schema(type=openapi.TYPE_STRING, description='Nombre de usuario.')
+                'user': openapi.Schema(type=openapi.TYPE_STRING, description='Nombre de usuario.'),
+                'saveTk': openapi.Schema(type=openapi.TYPE_INTEGER, description='Valor que determina si basar la verificación del token en el que este almacenado y activo en la BD, opcional'),
+                'idSistema': openapi.Schema(type=openapi.TYPE_INTEGER, description='Id del sistema de donde viene el token; colocar NA en caso de que no aplique.')
             },
             required=['token', 'user']
         ),
@@ -1696,6 +1701,7 @@ class CVerificaToken(APIView):
         Para realizar un consulta exitosa, envía un objeto JSON con los siguientes campos:
        
         """
+        #ARSI 20/03/2025 se agrega el parametro saveTk para verificar en BD si existe el token activo correspondiente a la sesión del usuario.
         try:
             bValido = True
             sToken_encoded = ""
@@ -1708,26 +1714,46 @@ class CVerificaToken(APIView):
             nItemJson = 0
             nStatus = 0
 
-            dCamposJson = ['token', 'user']
+            dCamposJson = ['token', 'user','saveTk','idSistema']
             
             jd = json.loads(request.body)
 
             nLenDef = len(dCamposJson) 
 
-            nItemJson = len(jd)
+           
             dDatos = []
+            bSistInvalid = False #ARSI 20/03/2025 VARIABLE QUE ALMACENA SI EL TIPO DE DATO PARA EL PARAMETRO ID SISTEMA ES VALIDO
+            bSistNA = False  #ARSI 20/03/2025 VARIABLE QUE ALMACENA SI EL ID SISTEMA VIENE DEFINIDO COMO NA
+            bStkValid = False
             
-            if nItemJson != nLenDef:
-                sTexto = "El tamaño del JSON obtenido no es el esperado, por favor de verificar. "
-                bValido = False
-
+            #ARSI 20/03/2025 se valida si existen los parametros savetk e idSistema, en caso de que no, se asigna valores entendibles para el sistema.
             for item in dCamposJson:
                 if item in jd:
                     continue
                 else:
-                    sTexto += " El campo faltante es: "+item+". "
-                    bValido = False
-                    break
+                    # if item == 'saveTk':
+                    #     pass
+                    # sTexto += " El campo faltante es: "+item+". "
+                    # bValido = False
+                    # break
+
+                    #ARSI 20/03/2025 
+                    if item == 'saveTk':
+                        print("CVerificaToken - El campo saveTk no se encuentra en el JSON, se asigna valor de 0.")
+                        jd['saveTk'] = 0
+                        continue
+                    elif item == 'idSistema':
+                        print("CVerificaToken - El campo idSistema no se encuentra en el JSON, se asigna valor de NA.")
+                        jd['idSistema'] = "NA"
+                        continue
+                    else:
+                        
+                        sTexto += "El campo faltante es: "+item+". "
+                        bValido = False
+                        break
+
+            nItemJson = len(jd)
+            
 
 
             if (jd['token'].isspace() or len(jd['token']) <= 1):
@@ -1741,14 +1767,68 @@ class CVerificaToken(APIView):
                 bValido = False
 
 
+            # print("Valor de saveTk: bueno tipo: ")
+            # print(type(jd['saveTk']))
+
+            if isinstance(jd['saveTk'],int):
+                if ((jd['saveTk'] !=0 and jd['saveTk'] !=1)):
+                    sTexto += "El item de saveTk debe contener el valor entero 0 o 1. "
+                    nStatus = 404
+                    bValido = False
+
+                if (jd['saveTk'] ==1):
+                    bStkValid = True
+
+            elif isinstance(jd['saveTk'],str):
+                if (jd['saveTk']== "" or jd['saveTk'].isspace() or jd['saveTk'] !="0" or jd['saveTk'] !="1"):
+                    sTexto += "El item de saveTk debe contener el valor entero 0 o 1; no caracteres alfanumericos. "
+                    nStatus = 404
+                    bValido = False
+
+            
+            if isinstance(jd['idSistema'],int):                       
+                if (jd['idSistema']<=0):
+                    sTexto += "El item de idSistema debe contener algún id de sistema valido o si no aplica, colocar NA. "
+                    nStatus = 404
+                    bValido = False
+                    bSistInvalid = True
+            if isinstance(jd['idSistema'],str):
+                if (jd['idSistema'] !='NA' or jd['idSistema'] == '' or jd['idSistema'].isspace()):
+                    sTexto += "El item de idSistema debe contener algún valor numerico que indique el Id del sistema valido o si no aplica, colocar NA. "
+                    nStatus = 404
+                    bValido = False
+                    bSistInvalid = True
+                elif(jd['idSistema'] == "NA"):
+                    bSistNA = True
+
+            #bStkValid                        
+            #if jd['saveTk'] ==1 and ((bSistInvalid) or bSistNA ):
+            if bStkValid and ((bSistInvalid) or bSistNA ):
+
+                sTexto += "El item saveTk es igual a 1, por lo tanto el valor de idSistema debe estar definido. "
+                nStatus = 404
+                bValido = False
+
+            if nItemJson != nLenDef:
+                sTexto += "El tamaño del JSON obtenido no es el esperado, por favor de verificar. "
+                bValido = False
+
+
+        
             if bValido:
-                print("Verificar token ...")
+                print("CVerificaToken - Verificar token ...")
                 
                 sToken_encoded = jd['token']
                 sUserName = jd['user']
+                # nVerifyTk = jd['saveTk']
+                # nIdSistema = jd['idSistema']
                 
-                #ARSI 18/03/2025 COLOCAR ESTA LÓGICA DENTRO DE OTRO METODO...
-                dDatos = self.validarToken(sUserName,sToken_encoded);
+                #arsi 20/03/2025 se valida que el verifiTK sea 1 y que el sistema sea valido y no igual a NA
+                if bStkValid and not bSistInvalid and not bSistNA:
+                    pass
+                else:
+                    #ARSI 18/03/2025 COLOCAR ESTA LÓGICA DENTRO DE OTRO METODO...
+                    dDatos = self.validarToken(sUserName,sToken_encoded);
 
                 print("Datos obtenidos de validarToken: ");
                 print(dDatos["valido"]);
@@ -1816,13 +1896,14 @@ class CVerificaToken(APIView):
 
         except ValueError as error:
             nStatus = 404
-            sTexto = "%s" % error
-            datos = {'message': 'JSON invalido. ', "error": sTexto}
+            
+            sTexto += "%s" % error
+            datos = {'message': 'JSON invalido 1. ', "error": sTexto}
             # return False
         except KeyError as error:
             nStatus = 403
-            sTexto = "%s" % error
-            datos = {'message': 'JSON invalido. ', "error": sTexto}
+            sTexto += "%s" % error
+            datos = {'message': 'JSON invalido 2. ', "error": sTexto}
 
        
        

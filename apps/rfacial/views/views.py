@@ -1722,6 +1722,7 @@ class CVerificaToken(APIView):
 
            
             dDatos = []
+            dDatosValidarTkBD = []
             bSistInvalid = False #ARSI 20/03/2025 VARIABLE QUE ALMACENA SI EL TIPO DE DATO PARA EL PARAMETRO ID SISTEMA ES VALIDO
             bSistNA = False  #ARSI 20/03/2025 VARIABLE QUE ALMACENA SI EL ID SISTEMA VIENE DEFINIDO COMO NA
             bStkValid = False
@@ -1825,10 +1826,19 @@ class CVerificaToken(APIView):
                 
                 #arsi 20/03/2025 se valida que el verifiTK sea 1 y que el sistema sea valido y no igual a NA
                 if bStkValid and not bSistInvalid and not bSistNA:
-                    pass
+                    print("CVerificacionToken - Requiere obtener token desde BD y validar el token");
+
+                    dDatosValidarTkBD = self.validarTokenBD(sUserName,sToken_encoded,jd['idSistema'])
+
+                    if dDatosValidarTkBD['valido'] == 1:
+                       dDatos = self.validarToken(sUserName,sToken_encoded)
+                    else:
+                        dDatos["valido"] = dDatosValidarTkBD['valido']
+                        dDatos["Resultado"] = dDatosValidarTkBD['Resultado']
                 else:
                     #ARSI 18/03/2025 COLOCAR ESTA LÓGICA DENTRO DE OTRO METODO...
-                    dDatos = self.validarToken(sUserName,sToken_encoded);
+                    print("CVerificacionToken - No requiere obtener token desde BD, solo validar el token");
+                    dDatos = self.validarToken(sUserName,sToken_encoded)
 
                 print("Datos obtenidos de validarToken: ");
                 print(dDatos["valido"]);
@@ -1918,39 +1928,50 @@ class CVerificaToken(APIView):
         dDatos = []
         is_token_valid = False
         is_token_expired = True
+        dDesencriptarTk = []
 
         try:
             print("Accede a metodo validarToken.")
-            user = User.objects.get(username=p_suser) 
-                
-             
-            tk = crfr.decrypt(p_token.encode()).decode()
+        
+                           
+            #tk = crfr.decrypt(p_token.encode()).decode()
+            #ARSI 21/03/2025 SE APLICA DESENCRIPTADO DE TOKENS
+            dDesencriptarTk = CVerificaToken.desencriptarTk(p_token,True);
 
-            # Separar el token y la marca de tiempo               
-            parts = tk.split(',')
+            if dDesencriptarTk['estado'] == "Success":
+                
+
+            # # Separar el token y la marca de tiempo               
+            # parts = tk.split(',')
 
             
-            token_without_timestamp = '-'.join(parts[:-1])
-            timestamp = int(parts[-1])
+            # token_without_timestamp = '-'.join(parts[:-1])
+            # timestamp = int(parts[-1])
+
+                timestamp = dDesencriptarTk['expTime']
                
-            # Calcular la fecha de expiración del token               
-            expiration_time = timestamp  # 3600 segundos en una hora
-            # expiration_time = timestamp + (1 * 60)  # 60 segundos prueba de 1 min.
+                # Calcular la fecha de expiración del token               
+                expiration_time = timestamp  # 3600 segundos en una hora
+                # expiration_time = timestamp + (1 * 60)  # 60 segundos prueba de 1 min.
 
-            print(expiration_time)
-            print(timezone.now().timestamp())
-
-            if expiration_time > timezone.now().timestamp():
-                print("validarToken - Aun no expira el token")
-                is_token_expired = False
-              
-            is_token_valid = default_token_generator.check_token(user, parts[0])
+                print(expiration_time)
+                print(timezone.now().timestamp())
+                user = User.objects.get(username=p_suser) 
                 
+                if expiration_time > timezone.now().timestamp():
+                    print("validarToken - Aun no expira el token")
+                    is_token_expired = False
+                
+                is_token_valid = default_token_generator.check_token(user, dDesencriptarTk['tokenDj'])
+                    
 
-            if is_token_valid and not is_token_expired:
-                print("validarToken - El token es válido y no ha expirado para este usuario...")
-                nValido = 1
-                sTexto = "El token es válido y no ha expirado."
+                if is_token_valid and not is_token_expired:
+                    print("validarToken - El token es válido y no ha expirado para este usuario...")
+                    nValido = 1
+                    sTexto = "El token es válido y no ha expirado."
+            else:
+                nValido = 0           
+                sTexto += "Error en desencriptación del Token. "
 
         except ValueError as error: 
             nValido = 0           
@@ -1963,6 +1984,121 @@ class CVerificaToken(APIView):
 
         return dDatos
 
+
+    #ARSI 21/03/2025 VALIDAR TOKEN DESDE BASE DE DATOS.
+    @staticmethod
+    def validarTokenBD(p_suser,p_token, idSistema):
+        try:
+            
+            print("CVerificaToken - validarTokenBD  - Accede a método..")
+            
+            oAuth = CAutenticacion()
+            dDatosTk = []
+            dDesencriptarTkCliente = []
+            dDesencriptarTkBD = []
+            nValido = 0
+            sTexto = ""
+            dDatos = []
+
+            #ARSI 21/03/2025 OBTENER TOKEN ACTIVO DE LA BASE DE DATOS
+            dDatosTk = oAuth.obtenerTokenActivo(p_suser, idSistema)
+            
+            #ARSI 21/03/2025 verificar que el id de registro de token activo es mayor a 0 
+            if dDatosTk['idReg']>0:
+                print("CVerificaToken - validarTokenBD  - Se encontró registro de token activo en la BD.")
+
+                if len(dDatosTk['token'])>0:
+                    
+                    #se desencripta token que viene del cliente y el token activo en la BD
+                    dDesencriptarTkCliente = CVerificaToken.desencriptarTk(p_token,True);
+                    dDesencriptarTkBD = CVerificaToken.desencriptarTk(dDatosTk['token'],True);
+        
+                    if dDesencriptarTkCliente['estado'] == "Success" and dDesencriptarTkBD['estado'] == "Success" :
+                        print("CVerificaToken - validarTokenBD  - Token de cliente y token de BD desencriptado : OK ")
+
+                        if dDesencriptarTkCliente['tk'] == dDesencriptarTkBD['tk']:
+                            print("CVerificaToken - validarTokenBD  - Token de cliente y token de BD desencriptado coinciden : OK ")
+                            nValido = 1
+                            sTexto +="Token de cliente y token de BD coinciden. "
+                        else:
+                            sTexto +="Token de cliente y token de BD no coinciden. "
+                            print("CVerificaToken - validarTokenBD  - Token de cliente y token de BD desencriptado coinciden : Error ")
+                            
+
+                    else:
+                        sTexto +=" Error en desencriptación de Token. "
+                        print("CVerificaToken - validarTokenBD  - Token de cliente y token de BD desencriptado : ERROR ")
+                else:
+                    sTexto +="No se encuentra token almacenado en BD. "
+            else:
+                 sTexto +="No se encuentra token activo en BD. "
+
+
+        except ValueError as error: 
+            nValido = 0           
+            sTexto = "%s" % error
+        except KeyError as error:
+            nValido = 0
+            sTexto = "%s" % error
+
+        dDatos = {'valido': nValido, 'Resultado': sTexto}
+
+        return dDatos
+
+        
+
+    @staticmethod
+    def desencriptarTk(p_token, bSeparaTk =False):
+        tk = ""
+        dDatos = []
+        estado = "Error"
+        timestamp = 0
+        tokenDj = ""
+        sTexto = ""
+
+        try:
+            print("CVerificaToken - Accede a desencriptarTK. ")
+            
+            tk = crfr.decrypt(p_token.encode()).decode()
+
+            if bSeparaTk:
+
+                print("CVerificaToken - desencriptarTK - Solicita separar token y marca de tiempo")
+                # Separar el token y la marca de tiempo               
+                parts = tk.split(',')
+                                  
+                timestamp = int(parts[-1])
+                tokenDj = parts[0]
+
+                estado = "Success"
+                sTexto+="Token desencriptado y separado con exito."
+            else:
+                estado = "Success"
+
+                sTexto+="Token desencriptado con exito."
+        
+        except TypeError as error:
+            tk = ""  
+            sTexto += "- TypeError - "         
+            sTexto += "%s" % error
+        except ValueError as error: 
+            tk = ""          
+            sTexto += "- ValueError - " 
+            sTexto += "%s" % error
+        except KeyError as error:
+            tk = ""  
+            sTexto += "- KeyError - " 
+            sTexto += "%s" % error
+        except Exception as error:
+            tk = ""  
+            sTexto += "- Exception - " 
+            sTexto += "%s" % error
+
+        dDatos= {'estado':estado,'message': sTexto,'tk': tk, 'expTime': timestamp, 'tokenDj':tokenDj}
+
+        print("CVerificaToken - desencriptarTK - Resultado final: "+estado+' - '+sTexto)
+
+        return dDatos
 
 class CVerificaTokenGlobal(APIView):
 

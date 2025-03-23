@@ -1833,8 +1833,12 @@ class CVerificaToken(APIView):
                     if dDatosValidarTkBD['valido'] == 1:
                        dDatos = self.validarToken(sUserName,sToken_encoded)
                     else:
+                        
                         dDatos["valido"] = dDatosValidarTkBD['valido']
                         dDatos["Resultado"] = dDatosValidarTkBD['Resultado']
+                        #ARSI 23/03/2025 SI EL TOKEN DE LA BASE DE DATOS EN INVALIDO ELIMINA EL TOKEN DE LA bd.
+                        self.oAuth.inactivarTokens(sUserName,jd['idSistema']);
+                        
                 else:
                     #ARSI 18/03/2025 COLOCAR ESTA LÓGICA DENTRO DE OTRO METODO...
                     print("CVerificacionToken - No requiere obtener token desde BD, solo validar el token");
@@ -1890,6 +1894,7 @@ class CVerificaToken(APIView):
                     nStatus = 200
                     datos = {'message': 'Success', "descripcion":'El token es válido y no ha expirado.'}
                 else:
+                    
                     nStatus = 404
                     datos = {'message': 'Error', "descripcion":'El token ya no es válido y posiblemente ya expiro'}
                     print("El token no es válido.")
@@ -3202,6 +3207,9 @@ class CVerificarTokenPermiso(APIView):
                     #ARSI 23/03/2025 SE AGREGA VALIDACIONES DE TK EN BD y el token dado por el cliente.
                     if dDatosValidarTkBD['valido'] == 1 and dDatos['valido'] == 1:
                         bValidoTk = True
+                    else:
+                        #ARSI 23/03/2025 SI LOS TOKENS NO SON VALIDOS ELIMINA EL TOKEN DE LA bd.
+                        self.oAuth.inactivarTokens(sUserName,nSistemaOrigen);
                 elif dDatos['valido'] == 1:
                     bValidoTk = True
 
@@ -3291,3 +3299,9 @@ class CVerificarTokenPermiso(APIView):
         # return JsonResponse(datos)
     
         return JsonResponse(datos,status=nStatus)
+    
+
+class CInactivaTk(APIView):
+    def post(self, request):
+        pass
+    #Se requiere username y idSistema para inactivar el token en la BD.

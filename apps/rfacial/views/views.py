@@ -3067,7 +3067,8 @@ class CVerificarTokenPermiso(APIView):
                 'user': openapi.Schema(type=openapi.TYPE_STRING, description='Nombre de usuario.'),
                 'idSistema' :  openapi.Schema(type=openapi.TYPE_INTEGER, description='Id del sistema.'),
                 'permisoGrupo' : openapi.Schema(type=openapi.TYPE_STRING, description='Nombre del permiso o grupo a validar.'),
-                'tipoPerGp' : openapi.Schema(type=openapi.TYPE_STRING, description='Por favor de especificar que valor es el indicado en "permisoGrupo", si es un Grupo colocar G, si es un Permiso colocar P.')
+                'tipoPerGp' : openapi.Schema(type=openapi.TYPE_STRING, description='Por favor de especificar que valor es el indicado en "permisoGrupo", si es un Grupo colocar G, si es un Permiso colocar P.'),
+                'saveTk': openapi.Schema(type=openapi.TYPE_INTEGER, description='Valor que determina si basar la verificación del token en el que este almacenado y activo en la BD, opcional'),
             },
             required=['token', 'user','idSistema','permisoGrupo','tipoPerGp']
         ),
@@ -3081,6 +3082,7 @@ class CVerificarTokenPermiso(APIView):
         Para realizar un consulta exitosa, envía un objeto JSON con los siguientes campos:
        
         """
+        #ARSI 22/03/2025 SE AGREGA PARAMETRO OPCIONAL SAVE TOKEN PARA VALIDAR EL TOKEN ALMACENADO EN LA BASE DE DATOS.
         try:
             print("CVerificarTokenPermiso - Accede a la validación de token y permisos.")
             bValido = True
@@ -3096,7 +3098,8 @@ class CVerificarTokenPermiso(APIView):
             nItemJson = 0
             nStatus = 0
 
-            dCamposJson = ['token', 'user','idSistema','permisoGrupo','tipoPerGp']
+            #22/03/2025 ARSI SE AGREGA PARAMETRO OPCIONAL SAVE TOKEN
+            dCamposJson = ['token', 'user','idSistema','permisoGrupo','tipoPerGp','saveTk']
             
             jd = json.loads(request.body)
 
@@ -3105,6 +3108,9 @@ class CVerificarTokenPermiso(APIView):
             nItemJson = len(jd)
             dDatos = []
             dUsuario = []
+            bStkValid = False #ARSI 22/03/2025
+            dDatosValidarTkBD = [] #ARSI 22/03/2025
+            bValidoTk = False #ARSI 23/03/2025
             #datos = []
 
             if nItemJson != nLenDef:
@@ -3115,9 +3121,15 @@ class CVerificarTokenPermiso(APIView):
                 if item in jd:
                     continue
                 else:
-                    sTexto += " El campo faltante es: "+item+". "
-                    bValido = False
-                    break
+                    #ARSI 22/03/2025 
+                    if item == 'saveTk':
+                        print("CVerificaTokenPermiso - El campo saveTk no se encuentra en el JSON, se asigna valor de 0.")
+                        jd['saveTk'] = 0
+                        continue
+                    else:
+                        sTexto += " El campo faltante es: "+item+". "
+                        bValido = False
+                        break
 
 
             # if (jd['token'].isspace() or len(jd['token']) <= 1):
@@ -3155,6 +3167,22 @@ class CVerificarTokenPermiso(APIView):
                 nStatus = 400
                 bValido = False
 
+            #ARSI 22/03/2025 SE VALIDA EL VALOR DE SAVETK
+            if isinstance(jd['saveTk'],int):
+                if ((jd['saveTk'] !=0 and jd['saveTk'] !=1)):
+                    sTexto += "El item de saveTk debe contener el valor entero 0 o 1. "
+                    nStatus = 404
+                    bValido = False
+
+                if (jd['saveTk'] ==1):
+                    bStkValid = True
+
+            elif isinstance(jd['saveTk'],str):
+                if (jd['saveTk']== "" or jd['saveTk'].isspace() or jd['saveTk'] !="0" or jd['saveTk'] !="1"):
+                    sTexto += "El item de saveTk debe contener el valor entero 0 o 1; no caracteres alfanumericos. "
+                    nStatus = 404
+                    bValido = False
+
             
 
             if bValido:
@@ -3168,7 +3196,18 @@ class CVerificarTokenPermiso(APIView):
 
                 dDatos = self.oVeficarTk.validarToken(sUserName,sToken_encoded)
 
-                if dDatos['valido'] == 1:
+                #ARSI 22/03/2025 SE VALIDA QUE EL PARAMETRO SAVETOKEN SEA 1 PARA VALIDAR EL TOKEN EN LA BASE DE DATOS
+                if bStkValid:
+                    dDatosValidarTkBD = self.oVeficarTk.validarTokenBD(sUserName,sToken_encoded,nSistemaOrigen)
+                    #ARSI 23/03/2025 SE AGREGA VALIDACIONES DE TK EN BD y el token dado por el cliente.
+                    if dDatosValidarTkBD['valido'] == 1 and dDatos['valido'] == 1:
+                        bValidoTk = True
+                elif dDatos['valido'] == 1:
+                    bValidoTk = True
+
+                #ARSI 23/03/2025 AHORA SE VALIDA EL BOOLEANO DE TOKEN.
+                #if dDatos['valido'] == 1:
+                if bValidoTk:
                     
                     print("CVerificarTokenPermiso - El token es valido.")
                     

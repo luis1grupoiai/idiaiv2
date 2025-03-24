@@ -150,7 +150,7 @@ class GerenciaAdmin(admin.ModelAdmin):
 admin.site.register(Gerencia, GerenciaAdmin)
 
 class DireccionAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'abreviatura', 'rfc', 'director', 'created_at', 'updated_at')  # Campos que se mostrarán en la lista
+    list_display = ('nombre', 'abreviatura', 'nombreCorto', 'director', 'estado', 'created_at', 'updated_at')  # Campos que se mostrarán en la lista
     search_fields = ('nombre', 'abreviatura', 'id_gerente__username')  # Agregar campos para búsqueda
     list_filter = ('created_at', 'updated_at')  # Agregar filtros laterales
 

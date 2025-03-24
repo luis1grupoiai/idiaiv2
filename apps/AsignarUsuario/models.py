@@ -15,10 +15,16 @@ class VallEmpleado(models.Model):
     date_joined = models.DateTimeField()
     RutaFoto_ps = models.CharField(max_length=200)
     Nombre_ct = models.CharField(max_length=200)
+    EstadoEmpleado = models.CharField(max_length=200)
+    id_dir = models.IntegerField()
+    idGerencia = models.IntegerField()
     nombre_direccion = models.CharField(max_length=200)
     nombre_coordinacion = models.CharField(max_length=200)
     is_active= models.BooleanField()
     Proyecto = models.CharField(max_length=200)
+
+    def __str__(self):
+        return self.Nombre_ps + " " + self.Apaterno_ps + " " + self.Amaterno_ps
 
     class Meta:
         managed = False

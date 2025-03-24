@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
+from apps.AsignarUsuario.models import VallEmpleado
 
 class UserCoordinacion(models.Model):
     # Campo de clave única que establece una relación uno a uno con el modelo de usuario predeterminado de Django (User)
@@ -20,12 +21,21 @@ class UserCoordinacion(models.Model):
 
 
 class Direccion(models.Model):
+    ESTADO_INACTIVO = 0
+    ESTADO_ACTIVO = 1
+    ESTADO_CHOICES = [
+        (ESTADO_INACTIVO, 'Inactivo'),
+        (ESTADO_ACTIVO, 'Activo'),
+    ]
+
     nombre = models.CharField(max_length=255)
+    nombreCorto = models.CharField(max_length=100)
     abreviatura = models.CharField(max_length=10)
-    rfc = models.CharField(max_length=30)
+    rfc = models.CharField(max_length=30, null=True)
     id_director = models.ForeignKey(User, on_delete=models.CASCADE, db_constraint=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    estado = models.IntegerField(choices=ESTADO_CHOICES, default=ESTADO_ACTIVO)
     
     def __str__(self):
         return self.nombre
@@ -35,12 +45,20 @@ class Direccion(models.Model):
 
 
 class Gerencia(models.Model):
+    ESTADO_INACTIVO = 0
+    ESTADO_ACTIVO = 1
+    ESTADO_CHOICES = [
+        (ESTADO_INACTIVO, 'Inactivo'),
+        (ESTADO_ACTIVO, 'Activo'),
+    ]
     nombre = models.CharField(max_length=255)
     abreviatura = models.CharField(max_length=10)
     id_gerente = models.ForeignKey(User, on_delete=models.CASCADE)
     id_direccion = models.ForeignKey(Direccion, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    estado = models.IntegerField(choices=ESTADO_CHOICES, default=ESTADO_ACTIVO)
+
 
     def __str__(self):
         return self.nombre
@@ -50,6 +68,12 @@ class Gerencia(models.Model):
 
 
 class Coordinacion(models.Model):
+    ESTADO_INACTIVO = 0
+    ESTADO_ACTIVO = 1
+    ESTADO_CHOICES = [
+        (ESTADO_INACTIVO, 'Inactivo'),
+        (ESTADO_ACTIVO, 'Activo'),
+    ]
     nombre = models.CharField(max_length=255)
     abreviatura = models.CharField(max_length=10)
     id_coordinador = models.ForeignKey(User, on_delete=models.CASCADE, db_constraint=False)
@@ -57,6 +81,8 @@ class Coordinacion(models.Model):
     id_direccion = models.ForeignKey(Direccion, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    estado = models.IntegerField(choices=ESTADO_CHOICES, default=ESTADO_ACTIVO)
+
     
     def __str__(self):
         return self.nombre
@@ -65,4 +91,23 @@ class Coordinacion(models.Model):
         verbose_name_plural = 'Coordinaciones'
 
 
+class VDirecciones(models.Model):
+    idDireccion = models.IntegerField(primary_key=True)  # Clave primaria
+    idGerencia = models.IntegerField()
+    idCorporativo = models.IntegerField()
+    idDepartamento = models.IntegerField()
+    idArea = models.IntegerField()
+    nombre = models.CharField(max_length=255)
+    nombreCorto = models.CharField(max_length=100, null=True, blank=True)
+    Id_personal = models.IntegerField(null=True, blank=True)
+    encargado = models.CharField(max_length=255, null=True, blank=True)
+    abreviatura = models.CharField(max_length=50, null=True, blank=True)
+    rfc = models.CharField(max_length=13, null=True, blank=True)
+    borrado = models.BooleanField(default=False)
 
+    class Meta:
+        db_table = 'vDirecciones'
+        managed = False  # Indica que esta tabla ya existe en la base de datos
+
+    def __str__(self):
+        return self.nombre

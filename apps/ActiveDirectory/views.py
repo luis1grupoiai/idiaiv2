@@ -238,7 +238,7 @@ def actualizar_empleados():
                                 )
                            # imprimir(f"Actualización de Información :  proyecto({physicalDeliveryOfficeName_actual} -> {usuario.Proyecto}) , Puesto ({puesto_actual}->{usuario.Nombre_ct}) direccion({department_actual}->{usuario.nombre_direccion}) del '{usuario.username}' en Active Directory ")
                             mensajeCont=f"Actualización de Información de {usuario.NombreCompleto} ({usuario.username}) :<br> Proyecto ({physicalDeliveryOfficeName_actual} --> {usuario.Proyecto}) <br> Puesto ({puesto_actual} --> {usuario.Nombre_ct}) <br> Direccion({department_actual} --> {usuario.nombre_direccion})   "
-                            notificacionCorreo(None,f'IDIAI - Active Directory : Actualizacion del usuario {usuario.username}','Actualización de Información en Active Directory',mensajeCont) 
+                            #notificacionCorreo(None,f'IDIAI - Active Directory : Actualizacion del usuario {usuario.username}','Actualización de Información en Active Directory',mensajeCont) 
                             if AccountControl_actual != 66050:
                                 imprimir(mover_usuario_ou_sys(usuario.username, unidadOrganizativa[asignar_Departamento(usuario.nombre_direccion)]))
                             
@@ -384,7 +384,7 @@ def actualizarProyectoDireccion(request):
                                     )
                                 mensajeCont=f"Actualización de Información de {usuario.NombreCompleto} ({usuario.username}) :<br> Proyecto ({physicalDeliveryOfficeName_actual} --> {usuario.Proyecto}) <br> Puesto ({puesto_actual} --> {usuario.Nombre_ct}) <br> Direccion({department_actual} --> {usuario.nombre_direccion})   "                
                                 usuariosmodificados.append(usuario)  # Añade el nombre de usuario a la lista
-                                notificacionCorreo(request,f'IDIAI - Active Directory : Actualizacion del usuario {usuario.username}','Actualización de Información en Active Directory',mensajeCont) 
+                                #notificacionCorreo(request,f'IDIAI - Active Directory : Actualizacion del usuario {usuario.username}','Actualización de Información en Active Directory',mensajeCont) 
                                                               
                                 if AccountControl_actual !=66050: 
                                     imprimir(mover_usuario_ou(usuario.username, unidadOrganizativa[asignar_Departamento(usuario.nombre_direccion)],request))  # no comentar esta linea XD
@@ -522,7 +522,7 @@ def personalNoContratada(request):
                             request.META.get('HTTP_USER_AGENT'),
                             'N/A'
                             )
-                        notificacionCorreo(request,f'IDIAI - Active Directory : Creación del usuario {nombre_usuario}','Creación de usuario',mensajeCont)    
+                        #notificacionCorreo(request,f'IDIAI - Active Directory : Creación del usuario {nombre_usuario}','Creación de usuario',mensajeCont)    
                             #return redirect('usuariosID')
                             
                             
@@ -573,7 +573,7 @@ def personalNoContratada(request):
                             'N/A'
                             )         
 
-            notificacionCorreo(request,f'IDIAI V2 creación del usuario {nombre_usuario}','Creación de usuario',mensajeCont)
+            #notificacionCorreo(request,f'IDIAI V2 creación del usuario {nombre_usuario}','Creación de usuario',mensajeCont)
             nuevo_usuario, created2 = TRegistroDeModulo.objects.get_or_create(
                 _nombre=nombre_cifrado,
                 defaults={
@@ -852,7 +852,7 @@ def consultarUsuariosIDIAI(request):
                     
                     #return redirect('usuariosID')
                     
-                    notificacionCorreo(request,f'IDIAI - Active Directory : Creación del usuario {nombre_usuario}','Creación de usuario',mensajeCont)
+                    #notificacionCorreo(request,f'IDIAI - Active Directory : Creación del usuario {nombre_usuario}','Creación de usuario',mensajeCont)
                 else:
                     messages.error(request, f"Error {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])} o {conn.result['description']} : {conn.result['message']} ")
                     mensaje = {'titulo': 'Error', 'texto': f"Error {conn.result['result']} :  {obtener_mensaje_error_ad(conn.result['result'])} o  {conn.result['description']} ", 'tipo': 'error'}
@@ -1924,7 +1924,7 @@ def notificacionCorreo(request,Asunto,titulo,contenido):
             Asunto,  # Asunto
             text_content,  # Contenido en texto plano
             'sistemas.iai@grupo-iai.com.mx',  # Email del remitente
-            ['manuel.zarate@grupo-iai.com.mx','dennis.valencia@grupo-iai.com.mx', 'luis.dominguez@grupo-iai.com.mx']  # Lista de destinatarios
+            ['desarrollo.testing@grupo-iai.com.mx','dennis.valencia@grupo-iai.com.mx', 'luis.dominguez@grupo-iai.com.mx']  # Lista de destinatarios
         )
     email.attach_alternative(html_content, "text/html")
     try:

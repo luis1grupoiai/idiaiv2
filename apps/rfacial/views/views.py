@@ -830,6 +830,7 @@ class CAutenticacion(APIView):
                 'password': openapi.Schema(type=openapi.TYPE_STRING, description='contraseña en base64.'),
                 'idSistema': openapi.Schema(type=openapi.TYPE_INTEGER, description='Id del sistema donde el usuario esta iniciando sesión.'),
                 'timeExp': openapi.Schema(type=openapi.TYPE_INTEGER, description='Número de horas de la vigencia del token; si número de horas es 0, entonces por default el token durara 3 hrs.'),
+                #'saveTk': openapi.Schema(type=openapi.TYPE_INTEGER, description='Indica si se desea guardar el token en la base de datos, por defecto su valor es 0 (No se almacena Token).'),
             },
             required=['token', 'user', 'password','idSistema','timeExp']
         ),
@@ -883,6 +884,14 @@ class CAutenticacion(APIView):
             sPuestoActual = ""  #Se crea variable de puesto actual
             idPuestoActual = 0  #Se crea variable de id del puesto actual
             idProyectoActual = 0 #Se crea variable de id proyecto actual
+            idArea= "" #ARSI 30/11/2024 SE CREA VARIABLE QUE CONTENDRA ID AREA RELACIONADO A LA CATEGORIA DEL EMPLEADO.
+            sNombreArea = "" #ARSI 30/11/2024 SE CREA VARIABLE QUE CONTENDRA NOMBRE DEL AREA RELACIONADO A LA CATEGORIA DEL EMPLEADO.
+            nDir = 0 #ARSI 15/03/2025 SE CREA VARIABLE QUE CONTENDRA EL ID DE DIRECCION RELACIONADO A LA CATEGORIA DEL EMPLEADO.
+            sNombreDir = "" #ARSI 15/03/2025 SE CREA VARIABLE QUE CONTENDRA EL NOMBRE DE DIRECCION RELACIONADO A LA CATEGORIA DEL EMPLEADO.
+            idCor = "" #ARSI 22/03/2025 SE CREA VARIABLE QUE CONTENDRA EL ID DE COORDINACION 
+            sNombreCor = "" #ARSI 22/03/2025 SE CREA VARIABLE QUE CONTENDRA EL NOMBRE DE COORDINACION
+            idGer = "" #ARSI 22/03/2025 SE CREA VARIABLE QUE CONTENDRA EL ID DE GERENCIA
+            sNombreGer = "" #ARSI 22/03/2025 SE CREA VARIABLE QUE CONTENDRA EL NOMBRE DE GERENCIA
             tokenApi = ""
             nItemJson = 0
             keySis = ""
@@ -1070,6 +1079,21 @@ class CAutenticacion(APIView):
                                         idPuestoActual = dDatosPersonales[0][23]
                                         idProyectoActual = dDatosPersonales[0][24]
 
+                                        #ARSI 30/11/2024 
+                                        idArea= dDatosPersonales[0][25]
+                                        sNombreArea = dDatosPersonales[0][26]
+
+                                        #ARSI 15/03/2025
+                                        sNombreDir = dDatosPersonales[0][14]
+                                        nDir = dDatosPersonales[0][27]
+
+                                        #ARSI 22/03/2025
+                                        idCor = dDatosPersonales[0][28]
+                                        sNombreCor = dDatosPersonales[0][29]
+                                        idGer = dDatosPersonales[0][30]
+                                        sNombreGer = dDatosPersonales[0][31]
+
+
                                         
                                         dUsuario = self.consultarUsuarioActivo(sUserName)
                                          #ARSI 08/11/2024 
@@ -1089,6 +1113,7 @@ class CAutenticacion(APIView):
 
                                                 #El listado de permisos de grupos se unen al bloque permisos, todo junto.
                                                 dPermisos.update(dGrupos)
+                                                
 
                                             
                                                 # resultados = vUsuarioPermiso.objects.all()
@@ -1183,7 +1208,22 @@ class CAutenticacion(APIView):
                                                 opc = 1
                                                 info = self.registrarAcceso(sUserName,sistema,"Inicio de sesión exitoso al sistema "+self.sNombreSistema+sTextoTkg,opc)
                                                 nStatus = 200
-                                                datos = {'message': 'Success','idPersonal':idPersonal,'nNoEmpleado':nNoEmpleado,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg, 'fechaNac':dFechaNac, 'rutaFoto':sRutaFoto, 'expira':self.intTiempoExpira,'idProyectoActual':idProyectoActual ,'proyectoActual':sProyectoActual,'idPuestoActual':idPuestoActual,'puestoActual':sPuestoActual,'dHistoricoProyectosAsignados':dListaProyectos}
+                                                datos = {'message': 'Success','idPersonal':idPersonal,
+                                                         'nNoEmpleado':nNoEmpleado,'usuario': sUserName, 
+                                                         'sistema':self.sNombreSistema,
+                                                         'nombreCompleto':sNombreCompleto,
+                                                         'token': tokenApi,
+                                                         'grupos':self.dGruposAsigUsuario,
+                                                         'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 
+                                                         'tkg':gtkg, 'fechaNac':dFechaNac, 'rutaFoto':sRutaFoto, 
+                                                         'expira':self.intTiempoExpira,'idProyectoActual':idProyectoActual ,
+                                                         'proyectoActual':sProyectoActual,'idPuestoActual':idPuestoActual,
+                                                         'puestoActual':sPuestoActual,'dHistoricoProyectosAsignados':dListaProyectos,
+                                                         'idArea':idArea,'sNombreArea':sNombreArea, 'idDir':nDir,
+                                                         'sNombreDir':sNombreDir,
+                                                         'idCor':idCor,'sNombreCor':sNombreCor,
+                                                         'idGer':idGer,'sNombreGer':sNombreGer
+                                                         }
                                             else:
                                                 nStatus = 404
                                                 datos = {'message': 'Acceso denegado', 'error':sTexto}
@@ -1541,6 +1581,7 @@ class CVerificaToken(APIView):
             nLenDef = len(dCamposJson) 
 
             nItemJson = len(jd)
+            dDatos = []
             
             if nItemJson != nLenDef:
                 sTexto = "El tamaño del JSON obtenido no es el esperado, por favor de verificar. "
@@ -1568,48 +1609,57 @@ class CVerificaToken(APIView):
 
             if bValido:
                 print("Verificar token ...")
+                
                 sToken_encoded = jd['token']
                 sUserName = jd['user']
                 
-                user = User.objects.get(username=sUserName) 
+                #ARSI 18/03/2025 COLOCAR ESTA LÓGICA DENTRO DE OTRO METODO...
+                dDatos = self.validarToken(sUserName,sToken_encoded);
+
+                print("Datos obtenidos de validarToken: ");
+                print(dDatos["valido"]);
+                print(dDatos["Resultado"]);            
+
+                # user = User.objects.get(username=sUserName) 
                 
-                # tk = urlsafe_base64_decode(sToken_encoded)                
-                # tk = tk.decode('utf-8')
-                # print("Entra a decrypt ...")
-                tk = crfr.decrypt(sToken_encoded.encode()).decode()
+                # # tk = urlsafe_base64_decode(sToken_encoded)                
+                # # tk = tk.decode('utf-8')
+                # # print("Entra a decrypt ...")
+                # tk = crfr.decrypt(sToken_encoded.encode()).decode()
 
-                # print(tk)
-                 # Separar el token y la marca de tiempo
-                parts = tk.split(',')
+                # # print(tk)
+                #  # Separar el token y la marca de tiempo
+                # parts = tk.split(',')
 
-                # print("Token ... :( por favor funciona: ")
-                # print(parts[0])
+                # # print("Token ... :( por favor funciona: ")
+                # # print(parts[0])
                 
-                token_without_timestamp = '-'.join(parts[:-1])
-                timestamp = int(parts[-1])
-                # print("timestamp: ")
-                # print(timestamp)
+                # token_without_timestamp = '-'.join(parts[:-1])
+                # timestamp = int(parts[-1])
+                # # print("timestamp: ")
+                # # print(timestamp)
 
-                # Calcular la fecha de expiración del token
-                # expiration_time = timestamp + (expiration_hours * 3600)  # 3600 segundos en una hora
-                expiration_time = timestamp  # 3600 segundos en una hora
-                # expiration_time = timestamp + (1 * 60)  # 60 segundos prueba de 1 min.
+                # # Calcular la fecha de expiración del token
+                # # expiration_time = timestamp + (expiration_hours * 3600)  # 3600 segundos en una hora
+                # expiration_time = timestamp  # 3600 segundos en una hora
+                # # expiration_time = timestamp + (1 * 60)  # 60 segundos prueba de 1 min.
 
-                print(expiration_time)
-                print(timezone.now().timestamp())
+                # print(expiration_time)
+                # print(timezone.now().timestamp())
 
-                if expiration_time > timezone.now().timestamp():
-                    print("Aun no expira el token")
-                    is_token_expired = False
-                # else:
-                #     print("El token ya expiro...")
-                    # is_token_expired = True
+                # if expiration_time > timezone.now().timestamp():
+                #     print("Aun no expira el token")
+                #     is_token_expired = False
+                # # else:
+                # #     print("El token ya expiro...")
+                #     # is_token_expired = True
 
-                # is_token_valid = default_token_generator.check_token(user, tk)
-                is_token_valid = default_token_generator.check_token(user, parts[0])
+                # # is_token_valid = default_token_generator.check_token(user, tk)
+                # is_token_valid = default_token_generator.check_token(user, parts[0])
                 
 
-                if is_token_valid and not is_token_expired:
+                #if is_token_valid and not is_token_expired:
+                if dDatos["valido"] == 1: #ARSI 18/03/2025
                     print("El token es válido y no ha expirado para este usuario...")
                     # is_token_expired = self.is_token_expired(tk)
                     # print(type(is_token_expired))
@@ -1644,6 +1694,59 @@ class CVerificaToken(APIView):
        
 
         return JsonResponse(datos,status=nStatus)  
+    
+    #ARSI 18/03/2025 METODO PARA VERIFICAR SI EL TOKEN ES VALIDO.
+    @staticmethod
+    def validarToken(p_suser,p_token):
+        sTexto = ""
+        nValido = 0
+        dDatos = []
+        is_token_valid = False
+        is_token_expired = True
+
+        try:
+            print("Accede a metodo validarToken.")
+            user = User.objects.get(username=p_suser) 
+                
+             
+            tk = crfr.decrypt(p_token.encode()).decode()
+
+            # Separar el token y la marca de tiempo               
+            parts = tk.split(',')
+
+            
+            token_without_timestamp = '-'.join(parts[:-1])
+            timestamp = int(parts[-1])
+               
+            # Calcular la fecha de expiración del token               
+            expiration_time = timestamp  # 3600 segundos en una hora
+            # expiration_time = timestamp + (1 * 60)  # 60 segundos prueba de 1 min.
+
+            print(expiration_time)
+            print(timezone.now().timestamp())
+
+            if expiration_time > timezone.now().timestamp():
+                print("validarToken - Aun no expira el token")
+                is_token_expired = False
+              
+            is_token_valid = default_token_generator.check_token(user, parts[0])
+                
+
+            if is_token_valid and not is_token_expired:
+                print("validarToken - El token es válido y no ha expirado para este usuario...")
+                nValido = 1
+                sTexto = "El token es válido y no ha expirado."
+
+        except ValueError as error: 
+            nValido = 0           
+            sTexto = "%s" % error
+        except KeyError as error:
+            nValido = 0
+            sTexto = "%s" % error
+
+        dDatos = {'valido': nValido, 'Resultado': sTexto}
+
+        return dDatos
 
 
 class CVerificaTokenGlobal(APIView):
@@ -2591,3 +2694,210 @@ class CRelacionPermisos():
 
             
             return sTexto
+
+#ARSI 17/03/2025 CREAR CLASE QUE HAGA LA CONSULTA DE PERMISOS DE UN USUARIO Y VALIDE EL TOKEN
+# obtenerPermisos, obtenerGrupos y crear otro metodo que valide el token y que devuelva los permisos del usuario. (CValidaToken)            
+class CVerificarTokenPermiso(APIView):
+
+    oExecSP = CEjecutarSP()
+    oVeficarTk = CVerificaToken()
+    oAuth = CAutenticacion()
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self,request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)    
+
+    
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'token': openapi.Schema(type=openapi.TYPE_STRING, description='Token asignado por la aplicación.'),
+                'user': openapi.Schema(type=openapi.TYPE_STRING, description='Nombre de usuario.'),
+                'idSistema' :  openapi.Schema(type=openapi.TYPE_INTEGER, description='Id del sistema.'),
+                'permisoGrupo' : openapi.Schema(type=openapi.TYPE_STRING, description='Nombre del permiso o grupo a validar.'),
+                'tipoPerGp' : openapi.Schema(type=openapi.TYPE_STRING, description='Por favor de especificar que valor es el indicado en "permisoGrupo", si es un Grupo colocar G, si es un Permiso colocar P.')
+            },
+            required=['token', 'user','idSistema','permisoGrupo','tipoPerGp']
+        ),
+        responses={200: 'Token Validado', 400:'JSON INVALIDO' , 404:'Datos invalidos',401: 'Sin autorización,El servidor ha recibido la solicitud, pero no se ha podido autenticar al usuario.', 403:'Prohibido, El servidor entiende la solicitud, pero el usuario no tiene permiso para acceder al recurso, aunque sí está autenticado'},
+    )   
+
+    def post(self,request):
+        """
+        Realiza la validación del token dado por la api de autenticación y la validación del permisos al usuario.
+
+        Para realizar un consulta exitosa, envía un objeto JSON con los siguientes campos:
+       
+        """
+        try:
+            print("CVerificarTokenPermiso - Accede a la validación de token y permisos.")
+            bValido = True
+            sToken_encoded = ""
+            sUserName = ""
+            nSistemaOrigen = 0
+            sPermGp = ""
+            tk = ""
+            is_token_valid = False
+            is_token_expired = True
+            sTexto = ""
+            nLenDef = 0
+            nItemJson = 0
+            nStatus = 0
+
+            dCamposJson = ['token', 'user','idSistema','permisoGrupo','tipoPerGp']
+            
+            jd = json.loads(request.body)
+
+            nLenDef = len(dCamposJson) 
+
+            nItemJson = len(jd)
+            dDatos = []
+            dUsuario = []
+            #datos = []
+
+            if nItemJson != nLenDef:
+                sTexto += "El tamaño del JSON obtenido no es el esperado, por favor de verificar. "
+                bValido = False
+
+            for item in dCamposJson:
+                if item in jd:
+                    continue
+                else:
+                    sTexto += " El campo faltante es: "+item+". "
+                    bValido = False
+                    break
+
+
+            # if (jd['token'].isspace() or len(jd['token']) <= 1):
+            #     sTexto += "El item token es muy corto o viene vacio. "
+            #     nStatus = 400
+            #     bValido = False
+
+            if (jd['user'].isspace() or len(jd['user']) <= 1):
+                sTexto += "El item de usuario es muy corto o viene vacio. "
+                nStatus = 400
+                bValido = False
+
+            if (jd['token'].isspace() or len(jd['token']) <= 1):
+                sTexto += "El item token es muy corto o viene vacio. "
+                nStatus = 400
+                bValido = False
+
+            if (jd['idSistema']== 0 or jd['idSistema']== ""):
+                sTexto += "El item de sistema es muy corto o viene vacio. "
+                nStatus = 400
+                bValido = False
+
+            if (jd['permisoGrupo'].isspace() or len(jd['permisoGrupo']) < 0):
+                sTexto += "El item de permisoGrupo es muy corto o viene vacio. "
+                nStatus = 400
+                bValido = False
+
+            if (jd['tipoPerGp'].isspace() or len(jd['tipoPerGp']) > 1):
+                sTexto += "El item de tipoPerGp es muy largo o contiene espacios en blanco. "
+                nStatus = 400
+                bValido = False
+
+            if (jd['tipoPerGp'] != "G" and jd['tipoPerGp'] != "P"):
+                sTexto += "El item de tipoPerGp debe tener los valores G o P. "
+                nStatus = 400
+                bValido = False
+
+            
+
+            if bValido:
+                print("CVerificarTokenPermiso - Verificar token ...")
+                
+                sToken_encoded = jd['token']
+                sUserName = jd['user']
+                nSistemaOrigen = jd['idSistema']
+                sPermGp  = jd['permisoGrupo']
+                sTipo = jd['tipoPerGp']
+
+                dDatos = self.oVeficarTk.validarToken(sUserName,sToken_encoded)
+
+                if dDatos['valido'] == 1:
+                    
+                    print("CVerificarTokenPermiso - El token es valido.")
+                    
+                    dUsuario = self.oAuth.consultarUsuarioActivo(sUserName)
+
+                    if len(dUsuario):                                        
+                        idUsuario = dUsuario[0]['id']
+                        print("CVerificarTokenPermiso - Usuario validado, el id del usuario es: "+str(idUsuario))
+
+                        # lPermisoUsuario = self.oAuth.obtenerPermisos(nSistemaOrigen,idUsuario)
+                        # lGrupoUsuario = self.oAuth.obtenerGrupos(nSistemaOrigen,idUsuario)
+
+                        if(sTipo == "P"):                           
+                            print("CVerificarTokenPermiso -  se valida el permiso: "+sPermGp)
+                            lPermisoUsuario = self.oAuth.obtenerPermisos(nSistemaOrigen,idUsuario)
+                            lGrupoUsuario = self.oAuth.obtenerGrupos(nSistemaOrigen,idUsuario)
+
+                            #if len(lPermisoUsuario)>0 & len(lGrupoUsuario)>0:
+                            lPermisoUsuario.update(lGrupoUsuario)
+
+                            print("CVerificarTokenPermiso -  se obtiene listado de permisos: ")
+                            print(lPermisoUsuario)
+
+                            if sPermGp in lPermisoUsuario:
+                                print("CVerificarTokenPermiso - El usuario "+sUserName+" tiene el permiso: "+sPermGp);
+                                
+                                nStatus = 200
+                                datos = {'status': 'Success', "message":'El token es válido y no ha expirado.'}
+                            else:
+                                nStatus = 200
+                                datos = {'status': 'NOAUTORIZADO', "message":'El token es válido, pero el usuario no cuenta con el permiso solicitado.'}
+                        elif(sTipo == "G"):
+                            print("CVerificarTokenPermiso -  se valida el grupo: "+sPermGp)
+                            
+                            self.oAuth.obtenerGrupos(nSistemaOrigen,idUsuario)
+
+                            lGrupoUsuario = self.oAuth.dGruposAsigUsuario
+
+                            print("CVerificarTokenPermiso -  se obtiene listado de grupos: ")
+                            print(lGrupoUsuario)
+
+                            if sPermGp in lGrupoUsuario:
+                                print("CVerificarTokenPermiso - El usuario "+sUserName+" esta asignado al grupo "+sPermGp);
+                                nStatus = 200
+                                datos = {'status': 'Success', "message":'El token es válido y no ha expirado.'}
+                            else:
+                                nStatus = 200
+                                datos = {'status': 'NOAUTORIZADO', "message":'El token es válido, pero el usuario no esta asignado al grupo solicitado.'}
+                        else:
+                            nStatus = 400
+                            datos = {'status': 'Error', "message":'El tipo de permiso o grupo no es valido.'}
+                                                                  
+                    else:
+                        nStatus = 401
+                        datos = {'status': 'Error', "message":'El usuario no existe.'}
+                    # is_token_valid = True
+                    # is_token_expired = False
+                else:
+                    nStatus = 401
+                    datos = {'status': 'Error', "message":'El token es invalido'}
+
+            else:
+                #nStatus = 403
+                datos = {"status": 'Error', "message": sTexto}
+                
+                
+            
+        except ValueError as error:
+            nStatus = 404
+            sTexto += "%s" % error
+            datos = {'status': 'Error', "message": sTexto}
+            # return False
+        except KeyError as error:
+            nStatus = 403
+            sTexto += "%s" % error
+            datos = {'status': 'Error', "message": sTexto}
+
+
+        print(datos)
+        print(nStatus)
+        # return JsonResponse(datos)
+    
+        return JsonResponse(datos,status=nStatus)

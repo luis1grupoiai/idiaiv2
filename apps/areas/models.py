@@ -75,7 +75,7 @@ class Coordinacion(models.Model):
         (ESTADO_ACTIVO, 'Activo'),
     ]
     nombre = models.CharField(max_length=255)
-    abreviatura = models.CharField(max_length=10)
+    abreviatura = models.CharField(max_length=10, null=True,)
     id_coordinador = models.ForeignKey(User, on_delete=models.CASCADE, db_constraint=False)
     id_gerencia = models.ForeignKey(Gerencia, on_delete=models.CASCADE,  null=True, blank=True, default=None)
     id_direccion = models.ForeignKey(Direccion, on_delete=models.CASCADE)

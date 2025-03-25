@@ -1,7 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
 from apps.AsignarUsuario.models import VallEmpleado
-from django.core.exceptions import ValidationError
 
 class Direccion(models.Model):
     ESTADO_INACTIVO = 0
@@ -115,55 +114,8 @@ class UserAreas(models.Model):
             parts.append(f'Dirección: {self.direccion.nombre}')
         return ' - '.join(parts) if parts else 'Sin área asignada'
     
-    def clean(self):
-        """Validación de la jerarquía organizacional"""
-        super().clean()
-        
-        # Un usuario no puede tener coordinación y gerencia asignadas directamente
-        if self.coordinacion and self.gerencia:
-            raise ValidationError(
-                "Un usuario no puede tener coordinación y gerencia asignadas directamente. "
-                "La gerencia se deriva de la coordinación."
-            )
-            
-        # Si tiene coordinación, heredar automáticamente su gerencia y dirección
-        if self.coordinacion and not self.gerencia:
-            self.gerencia = self.coordinacion.id_gerencia
-        
-        # Si tiene gerencia, heredar automáticamente su dirección
-        if self.gerencia and not self.direccion:
-            self.direccion = self.gerencia.id_direccion
-        
-        # Si tiene coordinación pero no dirección, heredar de la coordinación
-        if self.coordinacion and not self.direccion:
-            self.direccion = self.coordinacion.id_direccion
-
-    def save(self, *args, **kwargs):
-        self.full_clean()  # Ejecuta las validaciones
-        super().save(*args, **kwargs)
-    
-    @property
-    def nivel_asignacion(self):
-        """Devuelve el nivel organizacional más específico asignado"""
-        if self.coordinacion:
-            return 'Coordinación'
-        if self.gerencia:
-            return 'Gerencia'
-        if self.direccion:
-            return 'Dirección'
-        return 'Sin asignación específica'
-    
-    @property
-    def jerarquia_completa(self):
-        """Devuelve la jerarquía completa del usuario"""
-        return {
-            'direccion': self.direccion,
-            'gerencia': self.gerencia,
-            'coordinacion': self.coordinacion
-        }
-
     class Meta:
         verbose_name = 'Asignación de área'
         verbose_name_plural = 'Asignaciones de áreas'
         db_table = 'areas_userareas'
-        managed = False
+        managed = False  # Indica que esta tabla ya existe en la base de datos

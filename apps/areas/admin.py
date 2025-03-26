@@ -128,48 +128,60 @@ class CustomUserAdmin(UserAdmin):
     get_coordinacion.short_description = 'Coordinación'
 
     def get_gerencia(self, obj):
-        """Obtiene la gerencia del usuario, ya sea porque es encargado o por su relación en UserAreas"""
+        """Obtiene la gerencia del usuario, ya sea porque es encargado o por su relación en UserAreas."""
         # Si el usuario es gerente de alguna gerencia
         if gerencia := Gerencia.objects.filter(id_gerente=obj).first():
             return gerencia.nombre
-        # Si es coordinador, obtener la gerencia asociada a su coordinación
+        # Si el usuario es coordinador, obtener la gerencia de su coordinación
         if coordinacion := Coordinacion.objects.filter(id_coordinador=obj).first():
             return coordinacion.id_gerencia.nombre if coordinacion.id_gerencia else 'Sin gerencia'
-        # Si no es coordinador, obtener la gerencia desde UserAreas
         try:
             user_area = UserAreas.objects.get(user=obj)
+            # Si tiene coordinación, obtener la gerencia asociada
             if user_area.coordinacion and user_area.coordinacion.id_gerencia:
                 return user_area.coordinacion.id_gerencia.nombre
-            return user_area.gerencia.nombre if user_area.gerencia else 'Sin gerencia'
+            # Si está asignado directamente a una gerencia
+            if user_area.gerencia:
+                return user_area.gerencia.nombre
+            # # Si está en una dirección que tiene gerencia
+            # if user_area.direccion and user_area.direccion.id_gerencia:
+            #     return user_area.direccion.id_gerencia.nombre
         except UserAreas.DoesNotExist:
-            return 'Sin gerencia'
+            pass
+        return 'Sin gerencia'
     get_gerencia.short_description = 'Gerencia'
 
     def get_direccion(self, obj):
-        """Obtiene la dirección del usuario, ya sea porque es encargado o por su relación en UserAreas"""
+        """Obtiene la dirección del usuario, ya sea porque es encargado o por su relación en UserAreas."""
         # Si el usuario es director de alguna dirección
         if direccion := Direccion.objects.filter(id_director=obj).first():
             return direccion.nombre
-        # Si es gerente, obtener la dirección asociada a su gerencia
+        # Si el usuario es gerente, obtener la dirección de su gerencia
         if gerencia := Gerencia.objects.filter(id_gerente=obj).first():
             return gerencia.id_direccion.nombre if gerencia.id_direccion else 'Sin dirección'
-        # Si es coordinador, obtener la dirección desde su gerencia
+        # Si el usuario es coordinador, obtener la dirección desde su gerencia o directamente
         if coordinacion := Coordinacion.objects.filter(id_coordinador=obj).first():
             if coordinacion.id_gerencia and coordinacion.id_gerencia.id_direccion:
                 return coordinacion.id_gerencia.id_direccion.nombre
             elif coordinacion.id_direccion:
                 return coordinacion.id_direccion.nombre
-        # Si no es encargado, obtener la dirección desde UserAreas
         try:
             user_area = UserAreas.objects.get(user=obj)
+            # Si tiene coordinación, buscar la dirección a través de la gerencia
             if user_area.coordinacion:
                 if user_area.coordinacion.id_gerencia and user_area.coordinacion.id_gerencia.id_direccion:
                     return user_area.coordinacion.id_gerencia.id_direccion.nombre
-                elif user_area.coordinacion.id_direccion:
+                if user_area.coordinacion.id_direccion:
                     return user_area.coordinacion.id_direccion.nombre
-            return user_area.direccion.nombre if user_area.direccion else 'Sin dirección'
+            # Si tiene gerencia, obtener la dirección
+            if user_area.gerencia and user_area.gerencia.id_direccion:
+                return user_area.gerencia.id_direccion.nombre
+            # Si está asignado directamente a una dirección
+            if user_area.direccion:
+                return user_area.direccion.nombre
         except UserAreas.DoesNotExist:
-            return 'Sin dirección'
+            pass
+        return 'Sin dirección'
     get_direccion.short_description = 'Dirección'
 
              

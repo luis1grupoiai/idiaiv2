@@ -3374,8 +3374,6 @@ class CInactivaTk(APIView):
                     if (jd['user'].isspace() or len(jd['user']) <= 1):
                         sTexto += "El item de usuario es muy corto o viene vacio. "     
 
-           
-
             for item in dCamposJson:
                 if item in jd:
                     continue
@@ -3393,11 +3391,21 @@ class CInactivaTk(APIView):
             if bValido:
                 sUserName = jd['user']
                 idSistema = jd['idSistema']
+                oAuth = CAutenticacion()
 
-                nTotAfectadas = self.inactivarTokens(sUserName,idSistema)
+                
+                print("CAutenticacion - registrarAccesos - Datos validos, se procede a inactivar token de la Base de datos.")
+
+                nTotAfectadas = oAuth.inactivarTokens(sUserName,idSistema)
 
                 if nTotAfectadas>0:
-                   print("CAutenticacion - registrarAccesos - Se inactivaron "+str(nTotAfectadas)+" tokens")
+                    print("CAutenticacion - registrarAccesos - Se inactivaron "+str(nTotAfectadas)+" tokens")
+                    nStatus = 200
+                    datos = {'status': 'Success', "message":'El token ha sido inhabilitado'}
+                else:
+                    print("CAutenticacion - registrarAccesos - No se inactivaron tokens")
+                    nStatus = 200
+                    datos = {'status': 'Success', "message":'No se inactivaron tokens'}
 
 
             else:

@@ -1032,6 +1032,10 @@ class CAutenticacion(APIView):
             sNombreArea = "" #ARSI 30/11/2024 SE CREA VARIABLE QUE CONTENDRA NOMBRE DEL AREA RELACIONADO A LA CATEGORIA DEL EMPLEADO.
             nDir = 0 #ARSI 15/03/2025 SE CREA VARIABLE QUE CONTENDRA EL ID DE DIRECCION RELACIONADO A LA CATEGORIA DEL EMPLEADO.
             sNombreDir = "" #ARSI 15/03/2025 SE CREA VARIABLE QUE CONTENDRA EL NOMBRE DE DIRECCION RELACIONADO A LA CATEGORIA DEL EMPLEADO.
+            idCor = "" #ARSI 22/03/2025 SE CREA VARIABLE QUE CONTENDRA EL ID DE COORDINACION 
+            sNombreCor = "" #ARSI 22/03/2025 SE CREA VARIABLE QUE CONTENDRA EL NOMBRE DE COORDINACION
+            idGer = "" #ARSI 22/03/2025 SE CREA VARIABLE QUE CONTENDRA EL ID DE GERENCIA
+            sNombreGer = "" #ARSI 22/03/2025 SE CREA VARIABLE QUE CONTENDRA EL NOMBRE DE GERENCIA
             tokenApi = ""
             nItemJson = 0
             keySis = ""
@@ -1240,6 +1244,12 @@ class CAutenticacion(APIView):
                                         sNombreDir = dDatosPersonales[0][14]
                                         nDir = dDatosPersonales[0][27]
 
+                                        #ARSI 22/03/2025
+                                        idCor = dDatosPersonales[0][28]
+                                        sNombreCor = dDatosPersonales[0][29]
+                                        idGer = dDatosPersonales[0][30]
+                                        sNombreGer = dDatosPersonales[0][31]
+
 
                                         
                                         dUsuario = self.consultarUsuarioActivo(sUserName)
@@ -1360,7 +1370,22 @@ class CAutenticacion(APIView):
                                                     info = self.registrarAcceso(sUserName,sistema,"Inicio de sesión exitoso al sistema "+self.sNombreSistema+sTextoTkg,opc,False,1,tokenApi)
 
                                                 nStatus = 200
-                                                datos = {'message': 'Success','idPersonal':idPersonal,'nNoEmpleado':nNoEmpleado,'usuario': sUserName, 'sistema':self.sNombreSistema,'nombreCompleto':sNombreCompleto,'token': tokenApi,'grupos':self.dGruposAsigUsuario,'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 'tkg':gtkg, 'fechaNac':dFechaNac, 'rutaFoto':sRutaFoto, 'expira':self.intTiempoExpira,'idProyectoActual':idProyectoActual ,'proyectoActual':sProyectoActual,'idPuestoActual':idPuestoActual,'puestoActual':sPuestoActual,'dHistoricoProyectosAsignados':dListaProyectos,'idArea':idArea,'sNombreArea':sNombreArea, 'idDir':nDir,'sNombreDir':sNombreDir}
+                                                datos = {'message': 'Success','idPersonal':idPersonal,
+                                                         'nNoEmpleado':nNoEmpleado,'usuario': sUserName, 
+                                                         'sistema':self.sNombreSistema,
+                                                         'nombreCompleto':sNombreCompleto,
+                                                         'token': tokenApi,
+                                                         'grupos':self.dGruposAsigUsuario,
+                                                         'permisos': dPermisos,'sistemas':sListSistemasPermitidos, 
+                                                         'tkg':gtkg, 'fechaNac':dFechaNac, 'rutaFoto':sRutaFoto, 
+                                                         'expira':self.intTiempoExpira,'idProyectoActual':idProyectoActual ,
+                                                         'proyectoActual':sProyectoActual,'idPuestoActual':idPuestoActual,
+                                                         'puestoActual':sPuestoActual,'dHistoricoProyectosAsignados':dListaProyectos,
+                                                         'idArea':idArea,'sNombreArea':sNombreArea, 'idDir':nDir,
+                                                         'sNombreDir':sNombreDir,
+                                                         'idCor':idCor,'sNombreCor':sNombreCor,
+                                                         'idGer':idGer,'sNombreGer':sNombreGer
+                                                         }
                                             else:
                                                 nStatus = 404
                                                 datos = {'message': 'Acceso denegado', 'error':sTexto}

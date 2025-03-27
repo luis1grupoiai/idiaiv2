@@ -74,12 +74,12 @@ admin.site.unregister(Group)
 admin.site.register(Group, CustomGroupAdmin)
 
 
-class CustomUserAdmin(UserAdmin):
-    def save_related(self, request, form, formsets, change):
-        # Configura el usuario que realiza el cambio antes de guardar los permisos
-        set_changed_by(request.user)
-        super().save_related(request, form, formsets, change)
+# class CustomUserAdmin(UserAdmin):
+#     def save_related(self, request, form, formsets, change):
+#         # Configura el usuario que realiza el cambio antes de guardar los permisos
+#         set_changed_by(request.user)
+#         super().save_related(request, form, formsets, change)
 
-# Registra el nuevo UserAdmin
-admin.site.unregister(User)
-admin.site.register(User, CustomUserAdmin)
+# # Registra el nuevo UserAdmin
+# admin.site.unregister(User)
+# admin.site.register(User, CustomUserAdmin)

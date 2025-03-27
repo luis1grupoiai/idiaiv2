@@ -3302,6 +3302,120 @@ class CVerificarTokenPermiso(APIView):
     
 
 class CInactivaTk(APIView):
-    def post(self, request):
-        pass
-    #Se requiere username y idSistema para inactivar el token en la BD.
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self,request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'user': openapi.Schema(type=openapi.TYPE_STRING, description='Nombre de usuario.'),                
+                'idSistema': openapi.Schema(type=openapi.TYPE_INTEGER, description='Id del sistema de donde viene el token; colocar NA en caso de que no aplique.')
+            },
+            required=['token', 'user','idSistema']
+        ),
+        #responses={200: 'Token Validado', 403: 'Json invalido o problemas internos en el server.', 404:'Datos invalidos'},
+        responses={200: 'Token Validado', 400:'JSON INVALIDO' , 404:'Datos invalidos',401: 'Sin autorización,El servidor ha recibido la solicitud, pero no se ha podido autenticar al usuario.', 403:'Prohibido, El servidor entiende la solicitud, pero el usuario no tiene permiso para acceder al recurso, aunque sí está autenticado'},
+    ) 
+    
+    def post(self,request):
+        """
+         Realiza la inactivación del token en la BD
+
+        Para realizar un consulta exitosa, envía un objeto JSON con los siguientes campos:
+       
+        """           
+        try:
+            #pass
+            #Se requiere username y idSistema para inactivar el token en la BD.
+            print("CInactivaTk - Inactiva el token de la base de datos.")
+
+            bValido = True
+            sToken_encoded = ""
+            sUserName = ""
+            nSistemaOrigen = 0
+            sPermGp = ""
+            tk = ""
+            is_token_valid = False
+            is_token_expired = True
+            sTexto = ""
+            nLenDef = 0
+            nItemJson = 0
+            nStatus = 0
+            nTotAfectadas = 0
+
+            #27/03/2025 ARSI SE valida parametros de entrada.
+            dCamposJson = ['user','idSistema']
+
+            jd = json.loads(request.body)
+
+            nLenDef = len(dCamposJson)
+            
+
+            if (jd['user'].isspace() or len(jd['user']) <= 1):
+                sTexto += "El item de usuario es muy corto o viene vacio. "
+                nStatus = 400
+                bValido = False
+
+            if isinstance(jd['idSistema'],int):                       
+                if (jd['idSistema']<=0):
+                    sTexto += "El item de idSistema debe contener algún id de sistema valido."
+                    nStatus = 404
+                    bValido = False
+                   
+            if isinstance(jd['idSistema'],str):
+                    
+                    sTexto += "El item de idSistema debe contener algún valor numerico que indique el Id del sistema valido. "
+                    nStatus = 404
+                    bValido = False
+                    
+                    if (jd['user'].isspace() or len(jd['user']) <= 1):
+                        sTexto += "El item de usuario es muy corto o viene vacio. "     
+
+           
+
+            for item in dCamposJson:
+                if item in jd:
+                    continue
+                else:                  
+                    sTexto += " El campo faltante es: "+item+". "
+                    bValido = False
+                    break                                                 
+                        
+            nItemJson = len(jd)
+                        
+            if nItemJson != nLenDef:
+                sTexto += "El tamaño del JSON obtenido no es el esperado, por favor de verificar. "
+                bValido = False
+
+            if bValido:
+                sUserName = jd['user']
+                idSistema = jd['idSistema']
+
+                nTotAfectadas = self.inactivarTokens(sUserName,idSistema)
+
+                if nTotAfectadas>0:
+                   print("CAutenticacion - registrarAccesos - Se inactivaron "+str(nTotAfectadas)+" tokens")
+
+
+            else:
+               datos = {'status': 'Error', "message": sTexto}  
+                
+        except ValueError as error:
+            nStatus = 404
+            sTexto += "%s" % error
+            datos = {'status': 'Error', "message": sTexto}
+            # return False
+        except KeyError as error:
+            nStatus = 403
+            sTexto += "%s" % error
+            datos = {'status': 'Error', "message": sTexto}
+
+        print(datos)
+        print(nStatus)
+        
+        return JsonResponse(datos,status=nStatus)
+
+        

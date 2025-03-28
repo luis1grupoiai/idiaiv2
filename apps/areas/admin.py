@@ -8,6 +8,7 @@ from django import forms
 from django.contrib import messages
 from apps.sistemas.signals import set_changed_by
 
+# Formulario personalizado para edición de usuarios que filtra permisos
 class CustomUserChangeForm(UserChangeForm):
     class Meta:
         model = User
@@ -15,10 +16,12 @@ class CustomUserChangeForm(UserChangeForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Filtra permisos para mostrar solo los de la app 'sistemas-iai'
         self.fields['user_permissions'].queryset = self.fields['user_permissions'].queryset.filter(
             content_type__app_label='sistemas-iai'
         )
 
+# Formulario para las áreas de usuario con filtrado de áreas activas y con encargados
 class UserAreasInlineForm(forms.ModelForm):
     class Meta:
         model = UserAreas
@@ -26,48 +29,51 @@ class UserAreasInlineForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['coordinacion'].queryset = Coordinacion.objects.filter(estado=1)
-        self.fields['gerencia'].queryset = Gerencia.objects.filter(estado=1)
-        self.fields['direccion'].queryset = Direccion.objects.filter(estado=1)
+        # Filtra áreas que estén activas (estado=1) y que tengan encargados asignados
+        self.fields['coordinacion'].queryset = Coordinacion.objects.filter(estado=1, id_coordinador_id__isnull=False)
+        self.fields['gerencia'].queryset = Gerencia.objects.filter(estado=1, id_gerente_id__isnull=False)
+        self.fields['direccion'].queryset = Direccion.objects.filter(estado=1, id_director_id__isnull=False)
 
+# Inline para asignación de áreas a usuarios en el admin de Django
 class UserAreasInline(admin.StackedInline):
     model = UserAreas
     form = UserAreasInlineForm
     can_delete = False
     verbose_name_plural = 'Asignación de Áreas'
-    max_num = 1
+    max_num = 1  # Solo permite una asignación por usuario
     
     def has_add_permission(self, request, obj=None):
-        """Oculta el botón de añadir si el usuario es encargado"""
+        """Previene que usuarios encargados de áreas tengan asignaciones adicionales"""
         if obj and self.is_user_in_charge(obj):
             return False
         return True
     
     def has_change_permission(self, request, obj=None):
-        """Oculta el inline si el usuario es encargado"""
+        """Bloquea la edición para usuarios que son encargados de áreas"""
         if obj and self.is_user_in_charge(obj):
             return False
         return True
     
     def is_user_in_charge(self, user):
-        """Verifica si el usuario es encargado de alguna área"""
-        return (Direccion.objects.filter(id_director=user).exists() or
-                Gerencia.objects.filter(id_gerente=user).exists() or
-                Coordinacion.objects.filter(id_coordinador=user).exists())
+        """Determina si un usuario es encargado de alguna área (director, gerente o coordinador)"""
+        return (Direccion.objects.filter(id_director=user, estado=1).exists() or
+                Gerencia.objects.filter(id_gerente=user, estado=1).exists() or
+                Coordinacion.objects.filter(id_coordinador=user, estado=1).exists())
 
+# Admin personalizado para el modelo User de Django
 class CustomUserAdmin(UserAdmin):
     form = CustomUserChangeForm
     inlines = (UserAreasInline,)
     list_display = ('username', 'get_nombre_completo', 'get_coordinacion', 'get_gerencia', 'get_direccion')
 
     def get_inline_instances(self, request, obj=None):
-        """Oculta el inline si el usuario es encargado"""
+        """Oculta el inline de áreas si el usuario es encargado"""
         if obj and self.is_user_in_charge(obj):
             return []
         return super().get_inline_instances(request, obj)
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
-        """Añade mensaje informativo para usuarios encargados"""
+        """Muestra mensaje informativo cuando se edita un usuario encargado"""
         extra_context = extra_context or {}
         obj = self.get_object(request, object_id)
 
@@ -77,22 +83,22 @@ class CustomUserAdmin(UserAdmin):
         return super().change_view(request, object_id, form_url, extra_context)
 
     def save_model(self, request, obj, form, change):
-        """Elimina asignación de áreas si se convierte en encargado"""
+        """Registra quién hizo el cambio y elimina asignaciones si el usuario se convierte en encargado"""
         set_changed_by(request.user)
         super().save_model(request, obj, form, change)
 
-        # Si el usuario es encargado, eliminar UserAreas
+        # Elimina asignación de áreas si el usuario ahora es encargado
         if self.is_user_in_charge(obj):
             UserAreas.objects.filter(user=obj).delete()
 
     def is_user_in_charge(self, user):
-        """Devuelve True si el usuario es encargado de alguna área"""
-        return (Direccion.objects.filter(id_director=user).exists() or
-                Gerencia.objects.filter(id_gerente=user).exists() or
-                Coordinacion.objects.filter(id_coordinador=user).exists())
+        """Verifica si el usuario tiene un cargo de responsabilidad"""
+        return (Direccion.objects.filter(id_director=user, estado=1).exists() or
+                Gerencia.objects.filter(id_gerente=user, estado=1).exists() or
+                Coordinacion.objects.filter(id_coordinador=user, estado=1).exists())
 
     def get_user_charge_info(self, user):
-        """Devuelve en qué área es encargado el usuario"""
+        """Devuelve una cadena descriptiva del cargo del usuario"""
         if direccion := Direccion.objects.filter(id_director=user).first():
             return f"Director de {direccion.nombre}"
         if gerencia := Gerencia.objects.filter(id_gerente=user).first():
@@ -102,24 +108,23 @@ class CustomUserAdmin(UserAdmin):
         return "Sin cargo asignado"
     
     def save_related(self, request, form, formsets, change):
-        """Maneja el guardado de relaciones"""
+        """Maneja el guardado de relaciones, omitiendo UserAreas para encargados"""
         set_changed_by(request.user)
         obj = form.instance
         
-        # Si el usuario es encargado, no guardar UserAreas
+        # Solo guarda UserAreas si el usuario no es encargado
         if not self.is_user_in_charge(obj):
             super().save_related(request, form, formsets, change)
 
+    # Métodos para mostrar información en la lista de usuarios
     def get_nombre_completo(self, obj):
         return f'{obj.first_name} {obj.last_name}'
     get_nombre_completo.short_description = 'Nombre'
 
     def get_coordinacion(self, obj):
-        """Obtiene la coordinación del usuario, ya sea porque es encargado o porque pertenece a un área"""
-        # Si el usuario es coordinador de alguna área
-        if coordinacion := Coordinacion.objects.filter(id_coordinador=obj).first():
+        """Obtiene la coordinación del usuario, priorizando si es encargado"""
+        if coordinacion := Coordinacion.objects.filter(id_coordinador=obj, estado=1).first():
             return coordinacion.nombre
-        # Si no es coordinador, obtener su área asignada en UserAreas
         try:
             user_area = UserAreas.objects.get(user=obj)
             return user_area.coordinacion.nombre if user_area.coordinacion else 'Sin coordinación'
@@ -128,55 +133,42 @@ class CustomUserAdmin(UserAdmin):
     get_coordinacion.short_description = 'Coordinación'
 
     def get_gerencia(self, obj):
-        """Obtiene la gerencia del usuario, ya sea porque es encargado o por su relación en UserAreas."""
-        # Si el usuario es gerente de alguna gerencia
-        if gerencia := Gerencia.objects.filter(id_gerente=obj).first():
+        """Obtiene la gerencia del usuario, con lógica compleja de jerarquía"""
+        if gerencia := Gerencia.objects.filter(id_gerente=obj, estado=1).first():
             return gerencia.nombre
-        # Si el usuario es coordinador, obtener la gerencia de su coordinación
-        if coordinacion := Coordinacion.objects.filter(id_coordinador=obj).first():
+        if coordinacion := Coordinacion.objects.filter(id_coordinador=obj, estado=1).first():
             return coordinacion.id_gerencia.nombre if coordinacion.id_gerencia else 'Sin gerencia'
         try:
             user_area = UserAreas.objects.get(user=obj)
-            # Si tiene coordinación, obtener la gerencia asociada
             if user_area.coordinacion and user_area.coordinacion.id_gerencia:
                 return user_area.coordinacion.id_gerencia.nombre
-            # Si está asignado directamente a una gerencia
             if user_area.gerencia:
                 return user_area.gerencia.nombre
-            # # Si está en una dirección que tiene gerencia
-            # if user_area.direccion and user_area.direccion.id_gerencia:
-            #     return user_area.direccion.id_gerencia.nombre
         except UserAreas.DoesNotExist:
             pass
         return 'Sin gerencia'
     get_gerencia.short_description = 'Gerencia'
 
     def get_direccion(self, obj):
-        """Obtiene la dirección del usuario, ya sea porque es encargado o por su relación en UserAreas."""
-        # Si el usuario es director de alguna dirección
-        if direccion := Direccion.objects.filter(id_director=obj).first():
+        """Obtiene la dirección del usuario, con lógica compleja de jerarquía"""
+        if direccion := Direccion.objects.filter(id_director=obj, estado=1).first():
             return direccion.nombre
-        # Si el usuario es gerente, obtener la dirección de su gerencia
-        if gerencia := Gerencia.objects.filter(id_gerente=obj).first():
+        if gerencia := Gerencia.objects.filter(id_gerente=obj, estado=1).first():
             return gerencia.id_direccion.nombre if gerencia.id_direccion else 'Sin dirección'
-        # Si el usuario es coordinador, obtener la dirección desde su gerencia o directamente
-        if coordinacion := Coordinacion.objects.filter(id_coordinador=obj).first():
+        if coordinacion := Coordinacion.objects.filter(id_coordinador=obj, estado=1).first():
             if coordinacion.id_gerencia and coordinacion.id_gerencia.id_direccion:
                 return coordinacion.id_gerencia.id_direccion.nombre
             elif coordinacion.id_direccion:
                 return coordinacion.id_direccion.nombre
         try:
             user_area = UserAreas.objects.get(user=obj)
-            # Si tiene coordinación, buscar la dirección a través de la gerencia
             if user_area.coordinacion:
                 if user_area.coordinacion.id_gerencia and user_area.coordinacion.id_gerencia.id_direccion:
                     return user_area.coordinacion.id_gerencia.id_direccion.nombre
                 if user_area.coordinacion.id_direccion:
                     return user_area.coordinacion.id_direccion.nombre
-            # Si tiene gerencia, obtener la dirección
             if user_area.gerencia and user_area.gerencia.id_direccion:
                 return user_area.gerencia.id_direccion.nombre
-            # Si está asignado directamente a una dirección
             if user_area.direccion:
                 return user_area.direccion.nombre
         except UserAreas.DoesNotExist:
@@ -184,83 +176,94 @@ class CustomUserAdmin(UserAdmin):
         return 'Sin dirección'
     get_direccion.short_description = 'Dirección'
 
-             
-# Desregistramos y registramos la configuración personalizada
+# Registro personalizado del modelo User
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
 
+# Admin para el modelo Coordinacion
 class CoordinacionAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'abreviatura', 'coordinador', 'gerencia' , 'direccion' ,'created_at', 'updated_at')  # Campos que se mostrarán en la lista
-    search_fields = ('nombre', 'abreviatura', 'id_coordinador__username')  # Agregar campos para búsqueda
-    list_filter = ('created_at', 'updated_at')  # Agregar filtros laterales
+    list_display = ('nombre', 'abreviatura', 'coordinador', 'gerencia', 'direccion', 'created_at', 'updated_at')
+    search_fields = ('nombre', 'abreviatura', 'id_coordinador__username')
+    list_filter = ('created_at', 'updated_at')
+    
+    def get_queryset(self, request):
+        """Muestra solo coordinaciones activas (estado=1)"""
+        return super().get_queryset(request).filter(estado=1)
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """Filtra direcciones y gerencias para mostrar solo las activas con encargados"""
+        if db_field.name == "id_direccion":  
+            kwargs["queryset"] = Direccion.objects.filter(estado=1, id_director_id__isnull=False)
+        elif db_field.name == "id_gerencia":
+            kwargs["queryset"] = Gerencia.objects.filter(estado=1, id_gerente_id__isnull=False)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    # Métodos para mostrar información relacionada en la lista
     def coordinador(self, obj):
-        if obj.id_coordinador:
-            return obj.id_coordinador.username
-        else:
-            return "Sin asignar"  # O cualquier otro mensaje que desees mostrar para los casos en que id_gerencia sea None
-
-    coordinador.short_description = 'Jefe de Coordinación'  # Nombre que se mostrará en la lista
+        return obj.id_coordinador.username if obj.id_coordinador else "Sin asignar"
+    coordinador.short_description = 'Coordinador'
 
     def gerencia(self, obj):
-        if obj.id_gerencia:
-            return obj.id_gerencia.nombre
-        else:
-            return "Sin asignar"  # O cualquier otro mensaje que desees mostrar para los casos en que id_gerencia sea None
-
-    gerencia.short_description = 'Gerencia'  # Corregido el nombre que se mostrará en la lista
+        return obj.id_gerencia.nombre if obj.id_gerencia else "Sin asignar"
+    gerencia.short_description = 'Gerencia'
 
     def direccion(self, obj):
-        if obj.id_direccion:
-            return obj.id_direccion.nombre
-        else:
-            return "Sin asignar"  # O cualquier otro mensaje que desees mostrar para los casos en que id_gerencia sea None
+        return obj.id_direccion.nombre if obj.id_direccion else "Sin asignar"
+    direccion.short_description = 'Dirección'
 
-    direccion.short_description = 'Direccion'  # Corregido el nombre que se mostrará en la lista
-
-# Registra el modelo Coordinacion en la interfaz de administración de Django, utilizando la configuración personalizada definida en la clase CoordinacionAdmin
 admin.site.register(Coordinacion, CoordinacionAdmin)
 
+# Admin para el modelo Gerencia
 class GerenciaAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'abreviatura', 'gerente', 'direccion', 'created_at', 'updated_at')  # Campos que se mostrarán en la lista
-    search_fields = ('nombre', 'abreviatura', 'id_gerente__username')  # Agregar campos para búsqueda
-    list_filter = ('created_at', 'updated_at')  # Agregar filtros laterales
+    list_display = ('nombre', 'abreviatura', 'gerente', 'direccion', 'created_at', 'updated_at')
+    search_fields = ('nombre', 'abreviatura', 'id_gerente__username')
+    list_filter = ('created_at', 'updated_at')
+
+    def get_queryset(self, request):
+        """Muestra solo gerencias activas (estado=1)"""
+        return super().get_queryset(request).filter(estado=1)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """Filtra direcciones para mostrar solo las activas con encargados"""
+        if db_field.name == "id_direccion":  
+            kwargs["queryset"] = Direccion.objects.filter(estado=1, id_director_id__isnull=False)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def gerente(self, obj):
-        if obj.id_gerente:
-            return obj.id_gerente.username
-        else:
-            return "Sin asignar"  # O cualquier otro mensaje que desees mostrar para los casos en que id_gerencia sea None
-
-    gerente.short_description = 'Gerente'  # Nombre que se mostrará en la lista
+        return obj.id_gerente.username if obj.id_gerente else "Sin asignar"
+    gerente.short_description = 'Gerente'
 
     def direccion(self, obj):
-        if obj.id_direccion:
-            return obj.id_direccion.nombre
-        else:
-            return "Sin asignar"  # O cualquier otro mensaje que desees mostrar para los casos en que id_gerencia sea None
+        return obj.id_direccion.nombre if obj.id_direccion else "Sin asignar"
+    direccion.short_description = 'Dirección'
 
-    direccion.short_description = 'Direccion'  # Corregido el nombre que se mostrará en la lista
-
-# Registra el modelo Gerencia en la interfaz de administración de Django, utilizando la configuración personalizada definida en la clase GerencoiaAdmin
 admin.site.register(Gerencia, GerenciaAdmin)
 
+# Admin para el modelo Direccion
 class DireccionAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'abreviatura', 'nombreCorto', 'director', 'estado', 'created_at', 'updated_at')  # Campos que se mostrarán en la lista
-    search_fields = ('nombre', 'abreviatura', 'id_gerente__username')  # Agregar campos para búsqueda
-    list_filter = ('created_at', 'updated_at')  # Agregar filtros laterales
+    list_display = ('nombre', 'abreviatura', 'nombreCorto', 'director', 'estado', 'created_at', 'updated_at')
+    search_fields = ('nombre', 'abreviatura', 'id_gerente__username')
+    list_filter = ('created_at', 'updated_at')
+
+    def get_queryset(self, request):
+        """Muestra solo direcciones activas (estado=1)"""
+        return super().get_queryset(request).filter(estado=1)
 
     def director(self, obj):
-        if obj.id_director:
-            return obj.id_director.username
-        else:
-            return "Sin asignar"  # O cualquier otro mensaje que desees mostrar para los casos en que id_gerencia sea None
+        return obj.id_director.username if obj.id_director else "Sin asignar"
+    director.short_description = 'Director'
 
-    director.short_description = 'Director'  # Nombre que se mostrará en la lista
+admin.site.register(Direccion, DireccionAdmin)
 
-# Registra el modelo Direccion en la interfaz de administración de Django, utilizando la configuración personalizada definida en la clase DireccionAdmin
-admin.site.register(Direccion, DireccionAdmin) 
+# Admin personalizado para el modelo Permission
+class PermissionAdmin(admin.ModelAdmin):
+    list_display = ('name', 'codename', 'content_type', 'descripcion', 'status')
 
+    def get_queryset(self, request):
+        """Filtra permisos para mostrar solo los de la app 'sistemas-iai'"""
+        return super().get_queryset(request).filter(content_type__app_label='sistemas-iai')
+
+admin.site.register(Permission, PermissionAdmin)
 
 # Habiltar el ContentType en la vista Admin de Django
 # class CustomContentTypeAdmin(admin.ModelAdmin):
@@ -269,17 +272,4 @@ admin.site.register(Direccion, DireccionAdmin)
 
 # # Registra el admin personalizado para ContentType
 # admin.site.register(ContentType, CustomContentTypeAdmin)
-
-
-# También puedes registrar el modelo Permission en la sección de autenticación y autorización
-class PermissionAdmin(admin.ModelAdmin):
-    list_display = ('name', 'codename', 'content_type', 'descripcion', 'status')
-
-    def get_queryset(self, request):
-        # Filtra los permisos por app_label, en este caso, "sistemas-iai"
-        return super().get_queryset(request).filter(content_type__app_label='sistemas-iai')
-
-# Registra el modelo Permission en la interfaz de administración de Django, utilizando la configuración personalizada definida en la clase PermissionAdmin
-admin.site.register(Permission, PermissionAdmin)
-
 

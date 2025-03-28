@@ -1092,7 +1092,7 @@ class CAutenticacion(APIView):
                 print("1.1 ) Validando saveTk: "+str(jd['saveTk']))
                 
                 #ARSI 19/03/2025 SE CREA VARIABLE nSaveTk
-                nSaveTk = jd['saveTk']
+                nSaveTk = int(jd['saveTk'])
 
                 # IMPORTANTE!
                 # Intranet tiene el id de sistema 3, Reconocimiento facial tiene el id de sistema 4.
@@ -1364,9 +1364,13 @@ class CAutenticacion(APIView):
                                                 
                                                 #ARSI 19/03/2025 ALMACENAR TOKEN EN LA BASE DE DATOS
                                                 opc = 1
+                                                print("Valor de nSaveTk es igual a:")
+                                                print(nSaveTk)
                                                 if nSaveTk==0:
+                                                    print("No Guardar el token en la base de datos.")
                                                     info = self.registrarAcceso(sUserName,sistema,"Inicio de sesión exitoso al sistema "+self.sNombreSistema+sTextoTkg,opc)
                                                 elif nSaveTk == 1:
+                                                    print("Guardar el token en la base de datos.")
                                                     info = self.registrarAcceso(sUserName,sistema,"Inicio de sesión exitoso al sistema "+self.sNombreSistema+sTextoTkg,opc,False,1,tokenApi)
 
                                                 nStatus = 200

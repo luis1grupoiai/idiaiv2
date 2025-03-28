@@ -1848,6 +1848,7 @@ class CVerificaToken(APIView):
             if bValido:
                 print("CVerificaToken - Verificar token ...")
                 
+                oAuth = CAutenticacion()
                 sToken_encoded = jd['token']
                 sUserName = jd['user']
                 # nVerifyTk = jd['saveTk']
@@ -1863,10 +1864,11 @@ class CVerificaToken(APIView):
                        dDatos = self.validarToken(sUserName,sToken_encoded)
                     else:
                         
-                        dDatos["valido"] = dDatosValidarTkBD['valido']
-                        dDatos["Resultado"] = dDatosValidarTkBD['Resultado']
+                        # dDatos["valido"] = dDatosValidarTkBD['valido']
+                        # dDatos["Resultado"] = dDatosValidarTkBD['Resultado']
+                        dDatos = dDatosValidarTkBD
                         #ARSI 23/03/2025 SI EL TOKEN DE LA BASE DE DATOS EN INVALIDO ELIMINA EL TOKEN DE LA bd.
-                        self.oAuth.inactivarTokens(sUserName,jd['idSistema']);
+                        oAuth.inactivarTokens(sUserName,jd['idSistema']);
                         
                 else:
                     #ARSI 18/03/2025 COLOCAR ESTA LÓGICA DENTRO DE OTRO METODO...
@@ -1950,7 +1952,7 @@ class CVerificaToken(APIView):
             datos = {'message': 'JSON invalido 2. ', "error": sTexto}
 
        
-       
+        print(datos)
 
         return JsonResponse(datos,status=nStatus)  
     
@@ -3227,6 +3229,8 @@ class CVerificarTokenPermiso(APIView):
                 nSistemaOrigen = jd['idSistema']
                 sPermGp  = jd['permisoGrupo']
                 sTipo = jd['tipoPerGp']
+                oAuth = CAutenticacion()
+               
 
                 dDatos = self.oVeficarTk.validarToken(sUserName,sToken_encoded)
 

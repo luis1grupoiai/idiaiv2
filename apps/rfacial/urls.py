@@ -4,6 +4,7 @@ from .views import Protegida
 from .views import CVerificaToken
 from .views import CVerificaTokenGlobal
 from .views import CVerificarTokenPermiso
+from .views import CInactivaTk
 # from .views import swagger_json
 
 # from django.urls import re_path
@@ -54,6 +55,7 @@ urlpatterns = [
    path('photo_view/', CPhotoView.as_view(), name='photo_view'),
    path('enviarCorreo/', EnviarCorreoAPIView.as_view(), name='enviarCorreo'),
    path('verifyTkper/', CVerificarTokenPermiso.as_view(), name='verifyTkper'),
+   path('inaTk/', CInactivaTk.as_view(), name='inaTk'),
 
    
    #  path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),

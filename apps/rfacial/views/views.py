@@ -244,15 +244,15 @@ class CAutenticacion(APIView):
         try:
             user = User.objects.get(username=p_sUsuario) 
             timestamp = int(timezone.now().timestamp())
-            print(timezone.now())
+            #print(timezone.now())
             # Calcular la fecha de expiración del token
             expiration_time = timestamp + (expiration_hours * 3600)  # 3600 segundos en una hora
             # expiration_time = timestamp + (expiration_hours * 60)  # 60 segundos en un minuto, solo para terminos de prueba ...
             # print(expiration_time)
             #ARSI 10072024
             self.intTiempoExpira = expiration_time
-            print("======== > Tiempo de expiración ====> :o ")
-            print(self.intTiempoExpira)
+            # print("======== > Tiempo de expiración ====> ")
+            # print(self.intTiempoExpira)
             
             token = default_token_generator.make_token(user)+ ',' + str(expiration_time)
    
@@ -375,7 +375,7 @@ class CAutenticacion(APIView):
             datos = {'message': 'Error al convertir de base64. ', "error": sTexto}
 
             print(datos)
-        print(sTextFinal)
+        #print(sTextFinal)
 
     
         return sTextFinal
@@ -415,8 +415,8 @@ class CAutenticacion(APIView):
                 # print(dProyectosInvolucrados)
                 
                 for item in dProyectosInvolucrados:
-                    print(item[0])
-                    print(item[1])
+                    # print(item[0])
+                    # print(item[1])
 
                     if(item[0]== None):
                         clave = 'SIN_ID_'+str(nPos)
@@ -443,7 +443,7 @@ class CAutenticacion(APIView):
 
     def consultarExisteUsuario(self, nameUser):
         print("Accede a metodo  consultarExisteUsuario:")
-        print(nameUser)
+        #print(nameUser)
         sTexto = ""
         datos = {}
         oUser = {}
@@ -511,8 +511,8 @@ class CAutenticacion(APIView):
         return bCorrecto
     
 
-
-    def registrarAcceso(self, username, idSistema, observaciones, opc, bConsultaBloqueo = False):
+    #ARSI  19/03/2025 SE ACTUALIZA METODO REGISTRAR ACCESO se valida token
+    def registrarAcceso(self, username, idSistema, observaciones, opc, bConsultaBloqueo = False, bSaveTk = 0, tk= ""):
             print("----- Accede a metodo registrar accesos -----")
 
             #Se declaran e Inicializan variables
@@ -533,6 +533,9 @@ class CAutenticacion(APIView):
             sTexto = ""
             message = ""
             datos = {}            
+            nReg = 0 #ARSI 19/03/2025 VARIABLE QUE ALMACENA ID DE REG DE TOKEN ACTIVO
+            dDatosTk = [] #ARSI 19/03/2025 VARIABLE QUE ALMACENA los datos de los token activos
+            nTotAfectadas = 0  #ARSI 19/03/2025 VARIABLE QUE ALMACENA total de filas afectadas para inactivar el registro de token.
             # print(username)
             # zona_horaria = timezone()
             # print("zona_horaria")
@@ -554,8 +557,8 @@ class CAutenticacion(APIView):
                         intFechaCad = int(fechaCad.timestamp()) #Fecha/hora de caducidad del intento registrado
                         timestamp = int(timezone.now().timestamp()) #Fecha/hora actual
 
-                        print(intFechaCad)
-                        print(timestamp)
+                        # print(intFechaCad)
+                        # print(timestamp)
 
                         if timestamp  > intFechaCad: 
                             bExisteRegAccess = False
@@ -594,16 +597,59 @@ class CAutenticacion(APIView):
                             message = "bloqueado"
                             sTexto = "El usuario alcanzo un limite de 3 intentos de inicio de sesión, por lo que esta bloqueado por 10 min."
 
+            #ARSI 20/03/2025 BLOQUE DE CODIGO PARA INACTIVAR TODOS LOS TOKENS EN CASO DE QUE EL USUARIO configure a no guardar TOKEN
+            if bSaveTk == 0:
+                dDatosTk = self.obtenerTokenActivo(username,idSistema)
+            
+                nTotReg = dDatosTk['TotReg']
+
+                print("1. nTotReg")
+                print(nTotReg)
+
+                if nTotReg > 0:
+                    nTotAfectadas = self.inactivarTokens(username,idSistema)
+                    print("CAutenticacion - registrarAccesos - Se inactivaron "+str(nTotAfectadas)+" tokens")
+                else:
+                    print("CAutenticacion - registrarAccesos - No Se inactivaron tokens")
+
+
 
             if bValido and not bConsultaBloqueo:                       
                 if bExisteRegAccess:
                     print("Si existe registro de historial de acceso en los sistemas para el usuario : "+username)
 
                     if opc == 1:
+                        #ARSI 19/03/2025 SE GUARDA EL TOKEN SOLO SI bSaveTk ES 1
                         print("caso exitoso, el usuario se loggeo sin problemas : "+username)
                         message = "Success"
                         sTexto = "Caso exitoso, el usuario se loggeo sin problemas : "+username
-                        actualizaReg = intentos.objects.filter(id=idReg).update(activo=0,updated_at=timezone.now(),observaciones=observaciones)
+
+                        if bSaveTk == 0:
+                            actualizaReg = intentos.objects.filter(id=idReg).update(activo=0,updated_at=timezone.now(),observaciones=observaciones)
+                        elif bSaveTk == 1:
+                            
+                            dDatosTk = self.obtenerTokenActivo(username,idSistema)
+
+                            nReg = dDatosTk['idReg']
+                            nTotReg = dDatosTk['TotReg']
+
+                            # print(nReg)
+                            # print(nTotReg)
+
+                            if nTotReg>1:
+                                nTotAfectadas = self.inactivarTokens(username,idSistema)
+
+                                if nTotAfectadas>0:
+                                   print("CAutenticacion - registrarAccesos - Se inactivaron "+str(nTotAfectadas)+" tokens")
+
+                            elif nReg > 0:
+                               nTotAfectadas = self.inactivarToken(nReg)
+
+                               if nTotAfectadas>0:
+                                   print("CAutenticacion - registrarAccesos - Se inactivaron "+str(nTotAfectadas)+" tokens")
+
+                            actualizaReg = intentos.objects.filter(id=idReg).update(activo=0,updated_at=timezone.now(),observaciones=observaciones,token=tk,tokenActivo=1)
+
 
                         
                     elif opc == 2:
@@ -713,15 +759,49 @@ class CAutenticacion(APIView):
                     print("No existe registro de historial de acceso en los sistemas para el usuario : "+username)
 
                     if opc == 1:
+                        #ARSI 19/03/2025 SE GUARDA EL TOKEN SOLO SI bSaveTk ES 1
                         print("caso exitoso, el usuario se loggeo sin problemas : "+username)
 
-                        regAcceso = intentos(
-                            username= username,
-                            numintentos = 0,
-                            idSistema = idSistema,
-                            activo = 0,
-                            observaciones = observaciones
-                        )
+                        if bSaveTk == 0:
+                            regAcceso = intentos(
+                                username= username,
+                                numintentos = 0,
+                                idSistema = idSistema,
+                                activo = 0,
+                                observaciones = observaciones
+                            )
+                        elif bSaveTk == 1:
+                            
+                            #nReg = self.obtenerTokenActivo(username,idSistema)
+                            dDatosTk = self.obtenerTokenActivo(username,idSistema)
+
+                            nReg = dDatosTk['idReg']
+                            nTotReg = dDatosTk['TotReg']
+
+                            # print(nReg)
+                            # print(nTotReg)
+
+                            if nTotReg>1:
+                                nTotAfectadas = self.inactivarTokens(username,idSistema)
+
+                                if nTotAfectadas>0:
+                                   print("CAutenticacion - registrarAccesos - Se inactivaron "+str(nTotAfectadas)+" tokens")
+
+                            elif nReg > 0:
+                               nTotAfectadas = self.inactivarToken(nReg)
+
+                               if nTotAfectadas>0:
+                                   print("CAutenticacion - registrarAccesos - Se inactivaron "+str(nTotAfectadas)+" tokens")
+
+                            regAcceso = intentos(
+                                username= username,
+                                numintentos = 0,
+                                idSistema = idSistema,
+                                activo = 0,
+                                observaciones = observaciones,
+                                token=tk,
+                                tokenActivo=1
+                            )
 
                         regAcceso.save()
 
@@ -800,6 +880,68 @@ class CAutenticacion(APIView):
 
         # resultado = instancia.ejecutarSP(sSP)
 
+ 
+    #ARSI 19/03/2025 SE CONSULTA SI EL USUARIO TIENE TOKEN ACTIVO PARA EL SISTEMA AL QUE INTENTA ACCEDER.
+    def obtenerTokenActivo(self, username, idSistema):
+        bExisteRegTokenActivo = True
+        idReg = 0
+        nTotReg = 0
+        dResult = []
+        token = ""
+        
+        try:
+            idReg = intentos.objects.get(username=username,tokenActivo=1, idSistema=idSistema).id                
+            token = intentos.objects.get(username=username,tokenActivo=1, idSistema=idSistema).token                
+            #nTotReg = intentos.objects.get(username=username,tokenActivo=1, idSistema=idSistema).count()
+            nTotReg = intentos.objects.filter(username=username,tokenActivo=1, idSistema=idSistema).count()
+            # print("obtenerTokenActivo :")
+            # print(nTotReg)
+        except intentos.DoesNotExist:
+            bExisteRegTokenActivo = False
+            idReg = 0
+            nTotReg = 0
+            token = ""
+
+        dResult = {"idReg": idReg, "TotReg": nTotReg,"token": token}
+
+        return dResult
+    
+
+    #ARSI 19/03/2025 INACTIVAR TOKEN ACTIVO, actualiza el registro del token activo que encuentre y devuelve el numero de filas
+    #actualizadas.
+    def inactivarToken(self, idReg):
+        
+        actualizaReg = 0
+        
+        try:
+            #idReg = intentos.objects.get(username=username,tokenActivo=1, idSistema=idSistema).id                
+            actualizaReg = intentos.objects.filter(id=idReg).update(token="",tokenActivo=0,updated_at=timezone.now())
+
+            print(f"Se actualizaron {actualizaReg} registros.")
+        except intentos.DoesNotExist:
+            #bExisteRegTokenActivo = False
+            actualizaReg = 0
+
+        return actualizaReg
+
+
+    #ARSI 19/03/2025 INACTIVAR TOKEN ACTIVO, actualiza el registro del token activo que encuentre y devuelve el numero de filas
+    #actualizadas.
+    def inactivarTokens(self, username,idSistema):
+        
+        actualizaReg = 0
+        
+        try:
+            #idReg = intentos.objects.get(username=username,tokenActivo=1, idSistema=idSistema).id                
+            actualizaReg = intentos.objects.filter(username=username,idSistema=idSistema,tokenActivo=1).update(token="",tokenActivo=0,updated_at=timezone.now())
+
+            print(f"Se actualizaron {actualizaReg} registros.")
+        except intentos.DoesNotExist:
+            #bExisteRegTokenActivo = False
+            actualizaReg = 0
+
+        return actualizaReg
+
     @method_decorator(csrf_exempt)
     def dispatch(self,request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
@@ -830,7 +972,7 @@ class CAutenticacion(APIView):
                 'password': openapi.Schema(type=openapi.TYPE_STRING, description='contraseña en base64.'),
                 'idSistema': openapi.Schema(type=openapi.TYPE_INTEGER, description='Id del sistema donde el usuario esta iniciando sesión.'),
                 'timeExp': openapi.Schema(type=openapi.TYPE_INTEGER, description='Número de horas de la vigencia del token; si número de horas es 0, entonces por default el token durara 3 hrs.'),
-                #'saveTk': openapi.Schema(type=openapi.TYPE_INTEGER, description='Indica si se desea guardar el token en la base de datos, por defecto su valor es 0 (No se almacena Token).'),
+                'saveTk': openapi.Schema(type=openapi.TYPE_INTEGER, description='Indica si se desea guardar el token en la base de datos, por defecto su valor es 0 (No se almacena Token).'),
             },
             required=['token', 'user', 'password','idSistema','timeExp']
         ),
@@ -862,8 +1004,10 @@ class CAutenticacion(APIView):
             bKey = False
             bKeyTkG = False
             bKeyRF = False
-            
-            dCamposJson = ['token', 'user', 'password','idSistema', 'timeExp']
+
+            #ARSI 19/03/2025 SE AGREGA saveTk A CAMPOS A VERIFICAR DEL JSON ENVIADO EN LA SOLICITUD.
+            dCamposJson = ['token', 'user', 'password','idSistema', 'timeExp', 'saveTk']
+
             sTexto = ""
             pwdD64 = ""
             dUsuario = ""
@@ -912,16 +1056,9 @@ class CAutenticacion(APIView):
             bExisteTkg = False   
             dListaProyectos = {} #ARSI 25092024 VARIABLE QUE ALMACENA EL LISTADO DE PROYECTOS DONDE EL EMPLEADO ESTUVO INVOLUCRADO
 
-            #Valida que el numero de claves del JSON enviado a la API
-            #coincida con el numero de claves declaras en el diccioario dCamposJson
-            nItemJson = len(jd)
-            
-            if nItemJson != nLenDef:
-                sTexto = "El tamaño del JSON obtenido no es el esperado, por favor de verificar. "
-                bValido = False
-
-
-
+           
+            #ARSI 19/03/2025 SE VALIDA SI EXISTE LA CLAVE SAVETK, en caso de no existir (porque no es obligatoria, se agrega al diccionario
+            #y se asigna valor de 0).
             #Validación de las claves json, si alguna clave no se encuentra en el objeto, entonces
             #el valor de bValido es Falso y regresa un mensaje de error indicando el identificador
             #  faltante.
@@ -929,14 +1066,34 @@ class CAutenticacion(APIView):
                 if item in jd:
                     continue
                 else:
-                    sTexto += "El campo faltante es: "+item+". "
-                    bValido = False
-                    break
+                    if item == 'saveTk':
+                        print("CAutenticacion - El campo saveTk no se encuentra en el JSON, se asigna valor de 0.")
+                        jd['saveTk'] = 0
+                        continue
+                    else:
+                        sTexto += "El campo faltante es: "+item+". "
+                        bValido = False
+                        break
+
+            #ARSI 19/03/2025 se valida tamaño de claves del JSON enviado a la API
+            #Valida que el numero de claves del JSON enviado a la API
+            #coincida con el numero de claves declaras en el diccioario dCamposJson
+            nItemJson = len(jd)
+            
+            if nItemJson != nLenDef:
+                sTexto += "El tamaño del JSON obtenido no es el esperado, por favor de verificar. "
+                bValido = False
             
             #si las claves estan correctas, continuara realizando el resto del proceso
             # de autenticación
             if bValido:
                 print("1 ) Tamaño y nombre de claves de JSON obtenido, validos.")
+
+                print("1.1 ) Validando saveTk: "+str(jd['saveTk']))
+                
+                #ARSI 19/03/2025 SE CREA VARIABLE nSaveTk
+                nSaveTk = int(jd['saveTk'])
+
                 # IMPORTANTE!
                 # Intranet tiene el id de sistema 3, Reconocimiento facial tiene el id de sistema 4.
 
@@ -947,7 +1104,7 @@ class CAutenticacion(APIView):
                 skTk = str(jd['token'])
                 # keySis = self.decodificarB64(jd['token'])
                 keySis = self.decodificarB64(skTk)
-                print(keySis)
+                #print(keySis)
 
                 # print(keySis)
                 # print(os.environ.get('KEY_RF'))
@@ -1011,7 +1168,7 @@ class CAutenticacion(APIView):
                                         # password = dUsuario[0]['password']
                                         idUsuario = dUsuario[0]['id']
                                         
-                                        print("paso 2")
+                                        #print("paso 2")
 
                                         # Si la clave obtenida NO es la llave de validado por django, entonces verifica la password.
                                         if keySis!=os.environ.get('KEYVALIDADJG'):
@@ -1064,7 +1221,7 @@ class CAutenticacion(APIView):
                                         print("No se recuperaron datos del usuario.")
                                     
                                     if len(dDatosPersonales)>0:
-                                        print(dDatosPersonales[0][1])
+                                        #print(dDatosPersonales[0][1])
                                         idPersonal = dDatosPersonales[0][1]
                                         sNombreCompleto = dDatosPersonales[0][9]
                                         idUsuario = dDatosPersonales[0][0]                               
@@ -1205,8 +1362,17 @@ class CAutenticacion(APIView):
                                                 #ARSI 25092024 SE AGREGA CONSULTA PARA OBTENER TODOS LOS PROYECTOS EN LOS QUE EL EMPLEADO ESTUVO INVOLUCRADO. 
                                                 dListaProyectos = self.obtenerProyectoAsignadosEmpleado(idPersonal)
                                                 
+                                                #ARSI 19/03/2025 ALMACENAR TOKEN EN LA BASE DE DATOS
                                                 opc = 1
-                                                info = self.registrarAcceso(sUserName,sistema,"Inicio de sesión exitoso al sistema "+self.sNombreSistema+sTextoTkg,opc)
+                                                print("Valor de nSaveTk es igual a:")
+                                                print(nSaveTk)
+                                                if nSaveTk==0:
+                                                    print("No Guardar el token en la base de datos.")
+                                                    info = self.registrarAcceso(sUserName,sistema,"Inicio de sesión exitoso al sistema "+self.sNombreSistema+sTextoTkg,opc)
+                                                elif nSaveTk == 1:
+                                                    print("Guardar el token en la base de datos.")
+                                                    info = self.registrarAcceso(sUserName,sistema,"Inicio de sesión exitoso al sistema "+self.sNombreSistema+sTextoTkg,opc,False,1,tokenApi)
+
                                                 nStatus = 200
                                                 datos = {'message': 'Success','idPersonal':idPersonal,
                                                          'nNoEmpleado':nNoEmpleado,'usuario': sUserName, 
@@ -1314,7 +1480,7 @@ class CAutenticacion(APIView):
         #     pass
         
 
-        print(datos)
+       # print(datos)
 
         return JsonResponse(datos,status= nStatus)
     
@@ -1549,7 +1715,9 @@ class CVerificaToken(APIView):
             type=openapi.TYPE_OBJECT,
             properties={
                 'token': openapi.Schema(type=openapi.TYPE_STRING, description='Token asignado por la aplicación.'),
-                'user': openapi.Schema(type=openapi.TYPE_STRING, description='Nombre de usuario.')
+                'user': openapi.Schema(type=openapi.TYPE_STRING, description='Nombre de usuario.'),
+                'saveTk': openapi.Schema(type=openapi.TYPE_INTEGER, description='Valor que determina si basar la verificación del token en el que este almacenado y activo en la BD, opcional'),
+                'idSistema': openapi.Schema(type=openapi.TYPE_INTEGER, description='Id del sistema de donde viene el token; colocar NA en caso de que no aplique.')
             },
             required=['token', 'user']
         ),
@@ -1562,6 +1730,7 @@ class CVerificaToken(APIView):
         Para realizar un consulta exitosa, envía un objeto JSON con los siguientes campos:
        
         """
+        #ARSI 20/03/2025 se agrega el parametro saveTk para verificar en BD si existe el token activo correspondiente a la sesión del usuario.
         try:
             bValido = True
             sToken_encoded = ""
@@ -1574,26 +1743,47 @@ class CVerificaToken(APIView):
             nItemJson = 0
             nStatus = 0
 
-            dCamposJson = ['token', 'user']
+            dCamposJson = ['token', 'user','saveTk','idSistema']
             
             jd = json.loads(request.body)
 
             nLenDef = len(dCamposJson) 
 
-            nItemJson = len(jd)
+           
             dDatos = []
+            dDatosValidarTkBD = []
+            bSistInvalid = False #ARSI 20/03/2025 VARIABLE QUE ALMACENA SI EL TIPO DE DATO PARA EL PARAMETRO ID SISTEMA ES VALIDO
+            bSistNA = False  #ARSI 20/03/2025 VARIABLE QUE ALMACENA SI EL ID SISTEMA VIENE DEFINIDO COMO NA
+            bStkValid = False
             
-            if nItemJson != nLenDef:
-                sTexto = "El tamaño del JSON obtenido no es el esperado, por favor de verificar. "
-                bValido = False
-
+            #ARSI 20/03/2025 se valida si existen los parametros savetk e idSistema, en caso de que no, se asigna valores entendibles para el sistema.
             for item in dCamposJson:
                 if item in jd:
                     continue
                 else:
-                    sTexto += " El campo faltante es: "+item+". "
-                    bValido = False
-                    break
+                    # if item == 'saveTk':
+                    #     pass
+                    # sTexto += " El campo faltante es: "+item+". "
+                    # bValido = False
+                    # break
+
+                    #ARSI 20/03/2025 
+                    if item == 'saveTk':
+                        print("CVerificaToken - El campo saveTk no se encuentra en el JSON, se asigna valor de 0.")
+                        jd['saveTk'] = 0
+                        continue
+                    elif item == 'idSistema':
+                        print("CVerificaToken - El campo idSistema no se encuentra en el JSON, se asigna valor de NA.")
+                        jd['idSistema'] = "NA"
+                        continue
+                    else:
+                        
+                        sTexto += "El campo faltante es: "+item+". "
+                        bValido = False
+                        break
+
+            nItemJson = len(jd)
+            
 
 
             if (jd['token'].isspace() or len(jd['token']) <= 1):
@@ -1607,14 +1797,81 @@ class CVerificaToken(APIView):
                 bValido = False
 
 
+            # print("Valor de saveTk: bueno tipo: ")
+            # print(type(jd['saveTk']))
+
+            if isinstance(jd['saveTk'],int):
+                if ((jd['saveTk'] !=0 and jd['saveTk'] !=1)):
+                    sTexto += "El item de saveTk debe contener el valor entero 0 o 1. "
+                    nStatus = 404
+                    bValido = False
+
+                if (jd['saveTk'] ==1):
+                    bStkValid = True
+
+            elif isinstance(jd['saveTk'],str):
+                if (jd['saveTk']== "" or jd['saveTk'].isspace() or jd['saveTk'] !="0" or jd['saveTk'] !="1"):
+                    sTexto += "El item de saveTk debe contener el valor entero 0 o 1; no caracteres alfanumericos. "
+                    nStatus = 404
+                    bValido = False
+
+            
+            if isinstance(jd['idSistema'],int):                       
+                if (jd['idSistema']<=0):
+                    sTexto += "El item de idSistema debe contener algún id de sistema valido o si no aplica, colocar NA. "
+                    nStatus = 404
+                    bValido = False
+                    bSistInvalid = True
+            if isinstance(jd['idSistema'],str):
+                if (jd['idSistema'] !='NA' or jd['idSistema'] == '' or jd['idSistema'].isspace()):
+                    sTexto += "El item de idSistema debe contener algún valor numerico que indique el Id del sistema valido o si no aplica, colocar NA. "
+                    nStatus = 404
+                    bValido = False
+                    bSistInvalid = True
+                elif(jd['idSistema'] == "NA"):
+                    bSistNA = True
+
+            #bStkValid                        
+            #if jd['saveTk'] ==1 and ((bSistInvalid) or bSistNA ):
+            if bStkValid and ((bSistInvalid) or bSistNA ):
+
+                sTexto += "El item saveTk es igual a 1, por lo tanto el valor de idSistema debe estar definido. "
+                nStatus = 404
+                bValido = False
+
+            if nItemJson != nLenDef:
+                sTexto += "El tamaño del JSON obtenido no es el esperado, por favor de verificar. "
+                bValido = False
+
+
+        
             if bValido:
-                print("Verificar token ...")
+                print("CVerificaToken - Verificar token ...")
                 
                 sToken_encoded = jd['token']
                 sUserName = jd['user']
+                # nVerifyTk = jd['saveTk']
+                # nIdSistema = jd['idSistema']
                 
-                #ARSI 18/03/2025 COLOCAR ESTA LÓGICA DENTRO DE OTRO METODO...
-                dDatos = self.validarToken(sUserName,sToken_encoded);
+                #arsi 20/03/2025 se valida que el verifiTK sea 1 y que el sistema sea valido y no igual a NA
+                if bStkValid and not bSistInvalid and not bSistNA:
+                    print("CVerificacionToken - Requiere obtener token desde BD y validar el token");
+
+                    dDatosValidarTkBD = self.validarTokenBD(sUserName,sToken_encoded,jd['idSistema'])
+
+                    if dDatosValidarTkBD['valido'] == 1:
+                       dDatos = self.validarToken(sUserName,sToken_encoded)
+                    else:
+                        
+                        dDatos["valido"] = dDatosValidarTkBD['valido']
+                        dDatos["Resultado"] = dDatosValidarTkBD['Resultado']
+                        #ARSI 23/03/2025 SI EL TOKEN DE LA BASE DE DATOS EN INVALIDO ELIMINA EL TOKEN DE LA bd.
+                        self.oAuth.inactivarTokens(sUserName,jd['idSistema']);
+                        
+                else:
+                    #ARSI 18/03/2025 COLOCAR ESTA LÓGICA DENTRO DE OTRO METODO...
+                    print("CVerificacionToken - No requiere obtener token desde BD, solo validar el token");
+                    dDatos = self.validarToken(sUserName,sToken_encoded)
 
                 print("Datos obtenidos de validarToken: ");
                 print(dDatos["valido"]);
@@ -1666,6 +1923,7 @@ class CVerificaToken(APIView):
                     nStatus = 200
                     datos = {'message': 'Success', "descripcion":'El token es válido y no ha expirado.'}
                 else:
+                    
                     nStatus = 404
                     datos = {'message': 'Error', "descripcion":'El token ya no es válido y posiblemente ya expiro'}
                     print("El token no es válido.")
@@ -1682,13 +1940,14 @@ class CVerificaToken(APIView):
 
         except ValueError as error:
             nStatus = 404
-            sTexto = "%s" % error
-            datos = {'message': 'JSON invalido. ', "error": sTexto}
+            
+            sTexto += "%s" % error
+            datos = {'message': 'JSON invalido 1. ', "error": sTexto}
             # return False
         except KeyError as error:
             nStatus = 403
-            sTexto = "%s" % error
-            datos = {'message': 'JSON invalido. ', "error": sTexto}
+            sTexto += "%s" % error
+            datos = {'message': 'JSON invalido 2. ', "error": sTexto}
 
        
        
@@ -1703,39 +1962,50 @@ class CVerificaToken(APIView):
         dDatos = []
         is_token_valid = False
         is_token_expired = True
+        dDesencriptarTk = []
 
         try:
             print("Accede a metodo validarToken.")
-            user = User.objects.get(username=p_suser) 
-                
-             
-            tk = crfr.decrypt(p_token.encode()).decode()
+        
+                           
+            #tk = crfr.decrypt(p_token.encode()).decode()
+            #ARSI 21/03/2025 SE APLICA DESENCRIPTADO DE TOKENS
+            dDesencriptarTk = CVerificaToken.desencriptarTk(p_token,True);
 
-            # Separar el token y la marca de tiempo               
-            parts = tk.split(',')
+            if dDesencriptarTk['estado'] == "Success":
+                
+
+            # # Separar el token y la marca de tiempo               
+            # parts = tk.split(',')
 
             
-            token_without_timestamp = '-'.join(parts[:-1])
-            timestamp = int(parts[-1])
+            # token_without_timestamp = '-'.join(parts[:-1])
+            # timestamp = int(parts[-1])
+
+                timestamp = dDesencriptarTk['expTime']
                
-            # Calcular la fecha de expiración del token               
-            expiration_time = timestamp  # 3600 segundos en una hora
-            # expiration_time = timestamp + (1 * 60)  # 60 segundos prueba de 1 min.
+                # Calcular la fecha de expiración del token               
+                expiration_time = timestamp  # 3600 segundos en una hora
+                # expiration_time = timestamp + (1 * 60)  # 60 segundos prueba de 1 min.
 
-            print(expiration_time)
-            print(timezone.now().timestamp())
-
-            if expiration_time > timezone.now().timestamp():
-                print("validarToken - Aun no expira el token")
-                is_token_expired = False
-              
-            is_token_valid = default_token_generator.check_token(user, parts[0])
+                print(expiration_time)
+                print(timezone.now().timestamp())
+                user = User.objects.get(username=p_suser) 
                 
+                if expiration_time > timezone.now().timestamp():
+                    print("validarToken - Aun no expira el token")
+                    is_token_expired = False
+                
+                is_token_valid = default_token_generator.check_token(user, dDesencriptarTk['tokenDj'])
+                    
 
-            if is_token_valid and not is_token_expired:
-                print("validarToken - El token es válido y no ha expirado para este usuario...")
-                nValido = 1
-                sTexto = "El token es válido y no ha expirado."
+                if is_token_valid and not is_token_expired:
+                    print("validarToken - El token es válido y no ha expirado para este usuario...")
+                    nValido = 1
+                    sTexto = "El token es válido y no ha expirado."
+            else:
+                nValido = 0           
+                sTexto += "Error en desencriptación del Token. "
 
         except ValueError as error: 
             nValido = 0           
@@ -1748,6 +2018,121 @@ class CVerificaToken(APIView):
 
         return dDatos
 
+
+    #ARSI 21/03/2025 VALIDAR TOKEN DESDE BASE DE DATOS.
+    @staticmethod
+    def validarTokenBD(p_suser,p_token, idSistema):
+        try:
+            
+            print("CVerificaToken - validarTokenBD  - Accede a método..")
+            
+            oAuth = CAutenticacion()
+            dDatosTk = []
+            dDesencriptarTkCliente = []
+            dDesencriptarTkBD = []
+            nValido = 0
+            sTexto = ""
+            dDatos = []
+
+            #ARSI 21/03/2025 OBTENER TOKEN ACTIVO DE LA BASE DE DATOS
+            dDatosTk = oAuth.obtenerTokenActivo(p_suser, idSistema)
+            
+            #ARSI 21/03/2025 verificar que el id de registro de token activo es mayor a 0 
+            if dDatosTk['idReg']>0:
+                print("CVerificaToken - validarTokenBD  - Se encontró registro de token activo en la BD.")
+
+                if len(dDatosTk['token'])>0:
+                    
+                    #se desencripta token que viene del cliente y el token activo en la BD
+                    dDesencriptarTkCliente = CVerificaToken.desencriptarTk(p_token,True);
+                    dDesencriptarTkBD = CVerificaToken.desencriptarTk(dDatosTk['token'],True);
+        
+                    if dDesencriptarTkCliente['estado'] == "Success" and dDesencriptarTkBD['estado'] == "Success" :
+                        print("CVerificaToken - validarTokenBD  - Token de cliente y token de BD desencriptado : OK ")
+
+                        if dDesencriptarTkCliente['tk'] == dDesencriptarTkBD['tk']:
+                            print("CVerificaToken - validarTokenBD  - Token de cliente y token de BD desencriptado coinciden : OK ")
+                            nValido = 1
+                            sTexto +="Token de cliente y token de BD coinciden. "
+                        else:
+                            sTexto +="Token de cliente y token de BD no coinciden. "
+                            print("CVerificaToken - validarTokenBD  - Token de cliente y token de BD desencriptado coinciden : Error ")
+                            
+
+                    else:
+                        sTexto +=" Error en desencriptación de Token. "
+                        print("CVerificaToken - validarTokenBD  - Token de cliente y token de BD desencriptado : ERROR ")
+                else:
+                    sTexto +="No se encuentra token almacenado en BD. "
+            else:
+                 sTexto +="No se encuentra token activo en BD. "
+
+
+        except ValueError as error: 
+            nValido = 0           
+            sTexto = "%s" % error
+        except KeyError as error:
+            nValido = 0
+            sTexto = "%s" % error
+
+        dDatos = {'valido': nValido, 'Resultado': sTexto}
+
+        return dDatos
+
+        
+
+    @staticmethod
+    def desencriptarTk(p_token, bSeparaTk =False):
+        tk = ""
+        dDatos = []
+        estado = "Error"
+        timestamp = 0
+        tokenDj = ""
+        sTexto = ""
+
+        try:
+            print("CVerificaToken - Accede a desencriptarTK. ")
+            
+            tk = crfr.decrypt(p_token.encode()).decode()
+
+            if bSeparaTk:
+
+                print("CVerificaToken - desencriptarTK - Solicita separar token y marca de tiempo")
+                # Separar el token y la marca de tiempo               
+                parts = tk.split(',')
+                                  
+                timestamp = int(parts[-1])
+                tokenDj = parts[0]
+
+                estado = "Success"
+                sTexto+="Token desencriptado y separado con exito."
+            else:
+                estado = "Success"
+
+                sTexto+="Token desencriptado con exito."
+        
+        except TypeError as error:
+            tk = ""  
+            sTexto += "- TypeError - "         
+            sTexto += "%s" % error
+        except ValueError as error: 
+            tk = ""          
+            sTexto += "- ValueError - " 
+            sTexto += "%s" % error
+        except KeyError as error:
+            tk = ""  
+            sTexto += "- KeyError - " 
+            sTexto += "%s" % error
+        except Exception as error:
+            tk = ""  
+            sTexto += "- Exception - " 
+            sTexto += "%s" % error
+
+        dDatos= {'estado':estado,'message': sTexto,'tk': tk, 'expTime': timestamp, 'tokenDj':tokenDj}
+
+        print("CVerificaToken - desencriptarTK - Resultado final: "+estado+' - '+sTexto)
+
+        return dDatos
 
 class CVerificaTokenGlobal(APIView):
 
@@ -2716,7 +3101,8 @@ class CVerificarTokenPermiso(APIView):
                 'user': openapi.Schema(type=openapi.TYPE_STRING, description='Nombre de usuario.'),
                 'idSistema' :  openapi.Schema(type=openapi.TYPE_INTEGER, description='Id del sistema.'),
                 'permisoGrupo' : openapi.Schema(type=openapi.TYPE_STRING, description='Nombre del permiso o grupo a validar.'),
-                'tipoPerGp' : openapi.Schema(type=openapi.TYPE_STRING, description='Por favor de especificar que valor es el indicado en "permisoGrupo", si es un Grupo colocar G, si es un Permiso colocar P.')
+                'tipoPerGp' : openapi.Schema(type=openapi.TYPE_STRING, description='Por favor de especificar que valor es el indicado en "permisoGrupo", si es un Grupo colocar G, si es un Permiso colocar P.'),
+                'saveTk': openapi.Schema(type=openapi.TYPE_INTEGER, description='Valor que determina si basar la verificación del token en el que este almacenado y activo en la BD, opcional'),
             },
             required=['token', 'user','idSistema','permisoGrupo','tipoPerGp']
         ),
@@ -2730,6 +3116,7 @@ class CVerificarTokenPermiso(APIView):
         Para realizar un consulta exitosa, envía un objeto JSON con los siguientes campos:
        
         """
+        #ARSI 22/03/2025 SE AGREGA PARAMETRO OPCIONAL SAVE TOKEN PARA VALIDAR EL TOKEN ALMACENADO EN LA BASE DE DATOS.
         try:
             print("CVerificarTokenPermiso - Accede a la validación de token y permisos.")
             bValido = True
@@ -2745,7 +3132,8 @@ class CVerificarTokenPermiso(APIView):
             nItemJson = 0
             nStatus = 0
 
-            dCamposJson = ['token', 'user','idSistema','permisoGrupo','tipoPerGp']
+            #22/03/2025 ARSI SE AGREGA PARAMETRO OPCIONAL SAVE TOKEN
+            dCamposJson = ['token', 'user','idSistema','permisoGrupo','tipoPerGp','saveTk']
             
             jd = json.loads(request.body)
 
@@ -2754,6 +3142,9 @@ class CVerificarTokenPermiso(APIView):
             nItemJson = len(jd)
             dDatos = []
             dUsuario = []
+            bStkValid = False #ARSI 22/03/2025
+            dDatosValidarTkBD = [] #ARSI 22/03/2025
+            bValidoTk = False #ARSI 23/03/2025
             #datos = []
 
             if nItemJson != nLenDef:
@@ -2764,9 +3155,15 @@ class CVerificarTokenPermiso(APIView):
                 if item in jd:
                     continue
                 else:
-                    sTexto += " El campo faltante es: "+item+". "
-                    bValido = False
-                    break
+                    #ARSI 22/03/2025 
+                    if item == 'saveTk':
+                        print("CVerificaTokenPermiso - El campo saveTk no se encuentra en el JSON, se asigna valor de 0.")
+                        jd['saveTk'] = 0
+                        continue
+                    else:
+                        sTexto += " El campo faltante es: "+item+". "
+                        bValido = False
+                        break
 
 
             # if (jd['token'].isspace() or len(jd['token']) <= 1):
@@ -2804,6 +3201,22 @@ class CVerificarTokenPermiso(APIView):
                 nStatus = 400
                 bValido = False
 
+            #ARSI 22/03/2025 SE VALIDA EL VALOR DE SAVETK
+            if isinstance(jd['saveTk'],int):
+                if ((jd['saveTk'] !=0 and jd['saveTk'] !=1)):
+                    sTexto += "El item de saveTk debe contener el valor entero 0 o 1. "
+                    nStatus = 404
+                    bValido = False
+
+                if (jd['saveTk'] ==1):
+                    bStkValid = True
+
+            elif isinstance(jd['saveTk'],str):
+                if (jd['saveTk']== "" or jd['saveTk'].isspace() or jd['saveTk'] !="0" or jd['saveTk'] !="1"):
+                    sTexto += "El item de saveTk debe contener el valor entero 0 o 1; no caracteres alfanumericos. "
+                    nStatus = 404
+                    bValido = False
+
             
 
             if bValido:
@@ -2817,7 +3230,21 @@ class CVerificarTokenPermiso(APIView):
 
                 dDatos = self.oVeficarTk.validarToken(sUserName,sToken_encoded)
 
-                if dDatos['valido'] == 1:
+                #ARSI 22/03/2025 SE VALIDA QUE EL PARAMETRO SAVETOKEN SEA 1 PARA VALIDAR EL TOKEN EN LA BASE DE DATOS
+                if bStkValid:
+                    dDatosValidarTkBD = self.oVeficarTk.validarTokenBD(sUserName,sToken_encoded,nSistemaOrigen)
+                    #ARSI 23/03/2025 SE AGREGA VALIDACIONES DE TK EN BD y el token dado por el cliente.
+                    if dDatosValidarTkBD['valido'] == 1 and dDatos['valido'] == 1:
+                        bValidoTk = True
+                    else:
+                        #ARSI 23/03/2025 SI LOS TOKENS NO SON VALIDOS ELIMINA EL TOKEN DE LA bd.
+                        self.oAuth.inactivarTokens(sUserName,nSistemaOrigen);
+                elif dDatos['valido'] == 1:
+                    bValidoTk = True
+
+                #ARSI 23/03/2025 AHORA SE VALIDA EL BOOLEANO DE TOKEN.
+                #if dDatos['valido'] == 1:
+                if bValidoTk:
                     
                     print("CVerificarTokenPermiso - El token es valido.")
                     
@@ -2901,3 +3328,131 @@ class CVerificarTokenPermiso(APIView):
         # return JsonResponse(datos)
     
         return JsonResponse(datos,status=nStatus)
+    
+
+class CInactivaTk(APIView):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self,request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'user': openapi.Schema(type=openapi.TYPE_STRING, description='Nombre de usuario.'),                
+                'idSistema': openapi.Schema(type=openapi.TYPE_INTEGER, description='Id del sistema de donde viene el token; colocar NA en caso de que no aplique.')
+            },
+            required=['token', 'user','idSistema']
+        ),
+        #responses={200: 'Token Validado', 403: 'Json invalido o problemas internos en el server.', 404:'Datos invalidos'},
+        responses={200: 'Token Validado', 400:'JSON INVALIDO' , 404:'Datos invalidos',401: 'Sin autorización,El servidor ha recibido la solicitud, pero no se ha podido autenticar al usuario.', 403:'Prohibido, El servidor entiende la solicitud, pero el usuario no tiene permiso para acceder al recurso, aunque sí está autenticado'},
+    ) 
+    
+    def post(self,request):
+        """
+         Realiza la inactivación del token en la BD
+
+        Para realizar un consulta exitosa, envía un objeto JSON con los siguientes campos:
+       
+        """           
+        try:
+            #pass
+            #Se requiere username y idSistema para inactivar el token en la BD.
+            print("CInactivaTk - Inactiva el token de la base de datos.")
+
+            bValido = True
+            sToken_encoded = ""
+            sUserName = ""
+            nSistemaOrigen = 0
+            sPermGp = ""
+            tk = ""
+            is_token_valid = False
+            is_token_expired = True
+            sTexto = ""
+            nLenDef = 0
+            nItemJson = 0
+            nStatus = 0
+            nTotAfectadas = 0
+
+            #27/03/2025 ARSI SE valida parametros de entrada.
+            dCamposJson = ['user','idSistema']
+
+            jd = json.loads(request.body)
+
+            nLenDef = len(dCamposJson)
+            
+
+            if (jd['user'].isspace() or len(jd['user']) <= 1):
+                sTexto += "El item de usuario es muy corto o viene vacio. "
+                nStatus = 400
+                bValido = False
+
+            if isinstance(jd['idSistema'],int):                       
+                if (jd['idSistema']<=0):
+                    sTexto += "El item de idSistema debe contener algún id de sistema valido."
+                    nStatus = 404
+                    bValido = False
+                   
+            if isinstance(jd['idSistema'],str):
+                    
+                    sTexto += "El item de idSistema debe contener algún valor numerico que indique el Id del sistema valido. "
+                    nStatus = 404
+                    bValido = False
+                    
+                    if (jd['user'].isspace() or len(jd['user']) <= 1):
+                        sTexto += "El item de usuario es muy corto o viene vacio. "     
+
+            for item in dCamposJson:
+                if item in jd:
+                    continue
+                else:                  
+                    sTexto += " El campo faltante es: "+item+". "
+                    bValido = False
+                    break                                                 
+                        
+            nItemJson = len(jd)
+                        
+            if nItemJson != nLenDef:
+                sTexto += "El tamaño del JSON obtenido no es el esperado, por favor de verificar. "
+                bValido = False
+
+            if bValido:
+                sUserName = jd['user']
+                idSistema = jd['idSistema']
+                oAuth = CAutenticacion()
+
+                
+                print("CAutenticacion - registrarAccesos - Datos validos, se procede a inactivar token de la Base de datos.")
+
+                nTotAfectadas = oAuth.inactivarTokens(sUserName,idSistema)
+
+                if nTotAfectadas>0:
+                    print("CAutenticacion - registrarAccesos - Se inactivaron "+str(nTotAfectadas)+" tokens")
+                    nStatus = 200
+                    datos = {'status': 'Success', "message":'El token ha sido inhabilitado'}
+                else:
+                    print("CAutenticacion - registrarAccesos - No se inactivaron tokens")
+                    nStatus = 200
+                    datos = {'status': 'Success', "message":'No se inactivaron tokens'}
+
+
+            else:
+               datos = {'status': 'Error', "message": sTexto}  
+                
+        except ValueError as error:
+            nStatus = 404
+            sTexto += "%s" % error
+            datos = {'status': 'Error', "message": sTexto}
+            # return False
+        except KeyError as error:
+            nStatus = 403
+            sTexto += "%s" % error
+            datos = {'status': 'Error', "message": sTexto}
+
+        print(datos)
+        print(nStatus)
+        
+        return JsonResponse(datos,status=nStatus)
+
+        

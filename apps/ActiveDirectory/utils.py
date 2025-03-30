@@ -63,55 +63,7 @@ class IPSinBaseDatos:
         self.ip = nueva_ip
 
     def mostrar_info(self):
-        print(f"ID: {self.id}, Servidor: {self.server}, IP: {self.ip}")
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+        print(f"ID: {self.id}, Servidor: {self.server}, IP: {self.ip}") 
 """
 librerias que hacen funcionar el proyecto ;) esto es un regalo de mi para el futuro XD 02/02/2024
 absl-py                       2.0.0

@@ -20,16 +20,15 @@ class ValidacionUsuarioUnico(models.Model):
 
             # Verificar si ya es coordinador en otra coordinación activa
             if Coordinacion.objects.filter(id_coordinador=usuario, estado=1).exclude(id=self.id).exists():
-                errores.append(f'El usuario {usuario.username} es coordinador en una Coordinación activa. ')
+                errores.append(f'El usuario {usuario.username} es coordinador en una Coordinación activa. Por lo tanto no puede ser {rol_actual} de {nombre}')
 
             # Verificar si ya es director en una dirección activa
             if Direccion.objects.filter(id_director=usuario, estado=1).exclude(id=self.id).exists():
-                errores.append(f'El usuario {usuario.username} es director en una Dirección activa. ')
+                errores.append(f'El usuario {usuario.username} es director en una Dirección activa. Por lo tanto no puede ser {rol_actual} de {nombre}')
 
             # Verificar si ya es gerente en una gerencia activa
             if Gerencia.objects.filter(id_gerente=usuario, estado=1).exclude(id=self.id).exists():
-                errores.append(f'El usuario {usuario.username} es gerente en una Gerencia activa. ')
-            errores.append(f'Por lo tanto no puede ser {rol_actual} de {nombre}')
+                errores.append(f'El usuario {usuario.username} es gerente en una Gerencia activa. Por lo tanto no puede ser {rol_actual} de {nombre}')
             if errores:
                 raise ValidationError(errores)
 

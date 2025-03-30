@@ -7,6 +7,11 @@ from django.contrib.contenttypes.models import ContentType
 from django import forms
 from django.contrib import messages
 from apps.sistemas.signals import set_changed_by
+from config.logger_setup import LoggerSetup
+import os
+
+entorno = os.environ.get('DJANGO_ENV')
+logger = LoggerSetup.setup_logger_for_environment('areas', entorno)
 
 # Formulario personalizado para edición de usuarios que filtra permisos
 class CustomUserChangeForm(UserChangeForm):
@@ -20,6 +25,7 @@ class CustomUserChangeForm(UserChangeForm):
         self.fields['user_permissions'].queryset = self.fields['user_permissions'].queryset.filter(
             content_type__app_label='sistemas-iai'
         )
+        logger.debug(f"CustomUserChangeForm inicializado con permisos filtrados para 'sistemas-iai'")
 
 # Formulario para las áreas de usuario con filtrado de áreas activas y con encargados
 class UserAreasInlineForm(forms.ModelForm):
@@ -33,6 +39,7 @@ class UserAreasInlineForm(forms.ModelForm):
         self.fields['coordinacion'].queryset = Coordinacion.objects.filter(estado=1, id_coordinador_id__isnull=False)
         self.fields['gerencia'].queryset = Gerencia.objects.filter(estado=1, id_gerente_id__isnull=False)
         self.fields['direccion'].queryset = Direccion.objects.filter(estado=1, id_director_id__isnull=False)
+        logger.debug("UserAreasInlineForm inicializado con áreas filtradas (activas y con encargados)")
 
 # Inline para asignación de áreas a usuarios en el admin de Django
 class UserAreasInline(admin.StackedInline):
@@ -44,21 +51,28 @@ class UserAreasInline(admin.StackedInline):
     
     def has_add_permission(self, request, obj=None):
         """Previene que usuarios encargados de áreas tengan asignaciones adicionales"""
-        if obj and self.is_user_in_charge(obj):
-            return False
-        return True
+        result = not (obj and self.is_user_in_charge(obj))
+        if not result and obj:
+            logger.info(f"Permiso de adición denegado para {obj.username} por ser encargado de área")
+        return result
     
     def has_change_permission(self, request, obj=None):
         """Bloquea la edición para usuarios que son encargados de áreas"""
-        if obj and self.is_user_in_charge(obj):
-            return False
-        return True
+        result = not (obj and self.is_user_in_charge(obj))
+        if not result and obj:
+            logger.info(f"Permiso de edición denegado para {obj.username} por ser encargado de área")
+        return result
     
     def is_user_in_charge(self, user):
         """Determina si un usuario es encargado de alguna área (director, gerente o coordinador)"""
-        return (Direccion.objects.filter(id_director=user, estado=1).exists() or
+        is_in_charge = (Direccion.objects.filter(id_director=user, estado=1).exists() or
                 Gerencia.objects.filter(id_gerente=user, estado=1).exists() or
                 Coordinacion.objects.filter(id_coordinador=user, estado=1).exists())
+        
+        if is_in_charge:
+            logger.debug(f"Usuario {user.username} identificado como encargado de área")
+        
+        return is_in_charge
 
 # Admin personalizado para el modelo User de Django
 class CustomUserAdmin(UserAdmin):
@@ -69,6 +83,7 @@ class CustomUserAdmin(UserAdmin):
     def get_inline_instances(self, request, obj=None):
         """Oculta el inline de áreas si el usuario es encargado"""
         if obj and self.is_user_in_charge(obj):
+            logger.info(f"Inlines ocultados para usuario encargado: {obj.username}")
             return []
         return super().get_inline_instances(request, obj)
 
@@ -78,18 +93,27 @@ class CustomUserAdmin(UserAdmin):
         obj = self.get_object(request, object_id)
 
         if obj and self.is_user_in_charge(obj):
-            messages.info(request, f'Este usuario es {self.get_user_charge_info(obj)}, por lo que no necesita asignación adicional de áreas.')
+            charge_info = self.get_user_charge_info(obj)
+            messages.info(request, f'Este usuario es {charge_info}, por lo que no necesita asignación adicional de áreas.')
+            logger.info(f"Vista de cambio para usuario encargado: {obj.username} ({charge_info})")
 
         return super().change_view(request, object_id, form_url, extra_context)
 
     def save_model(self, request, obj, form, change):
         """Registra quién hizo el cambio y elimina asignaciones si el usuario se convierte en encargado"""
         set_changed_by(request.user)
+        
+        action = "actualizado" if change else "creado"
+        logger.info(f"Usuario {obj.username} {action} por {request.user.username}")
+        
         super().save_model(request, obj, form, change)
 
         # Elimina asignación de áreas si el usuario ahora es encargado
         if self.is_user_in_charge(obj):
-            UserAreas.objects.filter(user=obj).delete()
+            user_areas = UserAreas.objects.filter(user=obj)
+            if user_areas.exists():
+                logger.info(f"Eliminando asignación de áreas para usuario encargado: {obj.username}")
+                user_areas.delete()
 
     def is_user_in_charge(self, user):
         """Verifica si el usuario tiene un cargo de responsabilidad"""
@@ -114,7 +138,10 @@ class CustomUserAdmin(UserAdmin):
         
         # Solo guarda UserAreas si el usuario no es encargado
         if not self.is_user_in_charge(obj):
+            logger.debug(f"Guardando relaciones para usuario no encargado: {obj.username}")
             super().save_related(request, form, formsets, change)
+        else:
+            logger.info(f"Omitiendo guardado de UserAreas para usuario encargado: {obj.username}")
 
     # Métodos para mostrar información en la lista de usuarios
     def get_nombre_completo(self, obj):
@@ -188,15 +215,25 @@ class CoordinacionAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         """Muestra solo coordinaciones activas (estado=1)"""
-        return super().get_queryset(request).filter(estado=1)
+        queryset = super().get_queryset(request).filter(estado=1)
+        logger.debug(f"Consultando coordinaciones activas: {queryset.count()} encontradas")
+        return queryset
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """Filtra direcciones y gerencias para mostrar solo las activas con encargados"""
         if db_field.name == "id_direccion":  
             kwargs["queryset"] = Direccion.objects.filter(estado=1, id_director_id__isnull=False)
+            logger.debug(f"Filtrando direcciones activas con director para campo {db_field.name}")
         elif db_field.name == "id_gerencia":
             kwargs["queryset"] = Gerencia.objects.filter(estado=1, id_gerente_id__isnull=False)
+            logger.debug(f"Filtrando gerencias activas con gerente para campo {db_field.name}")
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def save_model(self, request, obj, form, change):
+        """Registra la creación o actualización de coordinaciones"""
+        action = "actualizada" if change else "creada"
+        logger.info(f"Coordinación '{obj.nombre}' {action} por {request.user.username}")
+        super().save_model(request, obj, form, change)
 
     # Métodos para mostrar información relacionada en la lista
     def coordinador(self, obj):
@@ -221,13 +258,22 @@ class GerenciaAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         """Muestra solo gerencias activas (estado=1)"""
-        return super().get_queryset(request).filter(estado=1)
+        queryset = super().get_queryset(request).filter(estado=1)
+        logger.debug(f"Consultando gerencias activas: {queryset.count()} encontradas")
+        return queryset
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """Filtra direcciones para mostrar solo las activas con encargados"""
         if db_field.name == "id_direccion":  
             kwargs["queryset"] = Direccion.objects.filter(estado=1, id_director_id__isnull=False)
+            logger.debug(f"Filtrando direcciones activas con director para campo {db_field.name}")
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def save_model(self, request, obj, form, change):
+        """Registra la creación o actualización de gerencias"""
+        action = "actualizada" if change else "creada"
+        logger.info(f"Gerencia '{obj.nombre}' {action} por {request.user.username}")
+        super().save_model(request, obj, form, change)
 
     def gerente(self, obj):
         return obj.id_gerente.username if obj.id_gerente else "Sin asignar"
@@ -247,7 +293,15 @@ class DireccionAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         """Muestra solo direcciones activas (estado=1)"""
-        return super().get_queryset(request).filter(estado=1)
+        queryset = super().get_queryset(request).filter(estado=1)
+        logger.debug(f"Consultando direcciones activas: {queryset.count()} encontradas")
+        return queryset
+
+    def save_model(self, request, obj, form, change):
+        """Registra la creación o actualización de direcciones"""
+        action = "actualizada" if change else "creada"
+        logger.info(f"Dirección '{obj.nombre}' {action} por {request.user.username}")
+        super().save_model(request, obj, form, change)
 
     def director(self, obj):
         return obj.id_director.username if obj.id_director else "Sin asignar"
@@ -261,7 +315,15 @@ class PermissionAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         """Filtra permisos para mostrar solo los de la app 'sistemas-iai'"""
-        return super().get_queryset(request).filter(content_type__app_label='sistemas-iai')
+        queryset = super().get_queryset(request).filter(content_type__app_label='sistemas-iai')
+        logger.debug(f"Consultando permisos de 'sistemas-iai': {queryset.count()} encontrados")
+        return queryset
+
+    def save_model(self, request, obj, form, change):
+        """Registra la creación o actualización de permisos"""
+        action = "actualizado" if change else "creado"
+        logger.info(f"Permiso '{obj.codename}' {action} por {request.user.username}")
+        super().save_model(request, obj, form, change)
 
 admin.site.register(Permission, PermissionAdmin)
 
@@ -272,4 +334,3 @@ admin.site.register(Permission, PermissionAdmin)
 
 # # Registra el admin personalizado para ContentType
 # admin.site.register(ContentType, CustomContentTypeAdmin)
-

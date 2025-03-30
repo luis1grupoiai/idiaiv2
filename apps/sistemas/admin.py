@@ -5,81 +5,67 @@ from django.contrib.auth.models import Group, Permission, User
 from django.contrib.contenttypes.models import ContentType
 from .models import Sistemas, SistemaPermisoGrupo, UserSPG
 from .signals import set_changed_by
+from config.logger_setup import LoggerSetup
+import os
 
-# Define un formulario para el modelo SistemaPermisoGrupo en la interfaz de administración de Django
+entorno = os.environ.get('DJANGO_ENV')
+logger = LoggerSetup.setup_logger_for_environment('sistemas', entorno)
+
 class SistemaPermisoInlineForm(forms.ModelForm):
     class Meta:
         model = SistemaPermisoGrupo
         fields = '__all__'
 
-    # Inicializa el formulario y filtra las opciones de permisos basándose en la aplicación 'sistemas-iai'
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         app_label = 'sistemas-iai'
         content_types = ContentType.objects.filter(app_label=app_label)
         self.fields['permiso'].queryset = self.fields['permiso'].queryset.filter(content_type__in=content_types)
 
-# Define una clase de línea en la interfaz de administración para el modelo SistemaPermisoGrupo
 class SistemaPermisoInline(admin.TabularInline):
     model = SistemaPermisoGrupo
     form = SistemaPermisoInlineForm
     verbose_name = 'Añadir Permiso y/o Grupo'
     verbose_name_plural = 'Añadir Permiso y/o Grupo'
 
-# Define una clase de administrador para el modelo Sistemas
 class SistemaAdmin(admin.ModelAdmin):
-    # Agrega la clase de línea SistemaPermisoInline a la interfaz de administración
     inlines = [SistemaPermisoInline]
-    
-    # Configura los campos que se mostrarán en la lista de objetos del modelo
     list_display = ('nombre', 'version', 'status', 'get_permisos', 'get_grupos', 'created_at', 'updated_at')
-    
-    # Agrega campos de búsqueda para facilitar la búsqueda en la interfaz de administración
-    search_fields = ('nombre', 'status') 
+    search_fields = ('nombre', 'status')
 
-    # Define métodos personalizados para obtener y mostrar permisos y grupos
+    def save_model(self, request, obj, form, change):
+        if change:
+            logger.info(f'Usuario {request.user} actualizó el sistema: {obj.nombre}')
+        else:
+            logger.info(f'Usuario {request.user} creó un nuevo sistema: {obj.nombre}')
+        super().save_model(request, obj, form, change)
+
+    def delete_model(self, request, obj):
+        logger.warning(f'Usuario {request.user} eliminó el sistema: {obj.nombre}')
+        super().delete_model(request, obj)
+
     def get_permisos(self, obj):
         permisos = SistemaPermisoGrupo.objects.filter(sistema=obj)
         permisos_names = [p.permiso.name for p in permisos if p.permiso and p.permiso.name]
         return ' - '.join(permisos_names) if permisos_names else 'Sin Permisos'
-
     get_permisos.short_description = 'Permisos'
 
     def get_grupos(self, obj):
         grupos = SistemaPermisoGrupo.objects.filter(sistema=obj)
         grupos_names = [g.grupo.name for g in grupos if g.grupo and g.grupo.name]
         return ' - '.join(grupos_names) if grupos_names else 'Sin Grupos'
-
     get_grupos.short_description = 'Grupos'
 
-# Registra el modelo Sistemas con su configuración personalizada en la interfaz de administración
 admin.site.register(Sistemas, SistemaAdmin)
 
-# Define una clase de administrador personalizada para el modelo Group en la interfaz de administración
 class CustomGroupAdmin(admin.ModelAdmin):
+    filter_horizontal = ('permissions',)
     
-    # Permite la selección de permisos utilizando una interfaz de filtro horizontal
-    filter_horizontal = ('permissions',)  
-
-    # Personaliza el formulario del grupo para filtrar las opciones de permisos basándose en la aplicación 'sistemas-iai'
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
         form.base_fields['permissions'].queryset = Permission.objects.filter(content_type__app_label='sistemas-iai')
         return form
 
-# Anula el registro predeterminado del modelo Group en la interfaz de administración
 admin.site.unregister(Group)
-
-# Registra el modelo Group con la configuración personalizada en la interfaz de administración
 admin.site.register(Group, CustomGroupAdmin)
 
-
-# class CustomUserAdmin(UserAdmin):
-#     def save_related(self, request, form, formsets, change):
-#         # Configura el usuario que realiza el cambio antes de guardar los permisos
-#         set_changed_by(request.user)
-#         super().save_related(request, form, formsets, change)
-
-# # Registra el nuevo UserAdmin
-# admin.site.unregister(User)
-# admin.site.register(User, CustomUserAdmin)

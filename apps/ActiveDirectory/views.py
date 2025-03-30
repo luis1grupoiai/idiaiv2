@@ -34,8 +34,6 @@ empleado = AtributosDeEmpleado()
 ip_sin_base_dato = IPSinBaseDatos().cambiar_ip('192.192.194.10') #en caso que no funcione la base datos
 
 
-
-
 #CONFIGURACION PARA EL IP DEL SERVIDOR AD -------------------------------------------------------
 def asignar_ip():
     try: 
@@ -94,7 +92,6 @@ unidadOrganizativa = ('OU=Bajas','OU=Administracion','OU=Ingeniería','OU=DCASS'
 selectDepartamento= ('Administración','Ingeniería','Calidad, Ambiental, Seguridad y Salud','Proyectos Especiales','Tecnatom','Presidencia Grupo IAI',' ','Calidad Ambiental Seguridad y Salud','Ingenieria','Administracion')
 
 
-
 def SelectDepartamento():
     return selectDepartamento
 
@@ -119,6 +116,7 @@ def asignar_Departamento(departamento):
         opc = 5 #se le va asignar  '0'
     return opc
 
+
 def asignar_departamento_falta_probar(departamento):  #probar despues este codigo XD
     # Normaliza la cadena para manejar acentos y convertir a minúsculas
     departamento_normalizado = unicodedata.normalize('NFKD', departamento).encode('ASCII', 'ignore').decode('utf-8').lower()
@@ -136,6 +134,7 @@ def asignar_departamento_falta_probar(departamento):  #probar despues este codig
     opc = departamento_map.get(departamento_normalizado, 5)
     return opc
 
+
 def quitar_comas(cadena):
     """
     Esta función toma una cadena y devuelve una nueva cadena sin comas.
@@ -144,6 +143,7 @@ def quitar_comas(cadena):
     :return: Una nueva cadena sin comas.
     """
     return cadena.replace(',', '')
+
 
 def quitar_espacios_poner_guion_bajo(cadena):
     """
@@ -154,6 +154,7 @@ def quitar_espacios_poner_guion_bajo(cadena):
     """
     return cadena.replace(' ', '_')
 
+
 def quitar_guion_bajo_poner_espacios(cadena):
     """
     Esta función toma una cadena y devuelve una nueva cadena con los guiones bajos reemplazados por espacios.
@@ -162,6 +163,8 @@ def quitar_guion_bajo_poner_espacios(cadena):
     :return: Una nueva cadena con los guiones bajos reemplazados por espacios.
     """
     return cadena.replace('_', ' ')
+
+
 #Funcion para acciones asíncronas
 def actualizar_empleados():
     users = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='')
@@ -213,11 +216,7 @@ def actualizar_empleados():
                         print(f'{department_actual}-->{usuario.nombre_direccion}')
                         print("*****************************************************************************************")
                         print("")
-                        
-                        
-                        
-                        
-                        
+ 
                         changes = {
                             'physicalDeliveryOfficeName': [(MODIFY_REPLACE, [usuario.Proyecto])],
                             'department': [(MODIFY_REPLACE, [usuario.nombre_direccion])],
@@ -303,19 +302,11 @@ def mover_usuario_ou_sys(nombre_usuario, nueva_ou):
     return mensaje
 
 
-
-
-
-
-
-
-
 @login_required
 @user_passes_test(es_superusuario) # Solo permitir a superusuarios
 def actualizarProyectoDireccion(request):
 
     users = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='')
-    
     
     usuariosmodificados = []  # Lista para almacenar los usuarios modificados
     #usuariosmodificados = actualizar_empleados() #linea para provobar la funcionde actualizar los atributos 
@@ -353,11 +344,7 @@ def actualizarProyectoDireccion(request):
                            
                         if usuario.Nombre_ct is None:
                             usuario.Nombre_ct = ""   
-                        
-                        
-                        
-                        
-                       
+
                         if physicalDeliveryOfficeName_actual.strip().lower() != usuario.Proyecto.strip().lower() or department_actual.strip().lower() != usuario.nombre_direccion.strip().lower() or puesto_actual.strip().lower() != usuario.Nombre_ct.strip().lower() :
                             imprimir("")
                             imprimir("*****************************************************************************************")
@@ -401,21 +388,16 @@ def actualizarProyectoDireccion(request):
                               messages.info(request, f"No se realizo ningun cambio necesario .")
             except Exception as e:
                 messages.error(request,f"Error al actualizar en Active Directory: {str(e)}" )  # Considera usar logging
-    
-       
     #cn --------->usuario.username
     # physicalDeliveryOfficeName  ----> usuario.Proyecto
     # department --------->  usuario.nombre_direccion
 
-   
     encabezados ={
         'title' :' Actualizar Proyecto y Dirección del Personal de Grupo IAI',
         'Encabezado' :'Actualización Proyecto y Dirección  del Personal de Grupo IAI',
         'SubEncabezado' :'',
         'EncabezadoNav' :'Actualizar Proyecto y Dirección ',
         'EncabezadoCard' : 'Empleados Actualizados del atributo Proyecto y Dirección ',
-       
-        
     }
    # print(empleados)
     context = {
@@ -427,17 +409,7 @@ def actualizarProyectoDireccion(request):
         'users':usuariosmodificados
         
     }
-
-
-
-
     return render(request, 'actualizarProyectoDireccion.html',context)
-
-
-
-
-
-
 
 
 @login_required
@@ -466,10 +438,7 @@ def personalNoContratada(request):
         quoted_password = f'"{password}"'.encode('utf-16-le')
         LugarCreado=" "
         LugarNoCreado=" "
-        
-        
-        
-        
+
         #if usuarioexisteIDIAI(nombre_usuario): 
       #  if existeUsuario(nombre_usuario) : #VERIFICA SI EXISTE USUARIO EN ACTIVE DIRECTORY <---AQUÍ ESTUVO SON GOKU XD
         if existeUsuario(nombre_inicio_sesion) :
@@ -503,9 +472,7 @@ def personalNoContratada(request):
                             # ... otros atributos
                     })
                         # Verificar el resultado de la creación del usuario
-                    
-                    
-                    
+                
                     if conn.result['result'] == 0:  # éxito
                         LugarCreado+="Active Directory, "
                         messages.success(request, f'Usuario creado correctamente en {LugarCreado}.')
@@ -536,10 +503,7 @@ def personalNoContratada(request):
             except Exception as e:
                 messages.error(request, f"Error al conectar con AD: {str(e)}")
                 return redirect('personalNoContratada') 
-        
-        
-        
-        
+            
         user, created = User.objects.get_or_create(username= nombre_inicio_sesion, defaults={
                 'email':email,
                 'first_name': nombre_pila,
@@ -600,16 +564,10 @@ def personalNoContratada(request):
               # 
                  
             return redirect('personalNoContratada') 
-            
-            
-            
         else:
             LugarNoCreado+= ' IDIAI V2 y Modulo '
             messages.error(request,f"Usuario existente en {LugarNoCreado}: {nombre_usuario}")
             return redirect('personalNoContratada') 
-        
-    
-        
     
     empleados = []
     empleados = VAllReclutamiento.objects.all()
@@ -638,8 +596,6 @@ def personalNoContratada(request):
         'selectDepartamento': selectDepartamento
     }
     return render(request, 'nuevoPersonal.html',context)
-
-
 
 
 @login_required
@@ -709,9 +665,7 @@ def ipconfig(request): #vista para la gestion de la ip de AD
                 time.sleep(5)
                 messages.error(request, "La nueva IP no puede estar vacía")# y debe tener un formato válido (0.0.0.0).")
                 return redirect('ipconfig')
-        
-  
-    
+
     ip=asignar_ip()
     
     context = {
@@ -723,7 +677,6 @@ def ipconfig(request): #vista para la gestion de la ip de AD
         'Categoria': empleado.Categoria(request)
     }
     return render(request,'ipconfig.html',context)
-
 
 
 @login_required
@@ -750,9 +703,6 @@ def bitacora(request): #LA BITACORA QUE LLEVA EL SISTEMAS DE AD PARA LLEVAR EL H
                     'encabezados' :encabezados,
                     'Categoria': empleado.Categoria(request)
                     }
-        
-    
-    
     return render(request, 'bitacora.html',context)
 
 
@@ -769,9 +719,6 @@ def consultarUsuariosIDIAI(request):
     # Obtiene los usuarios de la base de datos
     usuarios = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='').exclude(is_active=False)
     UsuaruisDown = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='').exclude(is_active=True)
-   
-    
-    
     
     # Verifica la existencia en AD para cada conjunto de usuarios y agrega la información al contexto
     for conjunto_usuarios in [usuarios,UsuaruisDown]:
@@ -780,16 +727,10 @@ def consultarUsuariosIDIAI(request):
             #usuario.existe_en_ad = existeUsuario(usuario.username) # lo quite porque era tardado verificar todos XD
             usuario.existe_en_ad = True
     
-    
     usuariosAdmin =usuarios.filter(nombre_direccion="Administración")  
     usuariosIng = usuarios.filter(nombre_direccion="Ingeniería")
     usuariosDCASS =usuarios.filter(nombre_direccion="Calidad, Ambiental, Seguridad y Salud")
     UsuariosPS =usuarios.filter(nombre_direccion="Proyectos Especiales")
-
-    
-     
-    
-
 
     if request.method == 'POST':
         dominio_Principal ='@'+'.'.join(part.replace('DC=', '') for part in domino.split(',') if part.startswith('DC='))
@@ -883,7 +824,6 @@ def consultarUsuariosIDIAI(request):
     
     
     return render(request, 'UsuariosIDIAI.html',context)
-
 
 
 @login_required
@@ -1006,7 +946,6 @@ def consultar_usuarios(request): #Consulta los usuarios de Active Directory
     return render(request, 'Usuarios.html', context)
 
 
-
 @login_required
 @user_passes_test(es_superusuario) # Solo permitir a superusuarios
 def editar_usuario(request):
@@ -1075,7 +1014,6 @@ def editar_usuario(request):
     return redirect('usuarios')
 
  
-
 #@user_passes_test(es_superusuario) # Solo permitir a superusuarios
 @login_required
 def home(request):
@@ -1087,12 +1025,12 @@ def home(request):
     
     return render(request, 'home.html', context)
 
+
 @login_required
 @user_passes_test(es_superusuario) # Solo permitir a superusuarios 
 def salir (request):
     logout(request)
     return redirect ('home')
-
 
 
 @login_required
@@ -1177,6 +1115,8 @@ def agregar_usuario(request): #Esta función o vista fue mantenida con la posibi
     
     return render(request, 'AgregarUsuario.html',context)   
 # -----------------------------------------------------------funciones que no son vistas -----------------------------------
+
+
 def is_account_disabled(useraccountcontrol_str):
     DISABLED_ACCOUNT_BIT = 0x2
     try:
@@ -1188,6 +1128,7 @@ def is_account_disabled(useraccountcontrol_str):
         # En caso de que el valor no sea un número, asumir que la cuenta no está deshabilitada
         return False
  
+
 def existeUsuario(nombreUsuario):
     try:
        # server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
@@ -1236,6 +1177,7 @@ def obtener_distinguishedName(samaccountname):
         imprimir(f"Error al buscar distinguishedName: {str(e)}")
         return None
 
+
 def _obtener_cn(samaccountname):
     """
     Busca el Common Name  de un usuario basado en su sAMAccountName.
@@ -1268,6 +1210,7 @@ def _obtener_cn(samaccountname):
         imprimir(f"Error al buscar Common Name: {str(e)}")
         return None
 
+
 def probar_conexion_LDAP(request,nueva_ip):
     if settings.DEBUG:
         protocolo='ldaps' #dominio de AD para el desarrollo  puedes cambiarlo a ldap pero debe tener el puerto 389
@@ -1289,8 +1232,7 @@ def probar_conexion_LDAP(request,nueva_ip):
     except Exception as e:
         # Manejo de cualquier error durante la conexión o la desvinculación
         messages.error(request, f"Error al conectar con el servidor LDAP usando la IP {nueva_ip}: {e}")
-        return False
-        
+        return False 
    
 
 @login_required
@@ -1328,8 +1270,6 @@ def activar_usuario(request, nombre_usuario):
         messages.error(request, f"Error al conectar con AD: {str(e)}")
         imprimir(f"Error al conectar con AD: {str(e)}")
 
-    
-    
     
 @login_required
 @user_passes_test(es_superusuario) # Solo permitir a superusuarios
@@ -1382,7 +1322,6 @@ def desactivar_usuario(request, nombre_usuario):
         imprimir(f"Desactivar usuario - Error al conectar con AD: {str(e)}")
 
 
-
 def extraer_unidad_organizativa(dn):
     """
     Extrae la Unidad Organizativa (OU) de un Distinguished Name (DN) en Active Directory.
@@ -1395,10 +1334,7 @@ def extraer_unidad_organizativa(dn):
     return unidades_organizativas
 
 
-
-
 def connect_to_ad():
-    
         # Inicializa la variable de conexión a None para poder verificar luego si fue establecida
     conn = None
     try:
@@ -1433,6 +1369,7 @@ def verificar_usuario(request, nombre_usuario):
     imprimir(f'active directory : {existe} IDIAI V2: {existeIDIAI}')
     return JsonResponse({'existe': existe , 'existeIDIAI':existeIDIAI}) 
 
+
 @login_required 
 @user_passes_test(es_superusuario) # Solo permitir a superusuarios 
 @require_http_methods(["POST"])  # Asegurar que esta vista solo acepte solicitudes POST
@@ -1461,8 +1398,7 @@ def key_usuario(request):
                     )       
     
     #existe = TRegistroDeModulo.objects.filter(nombre_completo=nombre_completo).first()
-        
-    
+         
     if existe:
         # Crear un diccionario con la información necesaria
         print()
@@ -1480,7 +1416,6 @@ def key_usuario(request):
     else:
         imprimir("No se encontraron registros que coincidan con ambos criterios.")
         return JsonResponse({'error': 'Usuario no encontrado'}, status=404)
-
 
 
 @login_required  
@@ -1643,7 +1578,6 @@ def update_usuario (request):
         return JsonResponse({'error': 'Usuario no encontrado'}, status=404)
 
 
-
 def mover_usuario_ou(nombre_usuario, nueva_ou,request):
     mensaje = None
     try:
@@ -1692,11 +1626,6 @@ def mover_usuario_ou(nombre_usuario, nueva_ou,request):
     return mensaje
 
 
-
-
-
-
-
 def buscar_usuario_por_dn(dn_usuario):
     atributos_buscados = ['cn', 'department','sAMAccountName']
     resultado = {}
@@ -1718,6 +1647,7 @@ def buscar_usuario_por_dn(dn_usuario):
 
     return resultado
 
+
 def insertar_registro_accion(nombre_usuario, modulo, nombre_accion, descripcion, ip_usuario, user_agent, browser_id):
     nuevo_registro = TRegistroAccionesModulo(
         NombreUsuario=nombre_usuario,
@@ -1732,7 +1662,8 @@ def insertar_registro_accion(nombre_usuario, modulo, nombre_accion, descripcion,
     
     nuevo_registro.save()
     imprimir(nuevo_registro)
-    
+
+
 def get_client_ip(request):
     """
     Intenta obtener la dirección IP real del cliente a partir de una solicitud HTTP en Django.
@@ -1762,20 +1693,15 @@ def get_client_ip(request):
     # Si no se encuentra en las cabeceras, tomar la dirección del remitente de la solicitud
     return request.META.get('REMOTE_ADDR')
 
+
 def imprimir(mensaje): #funcion para imprimir en la consola  en modo desarrollador 
     if settings.DEBUG:
        print(mensaje)
     
     #print(mensaje)
     
-    
-
 
 def obtener_mensaje_error_ad(result_code):
-  
-  
-  
-  
     mensajes = {
         0: "La operación se realizó correctamente ",
         1: "Error interno del servidor ",
@@ -1794,8 +1720,6 @@ def obtener_mensaje_error_ad(result_code):
         
         # Añade más códigos de error y mensajes correspondientes según necesites
     }
-    
-    
     return mensajes.get(result_code, "Ocurrió un error desconocido.")
 
 
@@ -1827,6 +1751,7 @@ def UsuarioActivoAD(dn_usuario):
         imprimir(f"Error al verificar el estado del usuario: {e}")
         return False
 
+
 def isAccountDisabled(useraccountcontrol_value):
     """
     Determina si el usuario está deshabilitado basado en userAccountControl.
@@ -1840,7 +1765,6 @@ def isAccountDisabled(useraccountcontrol_value):
     # Bit que indica si la cuenta está deshabilitada
     ACCOUNTDISABLE = 0x0002
     return (useraccountcontrol_value & ACCOUNTDISABLE) != 0
-
 
 
 def obtenerUnidadesOrganizativas():
@@ -1871,6 +1795,7 @@ def obtenerUnidadesOrganizativas():
 
     return unidadesOrganizativas
 
+
 def obtenerUnidadesOrganizativas2():
     """
     Busca y devuelve una lista de las Unidades Organizativas en el dominio especificado.
@@ -1898,6 +1823,7 @@ def obtenerUnidadesOrganizativas2():
         imprimir(f"Error al obtener las Unidades Organizativas: {e}")
 
     return unidadesOrganizativas
+
 
 def imprimirUnidadesOrganizativas():
     uos = obtenerUnidadesOrganizativas2()
@@ -1941,15 +1867,11 @@ def usuarioexisteIDIAI(nombre_de_usuario):
     return User.objects.filter(username=nombre_de_usuario).exists()
 
 
-
-
 def imprimir_hola_mundo():
     """
     Tarea Celery para imprimir el mensaje "Hola Mundo".
     """
     print("Hola Mundo!")
-
-
 
 
 @require_POST
@@ -1965,160 +1887,3 @@ def Verificarlogin(request):
     else:
         print("si entro")
         return JsonResponse({'success': False, 'error': 'Usuario o contraseña incorrectos'}, status=401)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# JMZS-03-06-2024-Este código ha sido especialmente desarrollado para facilitar las tareas diarias de nuestro compañero Dennis (muy amigo de Luis ). Esperamos que este gesto contribuya a hacer su trabajo más eficiente y agradable. ¡Esperamos que lo encuentres útil!

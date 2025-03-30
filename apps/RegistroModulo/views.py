@@ -1,21 +1,22 @@
 from django.shortcuts import get_object_or_404, render
-from django.shortcuts import render, redirect
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from .models import TRegistroDeModulo 
 from apps.AsignarUsuario.models import  TRegistroAccionesModulo ,VallEmpleado
 from .forms import ModuloForm
-from cryptography.fernet import Fernet
 from django.contrib.auth.decorators import login_required , user_passes_test
-from django.contrib.auth import logout
 from django.contrib.auth.mixins import LoginRequiredMixin 
-from django.http import JsonResponse
 from django.utils import timezone
 from django.urls import reverse_lazy
 from django.contrib import messages
 from .mixins import SuperuserRequiredMixin , SuperuserRedirectMixin
 from django.contrib.auth.models import User
 from django.conf import settings
+from config.logger_setup import LoggerSetup
+import os
 
+entorno = os.environ.get('DJANGO_ENV')
+
+logger = LoggerSetup.setup_logger_for_environment('RegistroModulo', entorno)
 
 
 ModuloEntrada ="12345" # la contraseña del modal ----
@@ -43,6 +44,7 @@ class ModuloListView(LoginRequiredMixin,NombreUsuarioMixin,SuperuserRedirectMixi
     template_name = 'modulo_list.html'
     
     def get_context_data(self, **kwargs):
+        logger.info(f"Usuario {self.request.user.username} accediendo a lista de módulos")
         context = super().get_context_data(**kwargs)
         context['verificar'] = ModuloEntrada
         context['desarrollo']=settings.DEBUG   #LINEA PARA QUE APAREZCA EL BOTON DE ELIMINAR 
@@ -55,107 +57,125 @@ class ModuloCreateView(LoginRequiredMixin,NombreUsuarioMixin,SuperuserRedirectMi
     success_url = reverse_lazy('modulo_list')
     
     def get_context_data(self, **kwargs):
+       logger.info(f"Usuario {self.request.user.username} accediendo al formulario de creación de módulo")
        context = super().get_context_data(**kwargs)
        context['verificar'] = ModuloEntrada
        return context   
     
     
     def form_valid(self, form):
-        
-        response = super(ModuloCreateView, self).form_valid(form)
-        # Obtén la información del usuario y otros detalles aquí
-        nombreUsuario = self.request.user.get_full_name()  # O tu método personalizado
+        logger.info(f"Usuario {self.request.user.username} intentando crear un nuevo módulo")
+        try:
+            response = super(ModuloCreateView, self).form_valid(form)
+            # Obtén la información del usuario y otros detalles aquí
+            nombreUsuario = self.request.user.get_full_name()  # O tu método personalizado
 
-        # Insertar el registro de acción
-        insertar_registro_accion(
-            nombreUsuario,
-            'Modulo',
-            'Nuevo',
-            f"Se creo el módulo {self.object.nombre}",
-            get_client_ip(self.request),
-            self.request.META.get('HTTP_USER_AGENT'),
-            'N/A'
-        )
-
-        return response
+            # Insertar el registro de acción
+            insertar_registro_accion(
+                nombreUsuario,
+                'Modulo',
+                'Nuevo',
+                f"Se creo el módulo {self.object.nombre}",
+                get_client_ip(self.request),
+                self.request.META.get('HTTP_USER_AGENT'),
+                'N/A'
+            )
+            
+            logger.info(f"Módulo {self.object.nombre} creado exitosamente por {nombreUsuario}")
+            return response
+        except Exception as e:
+            logger.error(f"Error al crear módulo: {str(e)}")
+            raise
 
 class ModuloUpdateView(LoginRequiredMixin,NombreUsuarioMixin,SuperuserRequiredMixin,UpdateView):
     model = TRegistroDeModulo
     form_class = ModuloForm
     template_name = 'modulo_form.html'
     success_url = reverse_lazy('modulo_list')
-    
-
-   
-    
+      
     def get_initial(self):
         initial = super().get_initial()
         # Obtén la instancia del módulo que se va a actualizar
         modulo = self.get_object()
+        logger.info(f"Usuario {self.request.user.username} accediendo a formulario de actualización para módulo {modulo.nombre}")
         # Establece los valores iniciales desencriptados para el formulario
         initial['nombre'] = modulo.nombre
         initial['descripcion'] = modulo.descripcion
         return initial
     
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['verificar'] = ModuloEntrada
         return context    
     
-    
+
     def form_valid(self, form):
-        # Validación para el nombre
         modulo = self.get_object()
+        logger.info(f"Usuario {self.request.user.username} intentando actualizar el módulo {modulo.nombre}")
+        
+        # Validación para el nombre
         if form.cleaned_data['nombre'] != modulo.nombre:
+           logger.warning(f"Intento de cambiar el nombre del módulo {modulo.nombre} a {form.cleaned_data['nombre']} por {self.request.user.username}")
            messages.error(self.request, 'No puedes cambiar el nombre del módulo.')
            return self.form_invalid(form)
        
         # Validación para la descripción
         descripcion = form.cleaned_data.get('descripcion')
         if not descripcion:
+            logger.warning(f"Intento de actualizar el módulo {modulo.nombre} con descripción vacía por {self.request.user.username}")
             messages.error(self.request, 'La contraseña no puede estar vacía.')
             return self.form_invalid(form)
-         # Procesamiento normal si todas las validaciones pasan
-        response = super(ModuloUpdateView, self).form_valid(form)
-        # Obtén la información del usuario y otros detalles aquí
-        nombreUsuario = self.request.user.get_full_name()  # O tu método personalizado
-
-        # Insertar el registro de acción
-        insertar_registro_accion(
-            nombreUsuario,
-            'Modulo',
-            'Editar',
-            f"Se Modifico  el módulo {self.object.nombre}",
-            get_client_ip(self.request),
-            self.request.META.get('HTTP_USER_AGENT'),
-            'N/A'
-        )
-        #actualiza la contraseña 
-                 #Inicio ---- codigo para cambiar la contraseña en el repositorio del IDIAI : 
+        
         try:
-            user = User.objects.get(username=self.object.nombre)
-            user.set_password(self.object.descripcion)# Asegúrate de que la contraseña esté en texto plano aquí
-            
-            user.save()
-            #imprimir("Se Actualizo la Contraseña en IDIAI: ")
-            #imprimir(f'Nombre Completo: {user.get_username()}, Nombre de Usuario: {user.get_username()}: Contraseña : {keyPass}')
-           
+            # Procesamiento normal si todas las validaciones pasan
+            response = super(ModuloUpdateView, self).form_valid(form)
+            # Obtén la información del usuario y otros detalles aquí
+            nombreUsuario = self.request.user.get_full_name()  # O tu método personalizado
+
+            # Insertar el registro de acción
             insertar_registro_accion(
-                    nombreUsuario,
-                    'Modulo',
-                    'Actualizó',
-                    f"Se Actualizó la contraseña del usuario. '{self.object.nombre}' en el IDIAI V2 ",
-                    get_client_ip(self.request),
-                    self.request.META.get('HTTP_USER_AGENT'),
-                    'N/A'
-                    )
-            imprimir(f"Se actualizo la contraseña de IDIAI V2  {self.object.nombre} ")
-        except Exception as e : 
-             imprimir(f"Error al guardar el registro en repositorios de IDIAI {self.object.nombre} : {e}")
-          
-         #FIN ---- codigo para cambiar la contraseña en el repositorio del IDIAI : 
-        return response
-    
+                nombreUsuario,
+                'Modulo',
+                'Editar',
+                f"Se Modifico  el módulo {self.object.nombre}",
+                get_client_ip(self.request),
+                self.request.META.get('HTTP_USER_AGENT'),
+                'N/A'
+            )
+            
+            logger.info(f"Módulo {self.object.nombre} actualizado exitosamente por {nombreUsuario}")
+            
+            #actualiza la contraseña 
+            #Inicio ---- codigo para cambiar la contraseña en el repositorio del IDIAI : 
+            try:
+                user = User.objects.get(username=self.object.nombre)
+                user.set_password(self.object.descripcion)# Asegúrate de que la contraseña esté en texto plano aquí
+                
+                user.save()
+                
+                insertar_registro_accion(
+                        nombreUsuario,
+                        'Modulo',
+                        'Actualizó',
+                        f"Se Actualizó la contraseña del usuario. '{self.object.nombre}' en el IDIAI V2 ",
+                        get_client_ip(self.request),
+                        self.request.META.get('HTTP_USER_AGENT'),
+                        'N/A'
+                        )
+                imprimir(f"Se actualizo la contraseña de IDIAI V2  {self.object.nombre} ")
+                logger.info(f"Contraseña actualizada en IDIAI V2 para el usuario {self.object.nombre}")
+            except User.DoesNotExist:
+                logger.error(f"No se encontró el usuario {self.object.nombre} en el repositorio IDIAI")
+                imprimir(f"Error: Usuario {self.object.nombre} no encontrado en repositorio IDIAI")
+            except Exception as e: 
+                logger.error(f"Error al guardar la contraseña en repositorio IDIAI para {self.object.nombre}: {str(e)}")
+                imprimir(f"Error al guardar el registro en repositorios de IDIAI {self.object.nombre} : {e}")
+            
+            return response
+        except Exception as e:
+            logger.error(f"Error al actualizar módulo {modulo.nombre}: {str(e)}")
+            raise
     
 
 class ModuloDeleteView(LoginRequiredMixin,NombreUsuarioMixin,SuperuserRequiredMixin,DeleteView):
@@ -163,28 +183,40 @@ class ModuloDeleteView(LoginRequiredMixin,NombreUsuarioMixin,SuperuserRequiredMi
     template_name = 'modulo_confirm_delete.html'
     success_url = reverse_lazy('modulo_list')
     
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        logger.info(f"Usuario {request.user.username} accediendo a la página de confirmación para eliminar el módulo {self.object.nombre}")
+        return super().get(request, *args, **kwargs)
+    
     def form_valid(self, form):
-        response = super(ModuloDeleteView, self).form_valid(form)
-        # Obtén la información del usuario y otros detalles aquí
-        nombreUsuario = self.request.user.get_full_name()  # O tu método personalizado
+        self.object = self.get_object()
+        logger.info(f"Usuario {self.request.user.username} intentando eliminar el módulo {self.object.nombre}")
+        try:
+            response = super(ModuloDeleteView, self).form_valid(form)
+            # Obtén la información del usuario y otros detalles aquí
+            nombreUsuario = self.request.user.get_full_name()  # O tu método personalizado
 
-        # Insertar el registro de acción
-        insertar_registro_accion(
-            nombreUsuario,
-            'Modulo',
-            'Borrar',
-            f"Se borro el módulo {self.object.nombre}",
-            get_client_ip(self.request),
-            self.request.META.get('HTTP_USER_AGENT'),
-            'N/A'
-        )
-
-        return response
+            # Insertar el registro de acción
+            insertar_registro_accion(
+                nombreUsuario,
+                'Modulo',
+                'Borrar',
+                f"Se borro el módulo {self.object.nombre}",
+                get_client_ip(self.request),
+                self.request.META.get('HTTP_USER_AGENT'),
+                'N/A'
+            )
+            
+            logger.info(f"Módulo {self.object.nombre} eliminado exitosamente por {nombreUsuario}")
+            return response
+        except Exception as e:
+            logger.error(f"Error al eliminar módulo {self.object.nombre}: {str(e)}")
+            raise
 
 @login_required  
 @user_passes_test(es_superusuario) # Solo permitir a superusuarios
 def bitacora(request):
-    
+    logger.info(f"Usuario {request.user.username} accediendo a la bitácora de módulos")
     
     mensaje=None
     #registros= TRegistroAccionesModulo.objects.all()
@@ -211,65 +243,63 @@ def bitacora(request):
                     'foto':photoUser(request),
                     'Categoria': Categoria(request)
                     }
-        
-  
-    
     return render(request, 'bitacora2.html',context)
-
-
 
 
 @login_required 
 @user_passes_test(es_superusuario) # Solo permitir a superusuarios
 def ver_detalle_registro(request, id):
-    registro = get_object_or_404(TRegistroDeModulo, pk=id)
-    modulo_desencriptada = registro.descripcion
-    
-    
-    if request.user.is_authenticated:
-        nombreUsuario = request.user.first_name+" "+request.user.last_name
+    logger.debug(f"Accediendo a la vista de detalle del registro con ID: {id}")
+    try:
+        registro = get_object_or_404(TRegistroDeModulo, pk=id)
+        modulo_desencriptada = registro.descripcion
         
-    insertar_registro_accion(
-                nombreUsuario,
-                'Modulo',
-                'Ver',
-                f"Se visualizo la descripción del usuario '{registro}'",
-                get_client_ip(request),
-                request.META.get('HTTP_USER_AGENT'),
-                'N/A'
-                )
-    # Genera una clave segura
-    #ENCRYPTION_KEY = Fernet.generate_key()
-
-    # Puedes imprimir la clave para almacenarla y usarla posteriormente
-   # print(ENCRYPTION_KEY)
-    
+        if request.user.is_authenticated:
+            nombreUsuario = request.user.first_name+" "+request.user.last_name
+            
+        insertar_registro_accion(
+                    nombreUsuario,
+                    'Modulo',
+                    'Ver',
+                    f"Se visualizo la descripción del usuario '{registro}'",
+                    get_client_ip(request),
+                    request.META.get('HTTP_USER_AGENT'),
+                    'N/A'
+                    )
         
-         
-    context = {
-        'registro': registro,
-        'modulo_desencriptada': modulo_desencriptada,
-        'nombre_usuario': nombreUsuario,
-        'verificar':ModuloEntrada,
-        'foto':photoUser(request),
-        'Categoria': Categoria(request),
-        'active_page':'modulos'
-    }
-    return render(request, 'detalle_registro.html', context)
+        logger.info(f"Usuario {request.user.username} visualizó detalles del módulo {registro.nombre}")
+          
+        context = {
+            'registro': registro,
+            'modulo_desencriptada': modulo_desencriptada,
+            'nombre_usuario': nombreUsuario,
+            'verificar':ModuloEntrada,
+            'foto':photoUser(request),
+            'Categoria': Categoria(request),
+            'active_page':'modulos'
+        }
+        return render(request, 'detalle_registro.html', context)
+    except Exception as e:
+        logger.error(f"Error al acceder al detalle del registro {id}: {str(e)}")
+        raise
 
 def insertar_registro_accion(nombre_usuario, modulo, nombre_accion, descripcion, ip_usuario, user_agent, browser_id):
-    nuevo_registro = TRegistroAccionesModulo(
-        NombreUsuario=nombre_usuario,
-        Modulo=modulo,
-        NombreAccion=nombre_accion,
-        FechaHora=timezone.now(),  # Asigna la fecha y hora actual
-        Descripcion=descripcion,
-        IpUsuario=ip_usuario,
-        UserAgent=user_agent,
-        BrowserId=browser_id
-    )
-    nuevo_registro.save()
-    print(nuevo_registro)
+    try:
+        nuevo_registro = TRegistroAccionesModulo(
+            NombreUsuario=nombre_usuario,
+            Modulo=modulo,
+            NombreAccion=nombre_accion,
+            FechaHora=timezone.now(),  # Asigna la fecha y hora actual
+            Descripcion=descripcion,
+            IpUsuario=ip_usuario,
+            UserAgent=user_agent,
+            BrowserId=browser_id
+        )
+        nuevo_registro.save()
+        logger.info(f"Registro de acción creado: {modulo}/{nombre_accion} por {nombre_usuario}")
+        print(nuevo_registro)
+    except Exception as e:
+        logger.error(f"Error al insertar registro de acción: {str(e)}")
     
 def get_client_ip(request):
     """
@@ -310,13 +340,15 @@ def photoUser(request):
         # Obtener el nombre de usuario del usuario autenticado
         nombreUsuario = request.user.username
 
-        # Filtrar el objeto VallEmpleado usando el nombre de usuario
-        usuarioBD = VallEmpleado.objects.filter(username=nombreUsuario).first()
+        try:
+            # Filtrar el objeto VallEmpleado usando el nombre de usuario
+            usuarioBD = VallEmpleado.objects.filter(username=nombreUsuario).first()
 
-        # Si se encuentra un usuario en la BD y tiene una ruta de foto, actualizar la ruta de la foto
-        if usuarioBD and usuarioBD.RutaFoto_ps:
-        
-            photo = f'https://intranet.grupo-iai.com.mx:330/SERCAPNUBE/Imagenes/FOTOS/{usuarioBD.RutaFoto_ps}'
+            # Si se encuentra un usuario en la BD y tiene una ruta de foto, actualizar la ruta de la foto
+            if usuarioBD and usuarioBD.RutaFoto_ps:
+                photo = f'https://intranet.grupo-iai.com.mx:330/SERCAPNUBE/Imagenes/FOTOS/{usuarioBD.RutaFoto_ps}'
+        except Exception as e:
+            logger.error(f"Error al obtener foto de usuario {nombreUsuario}: {str(e)}")
 
     # Devolver la ruta de la foto
     return photo
@@ -325,43 +357,21 @@ def Categoria(request):
     usuario=None
     if request.user.is_authenticated:
         # Obtener el nombre de usuario del usuario autenticado
-       nombreUsuario = request.user.username
+        nombreUsuario = request.user.username
 
-        # Filtrar el objeto VallEmpleado usando el nombre de usuario
-       usuarioBD = VallEmpleado.objects.filter(username=nombreUsuario).first()
+        try:
+            # Filtrar el objeto VallEmpleado usando el nombre de usuario
+            usuarioBD = VallEmpleado.objects.filter(username=nombreUsuario).first()
 
-        # Si se encuentra un usuario en la BD
-       if usuarioBD:
-            usuario = usuarioBD.Nombre_ct
-
-
+            # Si se encuentra un usuario en la BD
+            if usuarioBD:
+                usuario = usuarioBD.Nombre_ct
+        except Exception as e:
+            logger.error(f"Error al obtener categoría de usuario {nombreUsuario}: {str(e)}")
+            
     return usuario
-"""    
-    la línea de código from django.views.generic import ListView, CreateView, 
-    UpdateView, DeleteView es una importación de clases de vistas genéricas de Django, 
-    un framework de desarrollo web en Python. Vamos a desglosar cada clase:
-
-ListView: Esta clase se utiliza para mostrar una lista de objetos. Por ejemplo, si
-tienes un modelo que representa artículos de un blog, puedes usar ListView para mostrar 
-una lista de todos los artículos.
-
-CreateView: Esta clase se usa para crear un nuevo objeto. Utiliza un formulario para 
-tomar los datos del usuario y, tras la validación, los guarda en la base de datos. 
-Por ejemplo, puedes usar CreateView para permitir a los usuarios crear un nuevo 
-artículo de blog.
-
-UpdateView: Similar a CreateView, pero se utiliza para actualizar un objeto existente. 
-Esta vista también utiliza un formulario, pero se rellena con la información del objeto 
-que se va a actualizar.
-
-DeleteView: Esta clase se usa para eliminar un objeto. Generalmente muestra una 
-confirmación antes de proceder a la eliminación del objeto de la base de datos.
-
-Estas vistas genéricas son parte del patrón de diseño MVC (Modelo-Vista-Controlador) 
-que Django implementa y ayudan a reducir la cantidad de código que necesitas escribir para realizar operaciones comunes en aplicaciones web. Cada una de estas clases está diseñada para manejar una operación específica de CRUD (Crear, Leer, Actualizar, Eliminar) y se integra estrechamente con el sistema de modelos y plantillas de Django.
-    """
-
 
 def imprimir(mensaje): #funcion para imprimir en la consola  en modo desarrollador 
     if settings.DEBUG:
         print(mensaje)
+        logger.debug(mensaje)

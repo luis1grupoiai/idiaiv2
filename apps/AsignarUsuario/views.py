@@ -6,7 +6,6 @@ from .models import VallEmpleado , VAllReclutamiento
 from apps.AsignarUsuario.models import  TRegistroAccionesModulo 
 from apps.RegistroModulo.models import TRegistroDeModulo 
 from apps.ActiveDirectory.views import  SelectDepartamento , notificacionCorreo
-
 from django.db.models import Q
 from django.core.mail import send_mail
 from django.shortcuts import redirect
@@ -30,15 +29,10 @@ selectDepartamento= SelectDepartamento()
 ENCRYPTION_KEY_DESCRIPCION =os.environ.get('KEY_DESCRIPCION').encode()
 ENCRYPTION_KEY_NOMBRE = os.environ.get('KEY_NOMBRE').encode()
 
-
-
-
 @login_required
 def solicitud(request):
     # Aquí la lógica para mostrar la página de inicio
-    
-    
-        
+   
     empleados = []
    # empleados = VallEmpleado.objects.exclude(username__isnull=True).exclude(username='')
     empleados = VallEmpleado.objects.exclude(nombre_direccion='Tecnatom').exclude(username__isnull=True).exclude(username='').filter(is_active=True)
@@ -77,7 +71,6 @@ def solicitudNuevos(request):
         'SubEncabezado' :'Plataforma para solicitar los usuarios para el personal del Grupo IAI',
         'EncabezadoNav' :'Solicitud',
         'EncabezadoCard' : 'Solicitar Alta',
-        
     }
    # print(empleados)
     context = {
@@ -106,7 +99,6 @@ def nuevosIDIAI(request):
         'EncabezadoNav' :'Agregar',
         'EncabezadoCard' : 'Agregar Usuario IDIAI',
         'titulomodal1':'Crear Usuario de IDIAI'
-        
     }
    # print(empleados)
     context = {
@@ -124,8 +116,7 @@ def nuevosIDIAI(request):
         'selectDepartamento': selectDepartamento
     }
   
-  
-  
+
     # Aquí la lógica para mostrar la página de inicio
     if request.method == 'POST':
         nombre_usuario = request.POST['nombre_usuario'].strip().title()
@@ -196,22 +187,13 @@ def nuevosIDIAI(request):
             else:
                 messages.error(request,f"Usuario existente en el Modulo: {nombre_usuario}")
               # 
-                 
-            
-            
-            
            # return redirect(request, 'nuevoPersonal.html',context) 
         else:
             LugarNoCreado+= ' IDIAI V2 y Modulo '
             messages.error(request,f"Usuario existente en {LugarNoCreado}: {nombre_usuario}")
           #  return redirect(request, 'nuevoPersonal.html',context) 
-        
-    
-        
-    
-  
-    return render(request, 'nuevoPersonal.html',context)
 
+    return render(request, 'nuevoPersonal.html',context)
 
 
 @login_required
@@ -278,6 +260,7 @@ def insertar_registro_accion(nombre_usuario, modulo, nombre_accion, descripcion,
     
     nuevo_registro.save()
     imprimir(nuevo_registro)
+    
     
 def get_client_ip(request):
     """

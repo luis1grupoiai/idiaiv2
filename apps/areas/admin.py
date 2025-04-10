@@ -131,17 +131,43 @@ class CustomUserAdmin(UserAdmin):
             return f"Coordinador de {coordinacion.nombre}"
         return "Sin cargo asignado"
     
+    # def save_related(self, request, form, formsets, change):
+    #     """Maneja el guardado de relaciones, omitiendo UserAreas para encargados"""
+    #     set_changed_by(request.user)
+    #     obj = form.instance
+        
+    #     # Solo guarda UserAreas si el usuario no es encargado
+    #     if not self.is_user_in_charge(obj):
+    #         logger.debug(f"Guardando relaciones para usuario no encargado: {obj.username}")
+    #         super().save_related(request, form, formsets, change)
+    #     else:
+    #         logger.info(f"Omitiendo guardado de UserAreas para usuario encargado: {obj.username}")
+
     def save_related(self, request, form, formsets, change):
-        """Maneja el guardado de relaciones, omitiendo UserAreas para encargados"""
+        """Maneja el guardado de relaciones, pero asegura que los permisos se guarden siempre"""
         set_changed_by(request.user)
         obj = form.instance
         
-        # Solo guarda UserAreas si el usuario no es encargado
-        if not self.is_user_in_charge(obj):
-            logger.debug(f"Guardando relaciones para usuario no encargado: {obj.username}")
-            super().save_related(request, form, formsets, change)
+        # Guarda los permisos explícitamente
+        if 'user_permissions' in form.cleaned_data:
+            logger.debug(f"Guardando permisos para usuario: {obj.username}")
+            obj.user_permissions.set(form.cleaned_data['user_permissions'])
+        
+        # Procesa los formsets pero filtra UserAreas si el usuario es encargado
+        filtered_formsets = []
+        for formset in formsets:
+            # Si es un formset de UserAreas y el usuario es encargado, lo omitimos
+            if hasattr(formset, 'model') and formset.model == UserAreas and self.is_user_in_charge(obj):
+                logger.info(f"Omitiendo guardado de UserAreas para usuario encargado: {obj.username}")
+                continue
+            filtered_formsets.append(formset)
+        
+        # Guarda el resto de formsets normalmente
+        if filtered_formsets:
+            logger.debug(f"Guardando {len(filtered_formsets)} formsets para usuario: {obj.username}")
+            super().save_related(request, form, filtered_formsets, change)
         else:
-            logger.info(f"Omitiendo guardado de UserAreas para usuario encargado: {obj.username}")
+            logger.debug(f"No hay formsets para guardar para usuario: {obj.username}")
 
     # Métodos para mostrar información en la lista de usuarios
     def get_nombre_completo(self, obj):

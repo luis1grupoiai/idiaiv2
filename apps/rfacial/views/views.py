@@ -3229,6 +3229,7 @@ class CVerificarTokenPermiso(APIView):
                 nSistemaOrigen = jd['idSistema']
                 sPermGp  = jd['permisoGrupo']
                 sTipo = jd['tipoPerGp']
+                idPersonal = 0
                 oAuth = CAutenticacion()
                
 
@@ -3258,6 +3259,12 @@ class CVerificarTokenPermiso(APIView):
                         idUsuario = dUsuario[0]['id']
                         print("CVerificarTokenPermiso - Usuario validado, el id del usuario es: "+str(idUsuario))
 
+                        #ARSI 06/06/2025 OBTENER ID PERSONAL DEL USUARIO CUANDO SE VERIFIQUE SUS PERMISOS.
+                        dDatosPersonales = self.oAuth.obtenerDatosPersonales(idUsuario,0) 
+
+                        if len(dDatosPersonales)>0:                                        
+                            idPersonal = dDatosPersonales[0][1]
+
                         # lPermisoUsuario = self.oAuth.obtenerPermisos(nSistemaOrigen,idUsuario)
                         # lGrupoUsuario = self.oAuth.obtenerGrupos(nSistemaOrigen,idUsuario)
 
@@ -3265,6 +3272,7 @@ class CVerificarTokenPermiso(APIView):
                             print("CVerificarTokenPermiso -  se valida el permiso: "+sPermGp)
                             lPermisoUsuario = self.oAuth.obtenerPermisos(nSistemaOrigen,idUsuario)
                             lGrupoUsuario = self.oAuth.obtenerGrupos(nSistemaOrigen,idUsuario)
+                            
 
                             #if len(lPermisoUsuario)>0 & len(lGrupoUsuario)>0:
                             lPermisoUsuario.update(lGrupoUsuario)
@@ -3276,7 +3284,7 @@ class CVerificarTokenPermiso(APIView):
                                 print("CVerificarTokenPermiso - El usuario "+sUserName+" tiene el permiso: "+sPermGp);
                                 
                                 nStatus = 200
-                                datos = {'status': 'Success', "message":'El token es válido y no ha expirado.'}
+                                datos = {'status': 'Success', "message":'El token es válido y no ha expirado.', "idPersonal":idPersonal}
                             else:
                                 nStatus = 200
                                 datos = {'status': 'NOAUTORIZADO', "message":'El token es válido, pero el usuario no cuenta con el permiso solicitado.'}
@@ -3293,7 +3301,7 @@ class CVerificarTokenPermiso(APIView):
                             if sPermGp in lGrupoUsuario:
                                 print("CVerificarTokenPermiso - El usuario "+sUserName+" esta asignado al grupo "+sPermGp);
                                 nStatus = 200
-                                datos = {'status': 'Success', "message":'El token es válido y no ha expirado.'}
+                                datos = {'status': 'Success', "message":'El token es válido y no ha expirado.', "idPersonal":idPersonal}
                             else:
                                 nStatus = 200
                                 datos = {'status': 'NOAUTORIZADO', "message":'El token es válido, pero el usuario no esta asignado al grupo solicitado.'}

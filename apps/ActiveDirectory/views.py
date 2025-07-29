@@ -24,7 +24,14 @@ from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.auth import authenticate, login
 from django.views.decorators.http import require_POST
+from config.logger_setup import LoggerSetup
 import unicodedata
+
+# arsi 29072025 se agrega validación ...
+entorno = os.environ.get('DJANGO_ENV')
+
+logger = LoggerSetup.setup_logger_for_environment('ActiveDirectory', entorno)
+
 ENCRYPTION_KEY_DESCRIPCION =os.environ.get('KEY_DESCRIPCION').encode()
 ENCRYPTION_KEY_NOMBRE = os.environ.get('KEY_NOMBRE').encode()
 def es_superusuario(user):
@@ -712,6 +719,9 @@ def consultarUsuariosIDIAI(request):
     mensaje = None
     opc = 0 #codigo basura jajajaaj , no me acuerdo porque lo puse jejeje XD
     
+    logger.info(f"Accede a método consultarUsuariosIDIAI.")
+    logger.info(f"Unidades Organizativas de AD :  {obtenerUnidadesOrganizativas()}")
+    
     imprimir(f"Unidades Organizativas de AD :  {obtenerUnidadesOrganizativas()}")
     
     imprimir(f"----------------------------------------------------------------------------------------------------------------")
@@ -920,6 +930,8 @@ def consultar_usuarios(request): #Consulta los usuarios de Active Directory
         # Manejar la excepción, por ejemplo, registrando el error
         messages.error(request,f"Error al conectar o buscar en Active Directory: {str(e)}")
         imprimir(f"Error al conectar o buscar en Active Directory: {str(e)}")
+        logger.info(f"Error al conectar o buscar en Active Directory: {str(e)}")
+
     
     # Crear el diccionario de contexto con todas las variables necesarias
     imprimir( "-------------------------------------------------------------------------------------------------------------------")
@@ -1130,15 +1142,27 @@ def is_account_disabled(useraccountcontrol_str):
  
 
 def existeUsuario(nombreUsuario):
+    
     try:
        # server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
+        logger.info("Accede a metodo existeUsuario: "+nombreUsuario)
         with connect_to_ad() as conn:
+            
+            logger.info("Dominio Raiz: "+dominoRaiz)
+
             search_base = dominoRaiz  # Asegúrate de que domino está definido y es correcto.
             #search_filter = f'(cn={nombreUsuario})'  # Filtro para buscar por Common Name
             search_filter = f'(sAMAccountName={nombreUsuario})'  # Cambiado de cn a sAMAccountName
+            imprimir("Valores de search_filter: ")
             imprimir(search_filter)
             #conn.search(search_base, search_filter, attributes=['cn'])
             conn.search(search_base, search_filter, attributes=['sAMAccountName'])
+            
+            imprimir(conn.entries)
+
+            imprimir("Total de entradas encontradas: ")
+            imprimir(len(conn.entries))
+
             return len(conn.entries) > 0
     except Exception as e:
         imprimir(f"Error al buscar en Active Directory: {str(e)}")
@@ -1157,8 +1181,12 @@ def obtener_distinguishedName(samaccountname):
     """
     try:
        # server = Server(settings.AD_SERVER, port=settings.AD_PORT, get_info=ALL_ATTRIBUTES)
+        imprimir("Accede a metodo obtener_distinguishedName")
+
         with connect_to_ad() as conn:
              if conn:
+                imprimir("El valor de samaccountname es "+samaccountname)
+                imprimir("El valor de dominio es "+domino)
                 search_base = domino # Ajusta este DN base según tu configuración de AD
                 search_filter = f"(sAMAccountName={samaccountname})"
                 conn.search(search_base, search_filter, attributes=['distinguishedName'])
@@ -1363,6 +1391,7 @@ def connect_to_ad():
 @login_required
 @user_passes_test(es_superusuario) # Solo permitir a superusuarios
 def verificar_usuario(request, nombre_usuario):
+    imprimir("Accede a metodo verificar_usuario: "+nombre_usuario)
     existe = existeUsuario(nombre_usuario)
     existeIDIAI = usuarioexisteIDIAI(nombre_usuario)
     obtener_distinguishedName(nombre_usuario)
@@ -1696,7 +1725,9 @@ def get_client_ip(request):
 
 def imprimir(mensaje): #funcion para imprimir en la consola  en modo desarrollador 
     if settings.DEBUG:
-       print(mensaje)
+       print(mensaje)    
+    
+    logger.info(mensaje)
     
     #print(mensaje)
     
